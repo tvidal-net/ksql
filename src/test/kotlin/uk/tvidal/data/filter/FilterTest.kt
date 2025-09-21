@@ -1,0 +1,65 @@
+package uk.tvidal.data.filter
+
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertThrows
+import uk.tvidal.data.equalsFilter
+import uk.tvidal.data.keyFilter
+import uk.tvidal.data.logging.KLogging
+import uk.tvidal.data.model.Key
+import uk.tvidal.data.sqlFilter
+import kotlin.test.assertEquals
+
+class FilterTest {
+
+  private data class TestClass(
+    val name: String,
+    @Key val key: Int,
+  )
+
+  @Test
+  fun testSingleKeyFilter() {
+    assertEquals(
+      SqlFieldParamFilter.Equals(TestClass::key),
+      TestClass::class.keyFilter
+    )
+  }
+
+  private data class MultiKeyTable(
+    val name: String,
+    @Key val firstKey: Int,
+    @Key val secondKey: Int,
+  )
+
+  @Test
+  fun testMultiKeyFilter() {
+    val expected = sqlFilter {
+      MultiKeyTable::firstKey.eq()
+      MultiKeyTable::secondKey.eq()
+    }
+    val actual = MultiKeyTable::class.keyFilter as SqlMultiFilter.And
+    assertEquals(expected, actual)
+  }
+
+  @Test
+  fun testFailEmptyKeyFields() {
+    assertThrows<IllegalArgumentException> {
+      equalsFilter(emptyList())
+    }
+  }
+
+  @Test
+  fun testOrFilter() {
+    val expected = SqlMultiFilter.Or(
+      listOf(
+        SqlFieldParamFilter.GreaterThan(TestClass::key),
+        SqlFieldParamFilter.LessThan(TestClass::key)
+      )
+    )
+    val actual = sqlFilter {
+      TestClass::key.gt().or(TestClass::key.lt())
+    }
+    assertEquals(expected, actual)
+  }
+
+  companion object : KLogging()
+}

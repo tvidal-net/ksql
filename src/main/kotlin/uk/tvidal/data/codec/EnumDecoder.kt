@@ -12,9 +12,8 @@ class EnumDecoder(val type: KClass<out Enum<*>>) : ResultSetDecoder<Enum<*>> {
     val name = rs.getString(fieldName)
     if (name != null) {
       val enumValue = values[name.uppercase()]
-      if (enumValue == null) {
-        throw IllegalArgumentException("$name is not a valid value for enum ${type.qualifiedName}")
-      }
+        ?: throw IllegalArgumentException("$name is not a valid value for enum ${type.qualifiedName}")
+
       return enumValue
     }
     return null

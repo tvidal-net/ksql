@@ -14,6 +14,7 @@ class Database(
   val dialect: Dialect,
   private val createConnection: () -> Connection,
 ) {
+
   private val connection = ThreadLocal<Connection>()
 
   val currentTransaction: Connection?
@@ -24,6 +25,7 @@ class Database(
     namingStrategy = dialect.namingStrategy,
   )
 
+  // inject factory method / supplier
   inline fun <reified E : Any> byProperties(vararg constructorArgs: Any?): EntityDecoder<E> = EntityDecoder.ByProperties(
     constructor = E::class.primaryConstructor!!,
     namingStrategy = dialect.namingStrategy,

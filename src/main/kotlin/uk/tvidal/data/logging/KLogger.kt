@@ -6,43 +6,43 @@ import org.slf4j.event.Level
 import org.slf4j.spi.LoggingEventBuilder
 import kotlin.reflect.KClass
 
-class KLogger(val log: Logger) : Logger by log {
+class KLogger(val logger: Logger) : Logger by logger {
 
   constructor(logger: String) : this(LoggerFactory.getLogger(logger))
   constructor(logger: Class<*>) : this(logger.name.substringBefore('$'))
   constructor(logger: KClass<*>) : this(logger.java)
 
-  override fun makeLoggingEventBuilder(level: Level): LoggingEventBuilder = log.makeLoggingEventBuilder(level)
-  override fun atLevel(level: Level): LoggingEventBuilder = log.atLevel(level)
-  override fun isEnabledForLevel(level: Level): Boolean = log.isEnabledForLevel(level)
-  override fun atTrace(): LoggingEventBuilder = log.atTrace()
-  override fun atDebug(): LoggingEventBuilder = log.atDebug()
-  override fun atInfo(): LoggingEventBuilder = log.atInfo()
-  override fun atWarn(): LoggingEventBuilder = log.atWarn()
-  override fun atError(): LoggingEventBuilder = log.atError()
+  override fun makeLoggingEventBuilder(level: Level): LoggingEventBuilder = logger.makeLoggingEventBuilder(level)
+  override fun atLevel(level: Level): LoggingEventBuilder = logger.atLevel(level)
+  override fun isEnabledForLevel(level: Level): Boolean = logger.isEnabledForLevel(level)
+  override fun atTrace(): LoggingEventBuilder = logger.atTrace()
+  override fun atDebug(): LoggingEventBuilder = logger.atDebug()
+  override fun atInfo(): LoggingEventBuilder = logger.atInfo()
+  override fun atWarn(): LoggingEventBuilder = logger.atWarn()
+  override fun atError(): LoggingEventBuilder = logger.atError()
 
   fun error(e: Throwable) =
-    log.error(TEMPLATE_EXCEPTION, e::class.simpleName, e.message, e)
+    logger.error(TEMPLATE_EXCEPTION, e::class.simpleName, e.message, e)
 
   inline fun error(vararg args: Any?, message: () -> Any?) =
-    log.error(message().toString(), *args)
+    logger.error(message().toString(), *args)
 
   fun warn(e: Throwable) =
-    log.warn(TEMPLATE_EXCEPTION, e::class.simpleName, e.message, e)
+    logger.warn(TEMPLATE_EXCEPTION, e::class.simpleName, e.message, e)
 
   inline fun warn(vararg args: Any?, message: () -> Any?) =
-    log.warn(message().toString(), *args)
+    logger.warn(message().toString(), *args)
 
   inline fun info(vararg args: Any?, message: () -> Any?) {
-    if (log.isInfoEnabled) log.info(message().toString(), *args)
+    if (logger.isInfoEnabled) logger.info(message().toString(), *args)
   }
 
   inline fun debug(vararg args: Any?, message: () -> Any?) {
-    if (log.isDebugEnabled) log.debug(message().toString(), *args)
+    if (logger.isDebugEnabled) logger.debug(message().toString(), *args)
   }
 
   inline fun trace(vararg args: Any?, message: () -> Any?) {
-    if (log.isTraceEnabled) log.trace(message().toString(), *args)
+    if (logger.isTraceEnabled) logger.trace(message().toString(), *args)
   }
 
   companion object {

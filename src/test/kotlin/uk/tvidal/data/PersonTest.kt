@@ -2,8 +2,6 @@ package uk.tvidal.data
 
 import uk.tvidal.data.logging.KLogger
 import uk.tvidal.data.mariadb.MariaDB
-import uk.tvidal.data.model.RandomUUID
-import uk.tvidal.data.model.Today
 import java.time.LocalDate
 import java.util.*
 import javax.persistence.Id

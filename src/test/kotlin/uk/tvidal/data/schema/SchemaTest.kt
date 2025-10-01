@@ -1,11 +1,14 @@
 package uk.tvidal.data.schema
 
-import uk.tvidal.data.model.RandomUUID
+import uk.tvidal.data.Dialect
+import uk.tvidal.data.RandomUUID
 import java.util.*
 import javax.persistence.Entity
 import javax.persistence.Id
 
 class SchemaTest {
+
+  val dialect = Dialect()
 
   @Entity
   data class Person(

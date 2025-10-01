@@ -1,11 +1,11 @@
 package uk.tvidal.data.schema
 
-import uk.tvidal.data.model.TableName
+import uk.tvidal.data.TableName
 import kotlin.reflect.KClass
 
-data class Table(
+data class SchemaTable(
   val name: TableName,
-  val columns: Collection<Column<*>>,
+  val columns: Collection<SchemaColumn<*>>,
   val constraints: Collection<Constraint> = listOf(),
   val indices: Collection<Index> = listOf(),
 ) {
@@ -21,7 +21,7 @@ data class Table(
 
   companion object Factory {
 
-    fun from(entity: KClass<*>): Table {
+    fun from(entity: KClass<*>): SchemaTable {
       TODO()
     }
   }

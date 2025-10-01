@@ -1,7 +1,6 @@
 package uk.tvidal.data
 
 import uk.tvidal.data.filter.*
-import uk.tvidal.data.model.*
 import uk.tvidal.data.query.EntityQuery
 import uk.tvidal.data.query.QueryParam
 import uk.tvidal.data.query.SimpleQuery

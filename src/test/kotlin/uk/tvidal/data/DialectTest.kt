@@ -2,8 +2,6 @@ package uk.tvidal.data
 
 import org.junit.jupiter.api.Test
 import uk.tvidal.data.filter.*
-import uk.tvidal.data.model.fields
-import uk.tvidal.data.model.updateFields
 import uk.tvidal.data.query.EntityQuery
 import uk.tvidal.data.query.QueryParam
 import java.util.*

@@ -1,6 +1,6 @@
 package uk.tvidal.data.schema
 
-import uk.tvidal.data.model.TableName
+import uk.tvidal.data.TableName
 
 sealed interface Constraint {
 
@@ -27,10 +27,10 @@ sealed interface Constraint {
   }
 
   enum class ForeignKeyAction {
-    DEFAULT,
-    NOTHING,
-    CASCADE,
-    SET_NULL,
+    Default,
+    Nothing,
+    Cascade,
+    SetNull,
   }
 
   data class ForeignKeyReference(
@@ -44,8 +44,8 @@ sealed interface Constraint {
     val table: TableName,
     val references: Collection<ForeignKeyReference>,
     val name: String? = null,
-    val updateAction: ForeignKeyAction = ForeignKeyAction.DEFAULT,
-    val deleteAction: ForeignKeyAction = ForeignKeyAction.DEFAULT,
+    val updateAction: ForeignKeyAction = ForeignKeyAction.Default,
+    val deleteAction: ForeignKeyAction = ForeignKeyAction.Default,
   ) : Constraint {
     override fun toString() = "REFERENCES $table ON $references"
   }

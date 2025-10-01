@@ -1,4 +1,4 @@
-package uk.tvidal.data.model
+package uk.tvidal.data
 
 data class TableName(
   val name: String,

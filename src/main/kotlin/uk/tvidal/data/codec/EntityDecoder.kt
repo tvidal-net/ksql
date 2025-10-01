@@ -1,8 +1,8 @@
 package uk.tvidal.data.codec
 
-import uk.tvidal.data.model.fieldName
-import uk.tvidal.data.model.fields
 import uk.tvidal.data.NamingStrategy
+import uk.tvidal.data.fieldName
+import uk.tvidal.data.fields
 import java.sql.ResultSet
 import java.sql.ResultSetMetaData
 import kotlin.reflect.KCallable

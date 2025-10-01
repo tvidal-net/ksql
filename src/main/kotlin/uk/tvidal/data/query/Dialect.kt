@@ -2,16 +2,11 @@ package uk.tvidal.data.query
 
 import uk.tvidal.data.QueryBuilder
 import uk.tvidal.data.equalsFilter
-import uk.tvidal.data.filter.SqlFieldFilter
-import uk.tvidal.data.filter.SqlFieldMultiValueFilter
-import uk.tvidal.data.filter.SqlFieldParamFilter
-import uk.tvidal.data.filter.SqlFieldValueFilter
-import uk.tvidal.data.filter.SqlFilter
-import uk.tvidal.data.filter.SqlMultiFilter
+import uk.tvidal.data.filter.*
 import uk.tvidal.data.model.fieldName
 import uk.tvidal.data.model.fields
 import uk.tvidal.data.model.tableName
-import java.util.LinkedList
+import java.util.*
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty
 import kotlin.reflect.KProperty1
@@ -37,10 +32,11 @@ open class Dialect(val namingStrategy: NamingStrategy = NamingStrategy.SNAKE_CAS
     keyFields: Collection<KProperty1<out E, *>>
   ): EntityQuery<E> = throw NotImplementedError("saveQuery is not implemented for the default Dialect!")
 
-  open fun <E : Any> delete(entity: KClass<out E>, keyFields: Collection<KProperty1<out E, *>>) = entityQuery<E> { params ->
-    val where = equalsFilter(keyFields)
-    delete(params, entity, where)
-  }
+  open fun <E : Any> delete(entity: KClass<out E>, keyFields: Collection<KProperty1<out E, *>>) =
+    entityQuery<E> { params ->
+      val where = equalsFilter(keyFields)
+      delete(params, entity, where)
+    }
 
   open fun delete(entity: KClass<*>, where: SqlFilter) = query { params ->
     delete(params, entity, where)
@@ -168,7 +164,10 @@ open class Dialect(val namingStrategy: NamingStrategy = NamingStrategy.SNAKE_CAS
     }
   }
 
-  private fun StringBuilder.appendFieldFilter(params: MutableCollection<in QueryParameter>, fieldFilter: SqlFieldFilter<*>) {
+  private fun StringBuilder.appendFieldFilter(
+    params: MutableCollection<in QueryParameter>,
+    fieldFilter: SqlFieldFilter<*>
+  ) {
     appendFieldName(fieldFilter.field)
     when (fieldFilter) {
       is SqlFieldFilter.IsNull -> append(IS_NULL)
@@ -180,12 +179,18 @@ open class Dialect(val namingStrategy: NamingStrategy = NamingStrategy.SNAKE_CAS
     }
   }
 
-  private fun StringBuilder.appendParamFilter(params: MutableCollection<in QueryParameter>, paramFilter: SqlFieldParamFilter<*>) {
+  private fun StringBuilder.appendParamFilter(
+    params: MutableCollection<in QueryParameter>,
+    paramFilter: SqlFieldParamFilter<*>
+  ) {
     append(paramFilter.operator)
     appendFieldParam(params, paramFilter.field)
   }
 
-  private fun StringBuilder.appendValueFilter(params: MutableCollection<in QueryParameter>, valueFilter: SqlFieldValueFilter<*>) {
+  private fun StringBuilder.appendValueFilter(
+    params: MutableCollection<in QueryParameter>,
+    valueFilter: SqlFieldValueFilter<*>
+  ) {
     append(valueFilter.operator)
     appendValueParam(params, valueFilter.field.fieldName, valueFilter.value)
   }
@@ -203,7 +208,10 @@ open class Dialect(val namingStrategy: NamingStrategy = NamingStrategy.SNAKE_CAS
     }
   }
 
-  private fun StringBuilder.appendInFilter(params: MutableCollection<in QueryParameter>, inFilter: SqlFieldMultiValueFilter.In<*>) {
+  private fun StringBuilder.appendInFilter(
+    params: MutableCollection<in QueryParameter>,
+    inFilter: SqlFieldMultiValueFilter.In<*>
+  ) {
     append(inFilter.operator)
     openBlock()
     for ((i, value) in inFilter.values.withIndex()) {
@@ -215,7 +223,10 @@ open class Dialect(val namingStrategy: NamingStrategy = NamingStrategy.SNAKE_CAS
     closeBlock()
   }
 
-  private fun <E> StringBuilder.appendFieldParam(params: MutableCollection<in QueryParameter>, field: KProperty1<in E, Any?>) {
+  private fun <E> StringBuilder.appendFieldParam(
+    params: MutableCollection<in QueryParameter>,
+    field: KProperty1<in E, Any?>
+  ) {
     ParameterProperty(params.nextIndex, field).also { newParam ->
       params.add(newParam)
       appendParam(newParam)
@@ -253,7 +264,7 @@ open class Dialect(val namingStrategy: NamingStrategy = NamingStrategy.SNAKE_CAS
 
   protected fun StringBuilder.appendName(name: String) {
     openQuote()
-    namingStrategy.appendDatabaseName(this, name)
+    namingStrategy.appendName(this, name)
     closeQuote()
   }
 

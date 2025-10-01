@@ -7,7 +7,7 @@ import uk.tvidal.data.NamingStrategy
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty1
 
-class MariaDB(namingStrategy: NamingStrategy = NamingStrategy.SNAKE_CASE) : Dialect(namingStrategy) {
+class MariaDB(namingStrategy: NamingStrategy = NamingStrategy.SnakeCase) : Dialect(namingStrategy) {
 
   override fun StringBuilder.openQuote() {
     append(QUOTE_CHAR)

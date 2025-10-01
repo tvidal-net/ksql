@@ -16,7 +16,7 @@ import kotlin.test.assertEquals
 
 class DialectTest {
 
-  private object TestDialect : Dialect(NamingStrategy.AS_IS) {
+  private object TestDialect : Dialect(NamingStrategy.AsIs) {
 
     fun tableName(entity: KClass<*>) = buildString {
       this.tableName(entity)

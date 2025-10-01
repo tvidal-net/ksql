@@ -10,9 +10,12 @@ import kotlin.reflect.KClass
 import kotlin.reflect.KProperty
 import kotlin.reflect.KProperty1
 
-open class Dialect(val namingStrategy: NamingStrategy = NamingStrategy.SNAKE_CASE) {
+open class Dialect(val namingStrategy: NamingStrategy = NamingStrategy.SnakeCase) {
 
-  open fun select(entity: KClass<*>, whereClause: SqlFilter? = null) = simpleQuery { params ->
+  open fun select(
+    entity: KClass<*>,
+    whereClause: SqlFilter? = null
+  ) = simpleQuery { params ->
     selectFrom(entity)
     where(params, whereClause)
   }
@@ -44,6 +47,15 @@ open class Dialect(val namingStrategy: NamingStrategy = NamingStrategy.SNAKE_CAS
     where(params, equalsFilter(keyFields))
   }
 
+  open fun <E : Any> insert(
+    entity: KClass<out E>,
+    insertFields: Collection<KProperty1<out E, *>> = entity.insertFields
+  ) = entityQuery<E> { params ->
+    insertInto(entity)
+    insertFields(insertFields)
+    insertValues(params, insertFields)
+  }
+
   private fun <E : Any, P : QueryParam> StringBuilder.deleteQuery(
     params: MutableCollection<in P>,
     entity: KClass<out E>,
@@ -51,15 +63,6 @@ open class Dialect(val namingStrategy: NamingStrategy = NamingStrategy.SNAKE_CAS
   ) {
     deleteFrom(entity)
     where(params, whereClause)
-  }
-
-  open fun <E : Any> insert(
-    entity: KClass<out E>,
-    fields: Collection<KProperty1<out E, *>> = entity.insertFields
-  ) = entityQuery<E> { params ->
-    insertInto(entity)
-    insertFields(fields)
-    insertValues(params, fields)
   }
 
   protected inline fun simpleQuery(
@@ -213,7 +216,10 @@ open class Dialect(val namingStrategy: NamingStrategy = NamingStrategy.SNAKE_CAS
     }
   }
 
-  private fun StringBuilder.valueParam(params: MutableCollection<in QueryParam>, name: String, value: Any?) {
+  private fun StringBuilder.valueParam(
+    params: MutableCollection<in QueryParam>,
+    name: String, value: Any?
+  ) {
     QueryParam.Value(params.nextIndex, name, value).also { newParam ->
       params.add(newParam)
       param(newParam)

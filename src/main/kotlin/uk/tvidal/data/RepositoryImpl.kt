@@ -3,10 +3,10 @@ package uk.tvidal.data
 import uk.tvidal.data.codec.EntityDecoder
 import uk.tvidal.data.filter.SqlFilter
 import uk.tvidal.data.model.fields
-import uk.tvidal.data.model.keyFields
-import uk.tvidal.data.model.nonKeyFields
-import uk.tvidal.data.query.EntityQuery
-import uk.tvidal.data.query.Query
+import uk.tvidal.data.model.keyColumns
+import uk.tvidal.data.model.nonKeyColumns
+import uk.tvidal.data.query.TableQuery
+import uk.tvidal.data.query.SimpleQuery
 import kotlin.reflect.KClass
 
 internal class RepositoryImpl<E : Any>(
@@ -15,31 +15,31 @@ internal class RepositoryImpl<E : Any>(
   override val entity: KClass<out E>,
 ) : Repository<E> {
 
-  private val selectByKey: Query by lazy {
+  private val selectByKey: SimpleQuery by lazy {
     selectQuery(entity.keyFilter)
   }
 
-  private val selectAll: Query by lazy {
+  private val selectAll: SimpleQuery by lazy {
     selectQuery(null)
   }
 
-  private val save: EntityQuery<E> by lazy {
-    db.dialect.save(entity, entity.nonKeyFields, entity.keyFields)
+  private val save: TableQuery<E> by lazy {
+    db.dialect.save(entity, entity.nonKeyColumns, entity.keyColumns)
   }
 
-  private val delete: EntityQuery<E> by lazy {
-    db.dialect.delete(entity, entity.keyFields)
+  private val delete: TableQuery<E> by lazy {
+    db.dialect.delete(entity, entity.keyColumns)
   }
 
-  private val update: EntityQuery<E> by lazy {
-    db.dialect.update(entity, entity.nonKeyFields, entity.keyFields)
+  private val update: TableQuery<E> by lazy {
+    db.dialect.update(entity, entity.nonKeyColumns, entity.keyColumns)
   }
 
-  private val insert: EntityQuery<E> by lazy {
+  private val insert: TableQuery<E> by lazy {
     db.dialect.insert(entity, entity.fields)
   }
 
-  private fun selectQuery(where: SqlFilter?): Query =
+  private fun selectQuery(where: SqlFilter?): SimpleQuery =
     db.dialect.select(entity, where)
 
   override fun one(vararg keyValues: Any) = db.select(selectByKey) {

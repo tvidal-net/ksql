@@ -3,9 +3,9 @@ package uk.tvidal.data
 import uk.tvidal.data.codec.EntityDecoder
 import uk.tvidal.data.logging.KLogging
 import uk.tvidal.data.query.Dialect
-import uk.tvidal.data.query.EntityQuery
-import uk.tvidal.data.query.Query
+import uk.tvidal.data.query.SimpleQuery
 import uk.tvidal.data.query.Statement
+import uk.tvidal.data.query.TableQuery
 import java.sql.Connection
 import kotlin.reflect.KClass
 import kotlin.reflect.full.primaryConstructor
@@ -26,7 +26,9 @@ class Database(
   )
 
   // inject factory method / supplier
-  inline fun <reified E : Any> byProperties(vararg constructorArgs: Any?): EntityDecoder<E> = EntityDecoder.ByProperties(
+  inline fun <reified E : Any> byProperties(
+    vararg constructorArgs: Any?
+  ): EntityDecoder<E> = EntityDecoder.ByProperties(
     constructor = E::class.primaryConstructor!!,
     namingStrategy = dialect.namingStrategy,
     constructorArgs = constructorArgs,
@@ -48,13 +50,13 @@ class Database(
     decoder = decoder
   )
 
-  fun <T> select(query: Query, decoder: Statement.() -> T): T = invoke { cnn ->
+  fun <T> select(query: SimpleQuery, decoder: Statement.() -> T): T = invoke { cnn ->
     info { "select: $query" }
     Statement(cnn, query)
       .use(decoder)
   }
 
-  fun execute(query: Query): Int = invoke { cnn ->
+  fun execute(query: SimpleQuery): Int = invoke { cnn ->
     Statement(cnn, query).use {
       it.executeSingle()
     }.also {
@@ -62,7 +64,7 @@ class Database(
     }
   }
 
-  fun <E> execute(query: EntityQuery<E>, value: E): Int = invoke { cnn ->
+  fun <E> execute(query: TableQuery<E>, value: E): Int = invoke { cnn ->
     Statement(cnn, query).use {
       it.setParams(query[value])
       it.executeSingle()
@@ -71,7 +73,7 @@ class Database(
     }
   }
 
-  fun <E> execute(query: EntityQuery<E>, values: Iterable<E>): IntArray = invoke { cnn ->
+  fun <E> execute(query: TableQuery<E>, values: Iterable<E>): IntArray = invoke { cnn ->
     Statement(cnn, query).use {
       for (value in values) {
         it.setParams(query[value])
@@ -87,8 +89,7 @@ class Database(
     dialect.delete(E::class, sqlFilter<E>(builder))
   )
 
-  fun beginTransaction() = currentTransaction ?: createConnection()
-    .also(connection::set)
+  fun beginTransaction() = currentTransaction ?: createConnection().also(connection::set)
 
   fun closeTransaction() {
     val transaction = currentTransaction

@@ -1,6 +1,6 @@
 package uk.tvidal.data.query
 
-open class Query(
+open class SimpleQuery(
   val sql: String,
   open val parameters: Collection<QueryParameter> = emptyList()
 ) : Iterable<QueryParameter> {

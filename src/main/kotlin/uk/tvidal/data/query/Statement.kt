@@ -11,7 +11,7 @@ open class Statement(
   parameters: Collection<ParameterValue> = emptyList()
 ) : AutoCloseable {
 
-  constructor(cnn: Connection, query: Query) : this(
+  constructor(cnn: Connection, query: SimpleQuery) : this(
     statement = cnn.prepareStatement(query.sql),
     parameters = query.parameters.filterIsInstance<ParameterValue>()
   )
@@ -81,6 +81,6 @@ open class Statement(
   }
 
   companion object : KLogging() {
-    private const val FIRST_PARAM = 1
+    const val FIRST_PARAM = 1
   }
 }

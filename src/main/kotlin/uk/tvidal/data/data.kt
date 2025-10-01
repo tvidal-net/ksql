@@ -4,7 +4,7 @@ import uk.tvidal.data.filter.SqlFieldParamFilter
 import uk.tvidal.data.filter.SqlFilter
 import uk.tvidal.data.filter.SqlFilterBuilder
 import uk.tvidal.data.filter.SqlMultiFilter
-import uk.tvidal.data.model.keyFields
+import uk.tvidal.data.model.keyColumns
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty1
 
@@ -13,7 +13,7 @@ internal typealias QueryBuilder<E> = StringBuilder.(MutableCollection<in E>) -> 
 typealias WhereClauseBuilder<E> = SqlFilterBuilder<E>.(KClass<out E>) -> Unit
 
 val <E : Any> KClass<out E>.keyFilter: SqlFilter
-  get() = equalsFilter(keyFields)
+  get() = equalsFilter(keyColumns)
 
 internal fun equalsFilter(filterFields: Collection<KProperty1<*, *>>): SqlFilter {
   if (filterFields.isEmpty()) {

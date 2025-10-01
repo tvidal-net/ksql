@@ -40,8 +40,8 @@ internal val KProperty<*>.fieldName: String
 internal val <E : Any> KClass<out E>.fields: Collection<KProperty1<out E, *>>
   get() = memberProperties
 
-internal val <E : Any> KClass<out E>.nonKeyFields: Collection<KProperty1<out E, *>>
+internal val <E : Any> KClass<out E>.nonKeyColumns: Collection<KProperty1<out E, *>>
   get() = fields.filterNot { it.hasAnnotation<Key>() }
 
-internal val <E : Any> KClass<out E>.keyFields: Collection<KProperty1<out E, *>>
+internal val <E : Any> KClass<out E>.keyColumns: Collection<KProperty1<out E, *>>
   get() = fields.filter { it.hasAnnotation<Key>() }

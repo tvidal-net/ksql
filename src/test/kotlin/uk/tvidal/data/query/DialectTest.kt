@@ -10,7 +10,7 @@ import uk.tvidal.data.filter.SqlMultiFilter
 import uk.tvidal.data.model.Key
 import uk.tvidal.data.model.Table
 import uk.tvidal.data.model.fields
-import uk.tvidal.data.model.nonKeyFields
+import uk.tvidal.data.model.nonKeyColumns
 import uk.tvidal.data.sqlFilter
 import java.util.LinkedList
 import kotlin.reflect.KClass
@@ -23,23 +23,23 @@ class DialectTest {
   private object TestDialect : Dialect(NamingStrategy.AS_IS) {
 
     fun tableName(entity: KClass<*>) = buildString {
-      appendTableName(entity)
+      this.tableName(entity)
     }
 
     fun fieldNames() = buildString {
-      appendFieldNames(TestTable::class.fields)
+      fieldNames(TestTable::class.fields)
     }
 
     fun fieldParams(params: MutableCollection<QueryParameter>) = buildString {
-      appendFieldParams(params, TestTable::class.fields)
+      columnParams(params, TestTable::class.fields)
     }
 
     fun setFields(params: MutableCollection<QueryParameter>) = buildString {
-      appendSetFields(params, TestTable::class.nonKeyFields)
+      setColumns(params, TestTable::class.nonKeyColumns)
     }
 
     fun where(where: SqlFilter, params: MutableCollection<QueryParameter>) = buildString {
-      appendFilter(params, where)
+      filter(params, where)
     }
   }
 
@@ -48,7 +48,7 @@ class DialectTest {
   @Test
   fun testTableName() {
     test("SimpleTableName") {
-      tableName(SimpleTableName::class)
+      this.tableName(SimpleTableName::class)
     }
   }
 
@@ -61,19 +61,19 @@ class DialectTest {
   @Test
   fun testTableNameWithSchema() {
     test("tableSchema.tableName") {
-      tableName(TestTable::class)
+      this.tableName(TestTable::class)
     }
   }
 
   @Test
-  fun testFieldNames() {
+  fun testColumnNames() {
     test("id,name") {
       fieldNames()
     }
   }
 
   @Test
-  fun testFieldParams() {
+  fun testColumnParams() {
     val params = ArrayList<QueryParameter>()
     test("(?,?)") {
       fieldParams(params)
@@ -86,9 +86,9 @@ class DialectTest {
   }
 
   @Test
-  fun testSetFields() {
+  fun testSetColumns() {
     val params = ArrayList<QueryParameter>()
-    test("name = ?") {
+    test("SET name = ?") {
       setFields(params)
     }
     assertContentEquals(

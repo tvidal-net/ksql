@@ -10,50 +10,41 @@ import kotlin.reflect.KProperty1
 class MariaDb(namingStrategy: NamingStrategy = NamingStrategy.SNAKE_CASE) : Dialect(namingStrategy) {
 
   override fun StringBuilder.openQuote() {
-    append(MARIA_DB_QUOTE_CHAR)
+    append(QUOTE_CHAR)
   }
 
   override fun StringBuilder.closeQuote() {
-    append(MARIA_DB_QUOTE_CHAR)
+    append(QUOTE_CHAR)
   }
 
   override fun <E : Any> save(
-    entity: KClass<out E>,
-    updateFields: Collection<KProperty1<out E, *>>,
-    keyFields: Collection<KProperty1<out E, *>>
-  ) = entityQuery<E> { params ->
-    appendInsertInto()
-    appendTableName(entity)
-    append(SPACE)
-
-    openBlock()
-    appendFieldNames(updateFields + keyFields)
-    closeBlock()
-
-    append(VALUES)
-    appendFieldParams(params, updateFields + keyFields)
-
-    append(MARIA_DB_ON_DUPLICATE_UPDATE)
-    appendMariaDbSetValues(updateFields)
+    table: KClass<out E>,
+    updateColumns: Collection<KProperty1<out E, *>>,
+    keyColumns: Collection<KProperty1<out E, *>>
+  ) = tableQuery<E> { params ->
+    insertInto(table)
+    insertFields(updateColumns + keyColumns)
+    insertValues(params, updateColumns + keyColumns)
+    appendMariaDbSetValues(updateColumns)
   }
 
   private fun <E> StringBuilder.appendMariaDbSetValues(fields: Collection<KProperty1<in E, *>>) {
+    append("\n\tON DUPLICATE KEY UPDATE ")
     for ((i, field) in fields.withIndex()) {
       if (i > 0) {
-        appendListSeparator()
+        listSeparator()
       }
-      appendFieldName(field)
+      columnName(field)
       append("=VALUES")
       openBlock()
-      appendFieldName(field)
+      columnName(field)
       closeBlock()
     }
   }
 
   companion object {
 
-    const val MARIA_DB_ON_DUPLICATE_UPDATE = "\n\tON DUPLICATE KEY UPDATE "
-    const val MARIA_DB_QUOTE_CHAR = '`'
+    const val QUOTE_CHAR = '`'
 
     val Default = MariaDb()
 

@@ -3,9 +3,8 @@ package uk.tvidal.data.query
 import uk.tvidal.data.QueryBuilder
 import uk.tvidal.data.equalsFilter
 import uk.tvidal.data.filter.*
-import uk.tvidal.data.model.fieldName
-import uk.tvidal.data.model.fields
-import uk.tvidal.data.model.tableName
+import uk.tvidal.data.model.*
+import uk.tvidal.data.query.Statement.Companion.FIRST_PARAM
 import java.util.*
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty
@@ -13,125 +12,106 @@ import kotlin.reflect.KProperty1
 
 open class Dialect(val namingStrategy: NamingStrategy = NamingStrategy.SNAKE_CASE) {
 
-  open fun select(entity: KClass<*>, where: SqlFilter?) = query { params ->
-    appendSelect()
-    appendFieldNames(entity.fields)
-
-    append(FROM)
-    appendTableName(entity)
-
-    if (where != null) {
-      append(WHERE)
-      appendFilter(params, where)
-    }
+  open fun select(table: KClass<*>, whereClause: SqlFilter? = null) = simpleQuery { params ->
+    selectFrom(table)
+    where(params, whereClause)
   }
 
   open fun <E : Any> save(
-    entity: KClass<out E>,
-    updateFields: Collection<KProperty1<out E, *>>,
-    keyFields: Collection<KProperty1<out E, *>>
-  ): EntityQuery<E> = throw NotImplementedError("saveQuery is not implemented for the default Dialect!")
+    table: KClass<out E>,
+    updateColumns: Collection<KProperty1<out E, *>> = table.nonKeyColumns,
+    keyColumns: Collection<KProperty1<out E, *>> = table.keyColumns
+  ): TableQuery<E> = throw NotImplementedError("saveQuery is not implemented for the default Dialect!")
 
-  open fun <E : Any> delete(entity: KClass<out E>, keyFields: Collection<KProperty1<out E, *>>) =
-    entityQuery<E> { params ->
-      val where = equalsFilter(keyFields)
-      delete(params, entity, where)
-    }
+  open fun <E : Any> delete(
+    table: KClass<out E>,
+    keyColumns: Collection<KProperty1<out E, *>> = table.keyColumns
+  ) = tableQuery<E> { params ->
+    deleteQuery(params, table, equalsFilter(keyColumns))
+  }
 
-  open fun delete(entity: KClass<*>, where: SqlFilter) = query { params ->
-    delete(params, entity, where)
+  open fun delete(table: KClass<*>, whereClause: SqlFilter) = simpleQuery { params ->
+    deleteQuery(params, table, whereClause)
   }
 
   open fun <E : Any> update(
     entity: KClass<out E>,
-    updateFields: Collection<KProperty1<out E, *>>,
-    keyFields: Collection<KProperty1<out E, *>>
-  ) = entityQuery<E> { params ->
-    appendUpdate()
-    appendTableName(entity)
-
-    append(SET)
-    appendSetFields(params, updateFields)
-
-    append(WHERE)
-    appendFilter(params, equalsFilter(keyFields))
+    updateColumns: Collection<KProperty1<out E, *>>,
+    keyColumns: Collection<KProperty1<out E, *>>
+  ) = tableQuery<E> { params ->
+    update(entity)
+    setColumns(params, updateColumns)
+    where(params, equalsFilter(keyColumns))
   }
 
-  private fun <E : Any, P : QueryParameter> StringBuilder.delete(
+  private fun <E : Any, P : QueryParameter> StringBuilder.deleteQuery(
     params: MutableCollection<in P>,
     entity: KClass<out E>,
     where: SqlFilter
   ) {
-    appendDeleteFrom()
-    appendTableName(entity)
-
-    append(WHERE)
-    appendFilter(params, where)
+    deleteFrom(entity)
+    where(params, where)
   }
 
   open fun <E : Any> insert(
     entity: KClass<out E>,
     insertFields: Collection<KProperty1<out E, *>>
-  ) = entityQuery<E> { params ->
-    appendInsertInto()
-    appendTableName(entity)
-    append(SPACE)
-
-    openBlock()
-    appendFieldNames(insertFields)
-    closeBlock()
-
-    append(VALUES)
-    appendFieldParams(params, insertFields)
+  ) = tableQuery<E> { params ->
+    insertInto(entity)
+    insertFields(insertFields)
+    insertValues(params, insertFields)
   }
 
-  protected inline fun query(buildQuery: QueryBuilder<ParameterValue>) = LinkedList<ParameterValue>().let { params ->
-    Query(
+  protected inline fun simpleQuery(
+    builder: QueryBuilder<ParameterValue>
+  ) = LinkedList<ParameterValue>().let { params ->
+    SimpleQuery(
       sql = buildString {
-        buildQuery(params)
+        builder(params)
       },
       parameters = params
     )
   }
 
-  protected inline fun <E> entityQuery(
-    buildQuery: QueryBuilder<ParameterProperty<E>>
+  protected inline fun <E> tableQuery(
+    builder: QueryBuilder<ParameterProperty<E>>
   ) = LinkedList<ParameterProperty<E>>().let { params ->
-    EntityQuery(
+    TableQuery(
       sql = buildString {
-        buildQuery(params)
+        builder(params)
       },
       parameters = params
     )
   }
 
   @Suppress("UNCHECKED_CAST")
-  protected fun <E, P : QueryParameter> StringBuilder.appendSetFields(
+  protected fun <E, P : QueryParameter> StringBuilder.setColumns(
     params: MutableCollection<in P>,
-    fields: Collection<KProperty1<out E, *>>
+    columns: Collection<KProperty1<out E, *>>
   ) {
-    for ((i, field) in fields.withIndex()) {
+    append("SET ")
+    for ((i, col) in columns.withIndex()) {
       if (i > 0) {
-        appendListSeparator()
+        listSeparator()
       }
-      appendFieldFilter(
+      columnFilter(
         params = params as MutableCollection<QueryParameter>,
-        fieldFilter = SqlFieldParamFilter.Equals(field),
+        columnFilter = SqlFieldParamFilter.Equals(col),
       )
     }
   }
 
   @Suppress("UNCHECKED_CAST")
-  protected fun <E, P : QueryParameter> StringBuilder.appendFieldParams(
+  protected fun <E, P : QueryParameter> StringBuilder.columnParams(
     params: MutableCollection<in P>,
     fields: Collection<KProperty1<in E, *>>
   ) {
     openBlock()
     for ((i, field) in fields.withIndex()) {
       if (i > 0) {
-        appendListSeparator()
+        listSeparator()
       }
-      appendFieldParam(
+      fieldParam(
         params = params as MutableCollection<QueryParameter>,
         field = field
       )
@@ -140,7 +120,7 @@ open class Dialect(val namingStrategy: NamingStrategy = NamingStrategy.SNAKE_CAS
   }
 
   @Suppress("UNCHECKED_CAST")
-  protected fun <P : QueryParameter> StringBuilder.appendFilter(params: MutableCollection<in P>, filter: SqlFilter) {
+  protected fun <P : QueryParameter> StringBuilder.filter(params: MutableCollection<in P>, filter: SqlFilter) {
     when (filter) {
       is SqlMultiFilter.And, is SqlMultiFilter.Or -> {
         if (filter.operands.size > 1) {
@@ -149,53 +129,53 @@ open class Dialect(val namingStrategy: NamingStrategy = NamingStrategy.SNAKE_CAS
             if (i > 0) {
               append(filter.separator)
             }
-            appendFilter(params, operand)
+            filter(params, operand)
           }
           closeBlock()
         } else {
-          appendFilter(params, filter.operands.single())
+          filter(params, filter.operands.single())
         }
       }
 
-      is SqlFieldFilter<*> -> appendFieldFilter(
+      is SqlFieldFilter<*> -> columnFilter(
         params = params as MutableCollection<QueryParameter>,
-        fieldFilter = filter
+        columnFilter = filter
       )
     }
   }
 
-  private fun StringBuilder.appendFieldFilter(
+  private fun StringBuilder.columnFilter(
     params: MutableCollection<in QueryParameter>,
-    fieldFilter: SqlFieldFilter<*>
+    columnFilter: SqlFieldFilter<*>
   ) {
-    appendFieldName(fieldFilter.field)
-    when (fieldFilter) {
-      is SqlFieldFilter.IsNull -> append(IS_NULL)
-      is SqlFieldFilter.IsNotNull -> append(IS_NOT_NULL)
-      is SqlFieldParamFilter<*> -> appendParamFilter(params, fieldFilter)
-      is SqlFieldValueFilter<*> -> appendValueFilter(params, fieldFilter)
-      is SqlFieldMultiValueFilter.Between<*> -> appendBetweenFilter(params, fieldFilter)
-      is SqlFieldMultiValueFilter.In<*> -> appendInFilter(params, fieldFilter)
+    columnName(columnFilter.field)
+    when (columnFilter) {
+      is SqlFieldFilter.IsNull -> append(" IS NULL")
+      is SqlFieldFilter.IsNotNull -> append(" IS NOT NULL")
+      is SqlFieldParamFilter<*> -> paramFilter(params, columnFilter)
+      is SqlFieldValueFilter<*> -> valueFilter(params, columnFilter)
+      is SqlFieldMultiValueFilter.Between<*> -> betweenFilter(params, columnFilter)
+      is SqlFieldMultiValueFilter.In<*> -> inFilter(params, columnFilter)
     }
   }
 
-  private fun StringBuilder.appendParamFilter(
+  private fun StringBuilder.paramFilter(
     params: MutableCollection<in QueryParameter>,
     paramFilter: SqlFieldParamFilter<*>
   ) {
     append(paramFilter.operator)
-    appendFieldParam(params, paramFilter.field)
+    fieldParam(params, paramFilter.field)
   }
 
-  private fun StringBuilder.appendValueFilter(
+  private fun StringBuilder.valueFilter(
     params: MutableCollection<in QueryParameter>,
     valueFilter: SqlFieldValueFilter<*>
   ) {
     append(valueFilter.operator)
-    appendValueParam(params, valueFilter.field.fieldName, valueFilter.value)
+    valueParam(params, valueFilter.field.fieldName, valueFilter.value)
   }
 
-  private fun StringBuilder.appendBetweenFilter(
+  private fun StringBuilder.betweenFilter(
     params: MutableCollection<in QueryParameter>,
     betweenFilter: SqlFieldMultiValueFilter.Between<*>
   ) {
@@ -204,11 +184,11 @@ open class Dialect(val namingStrategy: NamingStrategy = NamingStrategy.SNAKE_CAS
       if (i > 0) {
         append(SqlFilter.AND)
       }
-      appendValueParam(params, "${betweenFilter.field.fieldName}_$i", value)
+      valueParam(params, "${betweenFilter.field.fieldName}_$i", value)
     }
   }
 
-  private fun StringBuilder.appendInFilter(
+  private fun StringBuilder.inFilter(
     params: MutableCollection<in QueryParameter>,
     inFilter: SqlFieldMultiValueFilter.In<*>
   ) {
@@ -216,84 +196,128 @@ open class Dialect(val namingStrategy: NamingStrategy = NamingStrategy.SNAKE_CAS
     openBlock()
     for ((i, value) in inFilter.values.withIndex()) {
       if (i > 0) {
-        appendListSeparator()
+        listSeparator()
       }
-      appendValueParam(params, "${inFilter.field.fieldName}_$i", value)
+      valueParam(params, "${inFilter.field.fieldName}_$i", value)
     }
     closeBlock()
   }
 
-  private fun <E> StringBuilder.appendFieldParam(
+  private fun <E> StringBuilder.fieldParam(
     params: MutableCollection<in QueryParameter>,
     field: KProperty1<in E, Any?>
   ) {
     ParameterProperty(params.nextIndex, field).also { newParam ->
       params.add(newParam)
-      appendParam(newParam)
+      param(newParam)
     }
   }
 
-  private fun StringBuilder.appendValueParam(params: MutableCollection<in QueryParameter>, name: String, value: Any?) {
+  private fun StringBuilder.valueParam(params: MutableCollection<in QueryParameter>, name: String, value: Any?) {
     ParameterValue(params.nextIndex, name, value).also { newParam ->
       params.add(newParam)
-      appendParam(newParam)
+      param(newParam)
     }
   }
 
-  protected fun StringBuilder.appendTableName(entity: KClass<*>) {
+  protected fun StringBuilder.tableName(entity: KClass<*>) {
     val (name, schema) = entity.tableName
     if (!schema.isNullOrBlank()) {
-      appendName(schema)
-      appendNameSeparator()
+      name(schema)
+      schemaSeparator()
     }
-    appendName(name)
+    name(name)
   }
 
-  protected fun StringBuilder.appendFieldNames(fields: Collection<KProperty1<*, *>>) {
+  protected fun StringBuilder.fieldNames(entity: KClass<*>) {
+    fieldNames(entity.fields)
+  }
+
+  protected fun StringBuilder.fieldNames(fields: Collection<KProperty1<*, *>>) {
     for ((i, property) in fields.withIndex()) {
       if (i > 0) {
-        appendListSeparator()
+        listSeparator()
       }
-      appendFieldName(property)
+      columnName(property)
     }
   }
 
-  protected fun StringBuilder.appendFieldName(field: KProperty<*>) {
-    appendName(field.fieldName)
+  protected fun StringBuilder.columnName(field: KProperty<*>) {
+    name(field.fieldName)
   }
 
-  protected fun StringBuilder.appendName(name: String) {
+  protected fun StringBuilder.name(name: String) {
     openQuote()
-    namingStrategy.appendName(this, name)
+    namingStrategy.databaseName(this, name)
     closeQuote()
   }
 
-  protected open fun StringBuilder.appendSelect() {
-    append(SELECT)
+  protected open fun StringBuilder.selectFrom(entity: KClass<*>) {
+    append("SELECT ")
+    fieldNames(entity)
+    from(entity)
   }
 
-  protected open fun StringBuilder.appendInsertInto() {
-    append(INSERT_INTO)
+  protected open fun StringBuilder.insertInto(entity: KClass<*>) {
+    append("INSERT INTO ")
+    tableName(entity)
   }
 
-  protected open fun StringBuilder.appendUpdate() {
-    append(UPDATE)
+  protected open fun <E> StringBuilder.insertFields(fields: Collection<KProperty1<out E, *>>) {
+    space()
+    openBlock()
+    fieldNames(fields)
+    closeBlock()
   }
 
-  protected open fun StringBuilder.appendDeleteFrom() {
-    append(DELETE_FROM)
+  protected open fun <E, P : QueryParameter> StringBuilder.insertValues(
+    params: MutableCollection<in P>,
+    insertFields: Collection<KProperty1<out E, *>>
+  ) {
+    append("\n\tVALUES ")
+    columnParams(params, insertFields)
   }
 
-  protected open fun StringBuilder.appendParam(param: QueryParameter) {
+  protected open fun StringBuilder.update(entity: KClass<*>) {
+    append("UPDATE ")
+    tableName(entity)
+  }
+
+  protected open fun StringBuilder.deleteFrom(entity: KClass<*>) {
+    append("DELETE FROM ")
+    tableName(entity)
+  }
+
+  protected open fun StringBuilder.from(entity: KClass<*>) {
+    append("\n\tFROM ")
+    tableName(entity)
+  }
+
+  protected open fun <P : QueryParameter> StringBuilder.where(params: MutableCollection<in P>, clause: SqlFilter?) {
+    if (clause != null) {
+      append("\n\tWHERE ")
+      filter(params, clause)
+    }
+  }
+
+  protected open fun StringBuilder.param(param: QueryParameter) {
     append(PARAM_CHAR)
   }
 
-  protected open fun StringBuilder.appendListSeparator() {
-    append(LIST_SEP)
+  protected open fun StringBuilder.space() {
+    append(' ')
   }
 
-  protected open fun StringBuilder.appendNameSeparator() {
-    append(NAME_SEP)
+  protected open fun StringBuilder.listSeparator() {
+    append(',')
+  }
+
+  protected open fun StringBuilder.nameSeparator() {
+    append('_')
+  }
+
+  protected open fun StringBuilder.schemaSeparator() {
+    append('.')
   }
 
   protected open fun StringBuilder.openQuote() {}
@@ -301,33 +325,18 @@ open class Dialect(val namingStrategy: NamingStrategy = NamingStrategy.SNAKE_CAS
   protected open fun StringBuilder.closeQuote() {}
 
   protected open fun StringBuilder.openBlock() {
-    append(OPEN_BLOCK)
+    append('(')
   }
 
   protected open fun StringBuilder.closeBlock() {
-    append(CLOSE_BLOCK)
+    append(')')
   }
 
   companion object Constants {
-    const val SELECT = "SELECT "
-    const val INSERT_INTO = "INSERT INTO "
-    const val DELETE_FROM = "DELETE FROM "
-    const val UPDATE = "UPDATE "
-    const val FROM = "\n\tFROM "
-    const val SET = "\n\tSET "
-    const val VALUES = "\n\tVALUES "
-    const val WHERE = "\n\tWHERE "
 
-    const val SPACE = ' '
-    const val NAME_SEP = '.'
-    const val LIST_SEP = ','
-    const val OPEN_BLOCK = '('
-    const val CLOSE_BLOCK = ')'
     const val PARAM_CHAR = '?'
-    const val IS_NULL = " IS NULL"
-    const val IS_NOT_NULL = " IS NOT NULL"
 
     private val Collection<*>.nextIndex: Int
-      get() = size + 1
+      get() = size + FIRST_PARAM
   }
 }

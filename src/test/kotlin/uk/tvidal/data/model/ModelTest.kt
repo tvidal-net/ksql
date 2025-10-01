@@ -15,11 +15,11 @@ class ModelTest {
   fun testTableWithoutKeys() {
     assertContentEquals(
       emptyList(),
-      NoAnnotation::class.keyFields
+      NoAnnotation::class.keyColumns
     )
     assertContentEquals(
       listOf(NoAnnotation::field),
-      NoAnnotation::class.nonKeyFields
+      NoAnnotation::class.nonKeyColumns
     )
   }
 
@@ -103,11 +103,11 @@ class ModelTest {
   fun testKeyAnnotatedFields() {
     assertContentEquals(
       listOf(KeyClass::id),
-      KeyClass::class.keyFields
+      KeyClass::class.keyColumns
     )
     assertContentEquals(
       listOf(KeyClass::name),
-      KeyClass::class.nonKeyFields
+      KeyClass::class.nonKeyColumns
     )
   }
 }

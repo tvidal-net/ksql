@@ -46,6 +46,13 @@ open class Dialect(val namingStrategy: NamingStrategy = NamingStrategy.SnakeCase
     where(params, equalsFilter(keyFields))
   }
 
+  fun <E : Any> drop(entity: KClass<out E>, ifExists: Boolean = true) =
+    drop(entity.tableName)
+
+  open fun drop(table: TableName, ifExists: Boolean = true) = simpleQuery { _ ->
+    dropTable(table, ifExists)
+  }
+
   open fun <E : Any> insert(
     entity: KClass<out E>,
     insertFields: Collection<KProperty1<out E, *>> = entity.insertFields
@@ -53,15 +60,6 @@ open class Dialect(val namingStrategy: NamingStrategy = NamingStrategy.SnakeCase
     insertInto(entity)
     insertFields(insertFields)
     insertValues(params, insertFields)
-  }
-
-  private fun <E : Any, P : QueryParam> StringBuilder.deleteQuery(
-    params: MutableCollection<in P>,
-    entity: KClass<out E>,
-    whereClause: SqlFilter
-  ) {
-    deleteFrom(entity)
-    where(params, whereClause)
   }
 
   protected inline fun simpleQuery(
@@ -84,6 +82,15 @@ open class Dialect(val namingStrategy: NamingStrategy = NamingStrategy.SnakeCase
       },
       parameters = params
     )
+  }
+
+  private fun <E : Any, P : QueryParam> StringBuilder.deleteQuery(
+    params: MutableCollection<in P>,
+    entity: KClass<out E>,
+    whereClause: SqlFilter
+  ) {
+    deleteFrom(entity)
+    where(params, whereClause)
   }
 
   @Suppress("UNCHECKED_CAST")
@@ -205,7 +212,7 @@ open class Dialect(val namingStrategy: NamingStrategy = NamingStrategy.SnakeCase
     closeBlock()
   }
 
-  private fun <E> StringBuilder.fieldParam(
+  protected fun <E> StringBuilder.fieldParam(
     params: MutableCollection<in QueryParam>,
     field: KProperty1<in E, Any?>
   ) {
@@ -215,7 +222,7 @@ open class Dialect(val namingStrategy: NamingStrategy = NamingStrategy.SnakeCase
     }
   }
 
-  private fun StringBuilder.valueParam(
+  protected fun StringBuilder.valueParam(
     params: MutableCollection<in QueryParam>,
     name: String, value: Any?
   ) {
@@ -225,8 +232,8 @@ open class Dialect(val namingStrategy: NamingStrategy = NamingStrategy.SnakeCase
     }
   }
 
-  protected fun StringBuilder.tableName(entity: KClass<*>) {
-    val (name, schema) = entity.tableName
+  protected fun StringBuilder.tableName(table: TableName) {
+    val (name, schema) = table
     if (!schema.isNullOrBlank()) {
       quotedName(schema)
       schemaSeparator()
@@ -265,7 +272,7 @@ open class Dialect(val namingStrategy: NamingStrategy = NamingStrategy.SnakeCase
 
   protected open fun StringBuilder.insertInto(entity: KClass<*>) {
     append("INSERT INTO ")
-    tableName(entity)
+    tableName(entity.tableName)
   }
 
   protected open fun <E> StringBuilder.insertFields(fields: Collection<KProperty1<out E, *>>) {
@@ -285,17 +292,17 @@ open class Dialect(val namingStrategy: NamingStrategy = NamingStrategy.SnakeCase
 
   protected open fun StringBuilder.update(entity: KClass<*>) {
     append("UPDATE ")
-    tableName(entity)
+    tableName(entity.tableName)
   }
 
   protected open fun StringBuilder.deleteFrom(entity: KClass<*>) {
     append("DELETE FROM ")
-    tableName(entity)
+    tableName(entity.tableName)
   }
 
   protected open fun StringBuilder.from(entity: KClass<*>) {
     append("\n\tFROM ")
-    tableName(entity)
+    tableName(entity.tableName)
   }
 
   protected open fun <P : QueryParam> StringBuilder.where(params: MutableCollection<in P>, clause: SqlFilter?) {
@@ -303,6 +310,14 @@ open class Dialect(val namingStrategy: NamingStrategy = NamingStrategy.SnakeCase
       append("\n\tWHERE ")
       filter(params, clause)
     }
+  }
+
+  protected open fun StringBuilder.dropTable(table: TableName, ifExists: Boolean) {
+    append("DROP TABLE ")
+    if (ifExists) {
+      append("IF EXISTS ")
+    }
+    tableName(table)
   }
 
   protected open fun StringBuilder.isNotNull() {

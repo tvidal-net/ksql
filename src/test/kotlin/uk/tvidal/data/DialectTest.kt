@@ -17,7 +17,7 @@ class DialectTest {
   private object TestDialect : Dialect(NamingStrategy.AsIs) {
 
     fun tableName(entity: KClass<*>) = buildString {
-      this.tableName(entity)
+      tableName(entity.tableName)
     }
 
     fun fieldNames() = buildString {

@@ -1,10 +1,12 @@
 package uk.tvidal.data
 
+import uk.tvidal.data.codec.DataType
 import uk.tvidal.data.filter.*
 import uk.tvidal.data.query.EntityQuery
 import uk.tvidal.data.query.QueryParam
 import uk.tvidal.data.query.SimpleQuery
 import uk.tvidal.data.query.Statement.Companion.FIRST_PARAM
+import uk.tvidal.data.schema.*
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty
 import kotlin.reflect.KProperty1
@@ -46,10 +48,17 @@ open class Dialect(val namingStrategy: NamingStrategy = NamingStrategy.SnakeCase
     where(params, equalsFilter(keyFields))
   }
 
+  fun <E : Any> create(entity: KClass<out E>, ifNotExists: Boolean = true) =
+    create(SchemaTable.from(entity), ifNotExists)
+
+  fun create(table: SchemaTable, ifNotExists: Boolean = true) = simpleQuery { _ ->
+    createTable(table, ifNotExists)
+  }
+
   fun <E : Any> drop(entity: KClass<out E>, ifExists: Boolean = true) =
     drop(entity.tableName)
 
-  open fun drop(table: TableName, ifExists: Boolean = true) = simpleQuery { _ ->
+  fun drop(table: TableName, ifExists: Boolean = true) = simpleQuery { _ ->
     dropTable(table, ifExists)
   }
 
@@ -312,12 +321,82 @@ open class Dialect(val namingStrategy: NamingStrategy = NamingStrategy.SnakeCase
     }
   }
 
+  protected open fun StringBuilder.createTable(table: SchemaTable, ifNotExists: Boolean) {
+    append("CREATE TABLE ")
+    if (ifNotExists) {
+      append("IF NOT EXISTS ")
+    }
+    tableName(table.name)
+    space()
+    openBlock()
+    for ((i, col) in table.columns.withIndex()) {
+      if (i > 0) {
+        listSeparator()
+      }
+      append("\n\t")
+      column(col)
+    }
+    table.constraints.forEach {
+      constraint(it)
+    }
+    newLine()
+    closeBlock()
+  }
+
   protected open fun StringBuilder.dropTable(table: TableName, ifExists: Boolean) {
     append("DROP TABLE ")
     if (ifExists) {
       append("IF EXISTS ")
     }
     tableName(table)
+  }
+
+  protected open fun StringBuilder.column(column: SchemaColumn<*>) {
+    quotedName(column.name)
+    space()
+    dataType(column.dataType)
+    notNull(!column.nullable)
+  }
+
+  protected open fun StringBuilder.dataType(dataType: DataType<*>) {
+    append(dataType.toString())
+  }
+
+  protected fun StringBuilder.constraint(constraint: Constraint) {
+    listSeparator()
+    append("\n\t")
+    when (constraint) {
+      is Constraint.PrimaryKey -> constraint("PRIMARY KEY", constraint.index)
+      is Constraint.Unique -> constraint("UNIQUE", constraint.index)
+      else -> {}
+    }
+  }
+
+  protected open fun StringBuilder.constraint(type: String, index: Index) {
+    if (index.name != null) {
+      append("CONSTRAINT ")
+      quotedName(index.name)
+      space()
+    }
+    append(type)
+    space()
+    openBlock()
+    columns(index.columns)
+    closeBlock()
+  }
+
+  protected open fun StringBuilder.columns(columns: Collection<ColumnReference>) {
+    for ((i, col) in columns.withIndex()) {
+      if (i > 0) listSeparator()
+      quotedName(col.name)
+      if (col is ColumnReference.Descending) append(" DESC")
+    }
+  }
+
+  protected open fun StringBuilder.notNull(notNull: Boolean) {
+    if (notNull) {
+      append(" NOT NULL")
+    }
   }
 
   protected open fun StringBuilder.isNotNull() {
@@ -346,6 +425,10 @@ open class Dialect(val namingStrategy: NamingStrategy = NamingStrategy.SnakeCase
 
   protected open fun StringBuilder.schemaSeparator() {
     append('.')
+  }
+
+  protected fun StringBuilder.newLine() {
+    appendLine()
   }
 
   protected open fun StringBuilder.openQuote() {}

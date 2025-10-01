@@ -1,6 +1,8 @@
 package uk.tvidal.data.schema
 
 import uk.tvidal.data.TableName
+import uk.tvidal.data.keyFields
+import kotlin.reflect.KClass
 
 sealed interface Constraint {
 
@@ -12,6 +14,11 @@ sealed interface Constraint {
       name: String? = null
     ) : this(
       Index(columns, name)
+    )
+
+    constructor(entity: KClass<*>, name: String? = null) : this(
+      name = name,
+      columns = entity.keyFields.map { it.asc },
     )
   }
 

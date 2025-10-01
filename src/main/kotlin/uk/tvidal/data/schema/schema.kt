@@ -1,24 +1,29 @@
 package uk.tvidal.data.schema
 
+import uk.tvidal.data.fieldName
+import kotlin.reflect.KClass
 import kotlin.reflect.KProperty
 
-fun primaryKey(name: String? = null, vararg properties: KProperty<*>) =
-  Constraint.PrimaryKey(columns(properties), name)
+val KProperty<*>.asc: ColumnReference
+  get() = ColumnReference.Ascending(fieldName)
 
-fun unique(name: String? = null, vararg properties: KProperty<*>) =
-  Constraint.Unique(columns(properties), name)
+val KProperty<*>.desc: ColumnReference
+  get() = ColumnReference.Descending(fieldName)
 
-fun index(name: String? = null, vararg properties: KProperty<*>) =
-  Index(columns(properties), name)
+val KClass<*>.primaryKey: Constraint.PrimaryKey?
+  get() = Constraint.PrimaryKey(this)
 
-fun desc(name: String): ColumnReference =
-  ColumnReference.Descending(name)
+fun primaryKey(primaryKeyName: String? = null, vararg columns: String): Constraint =
+  Constraint.PrimaryKey(columns.map(ColumnReference::asc), primaryKeyName)
 
-fun desc(property: KProperty<*>) =
-  desc(property.name)
+fun unique(uniqueName: String? = null, vararg columns: String): Constraint =
+  Constraint.Unique(columns.map(ColumnReference::asc), uniqueName)
 
-fun desc(properties: Array<out KProperty<*>>): Collection<ColumnReference> =
-  properties.map(::desc)
+fun unique(uniqueName: String? = null, vararg columns: ColumnReference): Constraint =
+  Constraint.Unique(columns.toList(), uniqueName)
 
-fun columns(properties: Array<out KProperty<*>>): Collection<ColumnReference> =
-  properties.map(ColumnReference::invoke)
+fun index(indexName: String? = null, vararg columns: ColumnReference) =
+  Index(columns.toList(), indexName)
+
+fun index(indexName: String? = null, vararg columns: String) =
+  Index(columns.map(ColumnReference::asc), indexName)

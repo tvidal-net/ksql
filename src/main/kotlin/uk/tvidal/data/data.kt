@@ -65,6 +65,9 @@ private inline fun <reified T : Annotation> Field?.hasAnnotation(): Boolean =
 internal val KProperty<*>.column: Column?
   get() = findAnnotation() ?: javaField.findAnnotation()
 
+internal val KProperty<*>.nullable: Boolean
+  get() = returnType.isMarkedNullable || column?.nullable ?: false
+
 internal fun Column?.fieldName(fallback: String) =
   this?.name?.ifBlank { null } ?: fallback
 

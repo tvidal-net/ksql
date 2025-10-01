@@ -1,7 +1,5 @@
 package uk.tvidal.data.schema
 
-import kotlin.reflect.KProperty
-
 sealed interface ColumnReference {
 
   val name: String
@@ -15,7 +13,7 @@ sealed interface ColumnReference {
   }
 
   companion object Factory {
-    operator fun invoke(name: String): ColumnReference = Ascending(name)
-    operator fun invoke(property: KProperty<*>) = invoke(property.name)
+    fun asc(name: String): ColumnReference = Ascending(name)
+    fun desc(name: String): ColumnReference = Descending(name)
   }
 }

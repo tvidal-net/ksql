@@ -1,8 +1,8 @@
 package uk.tvidal.data.query
 
 import org.junit.jupiter.api.Test
-import uk.tvidal.data.query.NamingStrategy.AS_IS
-import uk.tvidal.data.query.NamingStrategy.SNAKE_CASE
+import uk.tvidal.data.NamingStrategy.AS_IS
+import uk.tvidal.data.NamingStrategy.SNAKE_CASE
 import kotlin.test.assertEquals
 
 class NamingStrategyTest {

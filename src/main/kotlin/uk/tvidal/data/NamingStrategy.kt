@@ -1,4 +1,4 @@
-package uk.tvidal.data.query
+package uk.tvidal.data
 
 enum class NamingStrategy {
 

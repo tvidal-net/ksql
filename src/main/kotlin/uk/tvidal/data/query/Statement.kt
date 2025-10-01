@@ -8,12 +8,12 @@ import java.sql.PreparedStatement
 
 open class Statement(
   val statement: PreparedStatement,
-  parameters: Collection<ParameterValue> = emptyList()
+  parameters: Collection<QueryParam.Value> = emptyList()
 ) : AutoCloseable {
 
   constructor(cnn: Connection, query: SimpleQuery) : this(
     statement = cnn.prepareStatement(query.sql),
-    parameters = query.parameters.filterIsInstance<ParameterValue>()
+    parameters = query.parameters.filterIsInstance<QueryParam.Value>()
   )
 
   init {
@@ -29,7 +29,7 @@ open class Statement(
     }
   }
 
-  fun setParams(parameters: Collection<ParameterValue>) {
+  fun setParams(parameters: Collection<QueryParam.Value>) {
     if (parameters.isNotEmpty()) {
       debug { "setParams: $parameters" }
       for (param in parameters) {
@@ -59,7 +59,7 @@ open class Statement(
       override fun iterator(): Iterator<E> = object : Iterator<E> {
         override fun next() = decodeResultSet(rs)
         override fun hasNext() = rs.next()
-          .also { if (!it) close() }
+          .also { if (!it && !rs.isClosed) close() }
       }
     }
   }

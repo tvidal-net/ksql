@@ -10,69 +10,69 @@ class SqlFilterBuilder<in E> {
     filter.also(filters::add)
 
   val KProperty1<out E, Any>.isNull
-    get() = add(SqlFieldFilter.IsNull(this))
+    get() = add(SqlPropertyFilter.IsNull(this))
 
   val KProperty1<out E, Any>.isNotNull
-    get() = add(SqlFieldFilter.IsNotNull(this))
+    get() = add(SqlPropertyFilter.IsNotNull(this))
 
   internal fun <V> KProperty1<out E, V>.eq() = add(
-    SqlFieldParamFilter.Equals(this)
+    SqlPropertyParamFilter.Equals(this)
   )
 
   fun <V> KProperty1<out E, V>.eq(value: V) = add(
-    SqlFieldValueFilter.Equals(this, value)
+    SqlPropertyValueFilter.Equals(this, value)
   )
 
   internal fun <V> KProperty1<out E, V>.ne() = add(
-    SqlFieldParamFilter.NotEquals(this)
+    SqlPropertyParamFilter.NotEquals(this)
   )
 
   fun <V> KProperty1<out E, V>.ne(value: V) = add(
-    SqlFieldValueFilter.NotEquals(this, value)
+    SqlPropertyValueFilter.NotEquals(this, value)
   )
 
   internal fun <V> KProperty1<out E, V>.gt() = add(
-    SqlFieldParamFilter.GreaterThan(this)
+    SqlPropertyParamFilter.GreaterThan(this)
   )
 
   fun <V> KProperty1<out E, V>.gt(value: V) = add(
-    SqlFieldValueFilter.GreaterThan(this, value)
+    SqlPropertyValueFilter.GreaterThan(this, value)
   )
 
   internal fun <V> KProperty1<out E, V>.lt() = add(
-    SqlFieldParamFilter.LessThan(this)
+    SqlPropertyParamFilter.LessThan(this)
   )
 
   fun <V> KProperty1<out E, V>.lt(value: V) = add(
-    SqlFieldValueFilter.LessThan(this, value)
+    SqlPropertyValueFilter.LessThan(this, value)
   )
 
   internal fun <V> KProperty1<out E, V>.ge() = add(
-    SqlFieldParamFilter.GreaterEquals(this)
+    SqlPropertyParamFilter.GreaterEquals(this)
   )
 
   fun <V> KProperty1<out E, V>.ge(value: V) = add(
-    SqlFieldValueFilter.GreaterEquals(this, value)
+    SqlPropertyValueFilter.GreaterEquals(this, value)
   )
 
   internal fun <V> KProperty1<out E, V>.le() = add(
-    SqlFieldParamFilter.LessEquals(this)
+    SqlPropertyParamFilter.LessEquals(this)
   )
 
   fun <V> KProperty1<out E, V>.le(value: V) = add(
-    SqlFieldValueFilter.LessEquals(this, value)
+    SqlPropertyValueFilter.LessEquals(this, value)
   )
 
   fun KProperty1<out E, String>.like(value: String) = add(
-    SqlFieldValueFilter.Like(this, value)
+    SqlPropertyValueFilter.Like(this, value)
   )
 
   fun <V> KProperty1<out E, V>.between(fromValue: V, toValue: V) = add(
-    SqlFieldMultiValueFilter.Between(this, fromValue, toValue)
+    SqlPropertyMultiValueFilter.Between(this, fromValue, toValue)
   )
 
   fun <V> KProperty1<out E, V>.inValues(values: Collection<V>) = add(
-    SqlFieldMultiValueFilter.In(this, values)
+    SqlPropertyMultiValueFilter.In(this, values)
   )
 
   fun <V> KProperty1<out E, V>.inValues(vararg values: V) =

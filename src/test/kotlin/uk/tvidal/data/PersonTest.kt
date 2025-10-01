@@ -1,7 +1,7 @@
 package uk.tvidal.data
 
 import uk.tvidal.data.logging.KLogger
-import uk.tvidal.data.mariadb.MariaDb
+import uk.tvidal.data.mariadb.MariaDB
 import uk.tvidal.data.model.Key
 import uk.tvidal.data.model.RandomUUID
 import uk.tvidal.data.model.Table
@@ -15,7 +15,7 @@ val DB_PASSWORD: String = System.getenv("DB_PASSWORD")
 
 private val log = KLogger("uk.tvidal.data.PersonTestKt")
 
-private val db = MariaDb.createDatabase(DB_URL, DB_USER, DB_PASSWORD)
+private val db = MariaDB.createDatabase(DB_URL, DB_USER, DB_PASSWORD)
 
 enum class Name {
   Thiago,

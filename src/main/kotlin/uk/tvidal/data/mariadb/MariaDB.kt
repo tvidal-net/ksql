@@ -2,12 +2,12 @@ package uk.tvidal.data.mariadb
 
 import org.mariadb.jdbc.MariaDbPoolDataSource
 import uk.tvidal.data.Database
-import uk.tvidal.data.query.Dialect
-import uk.tvidal.data.query.NamingStrategy
+import uk.tvidal.data.Dialect
+import uk.tvidal.data.NamingStrategy
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty1
 
-class MariaDb(namingStrategy: NamingStrategy = NamingStrategy.SNAKE_CASE) : Dialect(namingStrategy) {
+class MariaDB(namingStrategy: NamingStrategy = NamingStrategy.SNAKE_CASE) : Dialect(namingStrategy) {
 
   override fun StringBuilder.openQuote() {
     append(QUOTE_CHAR)
@@ -25,10 +25,10 @@ class MariaDb(namingStrategy: NamingStrategy = NamingStrategy.SNAKE_CASE) : Dial
     insertInto(table)
     insertFields(updateColumns + keyColumns)
     insertValues(params, updateColumns + keyColumns)
-    appendMariaDbSetValues(updateColumns)
+    onDuplicateKey(updateColumns)
   }
 
-  private fun <E> StringBuilder.appendMariaDbSetValues(fields: Collection<KProperty1<in E, *>>) {
+  private fun <E> StringBuilder.onDuplicateKey(fields: Collection<KProperty1<in E, *>>) {
     append("\n\tON DUPLICATE KEY UPDATE ")
     for ((i, field) in fields.withIndex()) {
       if (i > 0) {
@@ -46,7 +46,7 @@ class MariaDb(namingStrategy: NamingStrategy = NamingStrategy.SNAKE_CASE) : Dial
 
     const val QUOTE_CHAR = '`'
 
-    val Default = MariaDb()
+    val Default = MariaDB()
 
     @Suppress("UsePropertyAccessSyntax")
     fun createDatabase(

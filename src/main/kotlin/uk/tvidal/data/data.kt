@@ -1,6 +1,6 @@
 package uk.tvidal.data
 
-import uk.tvidal.data.filter.SqlFieldParamFilter
+import uk.tvidal.data.filter.SqlPropertyParamFilter
 import uk.tvidal.data.filter.SqlFilter
 import uk.tvidal.data.filter.SqlFilterBuilder
 import uk.tvidal.data.filter.SqlMultiFilter
@@ -20,7 +20,7 @@ internal fun equalsFilter(filterFields: Collection<KProperty1<*, *>>): SqlFilter
     throw IllegalArgumentException("filterFields cannot be empty!")
   }
   val keyFilters = filterFields.map { field ->
-    SqlFieldParamFilter.Equals(field)
+    SqlPropertyParamFilter.Equals(field)
   }
   return if (keyFilters.size > 1) {
     SqlMultiFilter.And(keyFilters)

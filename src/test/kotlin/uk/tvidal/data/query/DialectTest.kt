@@ -1,18 +1,16 @@
 package uk.tvidal.data.query
 
 import org.junit.jupiter.api.Test
+import uk.tvidal.data.Dialect
+import uk.tvidal.data.NamingStrategy
 import uk.tvidal.data.WhereClauseBuilder
-import uk.tvidal.data.filter.SqlFieldFilter
-import uk.tvidal.data.filter.SqlFieldMultiValueFilter
-import uk.tvidal.data.filter.SqlFieldValueFilter
-import uk.tvidal.data.filter.SqlFilter
-import uk.tvidal.data.filter.SqlMultiFilter
+import uk.tvidal.data.filter.*
 import uk.tvidal.data.model.Key
 import uk.tvidal.data.model.Table
 import uk.tvidal.data.model.fields
 import uk.tvidal.data.model.nonKeyColumns
 import uk.tvidal.data.sqlFilter
-import java.util.LinkedList
+import java.util.*
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty1
 import kotlin.test.assertContentEquals
@@ -30,15 +28,15 @@ class DialectTest {
       fieldNames(TestTable::class.fields)
     }
 
-    fun fieldParams(params: MutableCollection<QueryParameter>) = buildString {
+    fun fieldParams(params: MutableCollection<QueryParam>) = buildString {
       columnParams(params, TestTable::class.fields)
     }
 
-    fun setFields(params: MutableCollection<QueryParameter>) = buildString {
+    fun setFields(params: MutableCollection<QueryParam>) = buildString {
       setColumns(params, TestTable::class.nonKeyColumns)
     }
 
-    fun where(where: SqlFilter, params: MutableCollection<QueryParameter>) = buildString {
+    fun where(where: SqlFilter, params: MutableCollection<QueryParam>) = buildString {
       filter(params, where)
     }
   }
@@ -74,27 +72,27 @@ class DialectTest {
 
   @Test
   fun testColumnParams() {
-    val params = ArrayList<QueryParameter>()
+    val params = ArrayList<QueryParam>()
     test("(?,?)") {
       fieldParams(params)
     }
     assertContentEquals(
       listOf(TestTable::id, TestTable::name),
-      params.filterIsInstance<ParameterProperty<TestTable>>()
-        .map(ParameterProperty<TestTable>::property)
+      params.filterIsInstance<EntityQuery.Param<TestTable>>()
+        .map(EntityQuery.Param<TestTable>::property)
     )
   }
 
   @Test
   fun testSetColumns() {
-    val params = ArrayList<QueryParameter>()
+    val params = ArrayList<QueryParam>()
     test("SET name = ?") {
       setFields(params)
     }
     assertContentEquals(
       listOf(TestTable::name),
-      params.filterIsInstance<ParameterProperty<TestTable>>()
-        .map(ParameterProperty<TestTable>::property)
+      params.filterIsInstance<EntityQuery.Param<TestTable>>()
+        .map(EntityQuery.Param<TestTable>::property)
     )
   }
 
@@ -206,7 +204,7 @@ class DialectTest {
   }
 
   private inline fun whereFields(expected: String, builder: WhereClauseBuilder<TestTable>) {
-    val params = LinkedList<QueryParameter>()
+    val params = LinkedList<QueryParam>()
     val filter = sqlFilter(builder)
     test(expected) {
       where(filter, params)
@@ -217,7 +215,7 @@ class DialectTest {
   }
 
   private inline fun whereValues(expected: String, builder: WhereClauseBuilder<TestTable>) {
-    val params = LinkedList<QueryParameter>()
+    val params = LinkedList<QueryParam>()
     val filter = sqlFilter(builder)
     test(expected) {
       where(filter, params)
@@ -228,20 +226,21 @@ class DialectTest {
   }
 
   private fun SqlFilter.fields(): Collection<KProperty1<*, *>> = when (this) {
-    is SqlFieldFilter<*> -> listOf(field)
+    is SqlPropertyFilter<*> -> listOf(property)
     is SqlMultiFilter -> operands.flatMap { it.fields() }
   }
 
   private fun SqlFilter.values(): Collection<Any?> = when (this) {
-    is SqlFieldValueFilter<*> -> listOf(value)
-    is SqlFieldMultiValueFilter<*> -> values
+    is SqlPropertyValueFilter<*> -> listOf(value)
+    is SqlPropertyMultiValueFilter<*> -> values
     is SqlMultiFilter -> operands.flatMap { it.values() }
     else -> emptyList()
   }
 
-  private fun Collection<QueryParameter>.fields() = filterIsInstance<ParameterProperty<*>>()
-    .map(ParameterProperty<*>::property)
+  private fun Collection<QueryParam>.fields() =
+    filterIsInstance<EntityQuery.Param<*>>().map(EntityQuery.Param<*>::property)
 
-  private fun Collection<QueryParameter>.values() = filterIsInstance<ParameterValue>()
-    .map(ParameterValue::value)
+  private fun Collection<QueryParam>.values() =
+    filterIsInstance<QueryParam.Value>()
+      .map(QueryParam.Value::value)
 }

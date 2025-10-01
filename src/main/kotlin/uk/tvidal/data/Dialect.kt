@@ -1,9 +1,8 @@
-package uk.tvidal.data.query
+package uk.tvidal.data
 
-import uk.tvidal.data.QueryBuilder
-import uk.tvidal.data.equalsFilter
 import uk.tvidal.data.filter.*
 import uk.tvidal.data.model.*
+import uk.tvidal.data.query.*
 import uk.tvidal.data.query.Statement.Companion.FIRST_PARAM
 import java.util.*
 import kotlin.reflect.KClass
@@ -21,7 +20,7 @@ open class Dialect(val namingStrategy: NamingStrategy = NamingStrategy.SNAKE_CAS
     table: KClass<out E>,
     updateColumns: Collection<KProperty1<out E, *>> = table.nonKeyColumns,
     keyColumns: Collection<KProperty1<out E, *>> = table.keyColumns
-  ): TableQuery<E> = throw NotImplementedError("saveQuery is not implemented for the default Dialect!")
+  ): EntityQuery<E> = throw NotImplementedError("saveQuery is not implemented for the default Dialect!")
 
   open fun <E : Any> delete(
     table: KClass<out E>,
@@ -44,7 +43,7 @@ open class Dialect(val namingStrategy: NamingStrategy = NamingStrategy.SNAKE_CAS
     where(params, equalsFilter(keyColumns))
   }
 
-  private fun <E : Any, P : QueryParameter> StringBuilder.deleteQuery(
+  private fun <E : Any, P : QueryParam> StringBuilder.deleteQuery(
     params: MutableCollection<in P>,
     entity: KClass<out E>,
     where: SqlFilter
@@ -63,8 +62,8 @@ open class Dialect(val namingStrategy: NamingStrategy = NamingStrategy.SNAKE_CAS
   }
 
   protected inline fun simpleQuery(
-    builder: QueryBuilder<ParameterValue>
-  ) = LinkedList<ParameterValue>().let { params ->
+    builder: QueryBuilder<QueryParam.Value>
+  ) = LinkedList<QueryParam.Value>().let { params ->
     SimpleQuery(
       sql = buildString {
         builder(params)
@@ -74,9 +73,9 @@ open class Dialect(val namingStrategy: NamingStrategy = NamingStrategy.SNAKE_CAS
   }
 
   protected inline fun <E> tableQuery(
-    builder: QueryBuilder<ParameterProperty<E>>
-  ) = LinkedList<ParameterProperty<E>>().let { params ->
-    TableQuery(
+    builder: QueryBuilder<EntityQuery.Param<E>>
+  ) = LinkedList<EntityQuery.Param<E>>().let { params ->
+    EntityQuery(
       sql = buildString {
         builder(params)
       },
@@ -85,7 +84,7 @@ open class Dialect(val namingStrategy: NamingStrategy = NamingStrategy.SNAKE_CAS
   }
 
   @Suppress("UNCHECKED_CAST")
-  protected fun <E, P : QueryParameter> StringBuilder.setColumns(
+  protected fun <E, P : QueryParam> StringBuilder.setColumns(
     params: MutableCollection<in P>,
     columns: Collection<KProperty1<out E, *>>
   ) {
@@ -95,14 +94,14 @@ open class Dialect(val namingStrategy: NamingStrategy = NamingStrategy.SNAKE_CAS
         listSeparator()
       }
       columnFilter(
-        params = params as MutableCollection<QueryParameter>,
-        columnFilter = SqlFieldParamFilter.Equals(col),
+        params = params as MutableCollection<QueryParam>,
+        columnFilter = SqlPropertyParamFilter.Equals(col),
       )
     }
   }
 
   @Suppress("UNCHECKED_CAST")
-  protected fun <E, P : QueryParameter> StringBuilder.columnParams(
+  protected fun <E, P : QueryParam> StringBuilder.columnParams(
     params: MutableCollection<in P>,
     fields: Collection<KProperty1<in E, *>>
   ) {
@@ -112,7 +111,7 @@ open class Dialect(val namingStrategy: NamingStrategy = NamingStrategy.SNAKE_CAS
         listSeparator()
       }
       fieldParam(
-        params = params as MutableCollection<QueryParameter>,
+        params = params as MutableCollection<QueryParam>,
         field = field
       )
     }
@@ -120,7 +119,7 @@ open class Dialect(val namingStrategy: NamingStrategy = NamingStrategy.SNAKE_CAS
   }
 
   @Suppress("UNCHECKED_CAST")
-  protected fun <P : QueryParameter> StringBuilder.filter(params: MutableCollection<in P>, filter: SqlFilter) {
+  protected fun <P : QueryParam> StringBuilder.filter(params: MutableCollection<in P>, filter: SqlFilter) {
     when (filter) {
       is SqlMultiFilter.And, is SqlMultiFilter.Or -> {
         if (filter.operands.size > 1) {
@@ -137,60 +136,60 @@ open class Dialect(val namingStrategy: NamingStrategy = NamingStrategy.SNAKE_CAS
         }
       }
 
-      is SqlFieldFilter<*> -> columnFilter(
-        params = params as MutableCollection<QueryParameter>,
+      is SqlPropertyFilter<*> -> columnFilter(
+        params = params as MutableCollection<QueryParam>,
         columnFilter = filter
       )
     }
   }
 
   private fun StringBuilder.columnFilter(
-    params: MutableCollection<in QueryParameter>,
-    columnFilter: SqlFieldFilter<*>
+    params: MutableCollection<in QueryParam>,
+    columnFilter: SqlPropertyFilter<*>
   ) {
-    columnName(columnFilter.field)
+    columnName(columnFilter.property)
     when (columnFilter) {
-      is SqlFieldFilter.IsNull -> append(" IS NULL")
-      is SqlFieldFilter.IsNotNull -> append(" IS NOT NULL")
-      is SqlFieldParamFilter<*> -> paramFilter(params, columnFilter)
-      is SqlFieldValueFilter<*> -> valueFilter(params, columnFilter)
-      is SqlFieldMultiValueFilter.Between<*> -> betweenFilter(params, columnFilter)
-      is SqlFieldMultiValueFilter.In<*> -> inFilter(params, columnFilter)
+      is SqlPropertyFilter.IsNull -> append(" IS NULL")
+      is SqlPropertyFilter.IsNotNull -> append(" IS NOT NULL")
+      is SqlPropertyParamFilter<*> -> paramFilter(params, columnFilter)
+      is SqlPropertyValueFilter<*> -> valueFilter(params, columnFilter)
+      is SqlPropertyMultiValueFilter.Between<*> -> betweenFilter(params, columnFilter)
+      is SqlPropertyMultiValueFilter.In<*> -> inFilter(params, columnFilter)
     }
   }
 
   private fun StringBuilder.paramFilter(
-    params: MutableCollection<in QueryParameter>,
-    paramFilter: SqlFieldParamFilter<*>
+    params: MutableCollection<in QueryParam>,
+    paramFilter: SqlPropertyParamFilter<*>
   ) {
     append(paramFilter.operator)
-    fieldParam(params, paramFilter.field)
+    fieldParam(params, paramFilter.property)
   }
 
   private fun StringBuilder.valueFilter(
-    params: MutableCollection<in QueryParameter>,
-    valueFilter: SqlFieldValueFilter<*>
+    params: MutableCollection<in QueryParam>,
+    valueFilter: SqlPropertyValueFilter<*>
   ) {
     append(valueFilter.operator)
-    valueParam(params, valueFilter.field.fieldName, valueFilter.value)
+    valueParam(params, valueFilter.property.fieldName, valueFilter.value)
   }
 
   private fun StringBuilder.betweenFilter(
-    params: MutableCollection<in QueryParameter>,
-    betweenFilter: SqlFieldMultiValueFilter.Between<*>
+    params: MutableCollection<in QueryParam>,
+    betweenFilter: SqlPropertyMultiValueFilter.Between<*>
   ) {
     append(betweenFilter.operator)
     for ((i, value) in betweenFilter.values.withIndex()) {
       if (i > 0) {
         append(SqlFilter.AND)
       }
-      valueParam(params, "${betweenFilter.field.fieldName}_$i", value)
+      valueParam(params, "${betweenFilter.property.fieldName}_$i", value)
     }
   }
 
   private fun StringBuilder.inFilter(
-    params: MutableCollection<in QueryParameter>,
-    inFilter: SqlFieldMultiValueFilter.In<*>
+    params: MutableCollection<in QueryParam>,
+    inFilter: SqlPropertyMultiValueFilter.In<*>
   ) {
     append(inFilter.operator)
     openBlock()
@@ -198,23 +197,23 @@ open class Dialect(val namingStrategy: NamingStrategy = NamingStrategy.SNAKE_CAS
       if (i > 0) {
         listSeparator()
       }
-      valueParam(params, "${inFilter.field.fieldName}_$i", value)
+      valueParam(params, "${inFilter.property.fieldName}_$i", value)
     }
     closeBlock()
   }
 
   private fun <E> StringBuilder.fieldParam(
-    params: MutableCollection<in QueryParameter>,
+    params: MutableCollection<in QueryParam>,
     field: KProperty1<in E, Any?>
   ) {
-    ParameterProperty(params.nextIndex, field).also { newParam ->
+    EntityQuery.Param(params.nextIndex, field).also { newParam ->
       params.add(newParam)
       param(newParam)
     }
   }
 
-  private fun StringBuilder.valueParam(params: MutableCollection<in QueryParameter>, name: String, value: Any?) {
-    ParameterValue(params.nextIndex, name, value).also { newParam ->
+  private fun StringBuilder.valueParam(params: MutableCollection<in QueryParam>, name: String, value: Any?) {
+    QueryParam.Value(params.nextIndex, name, value).also { newParam ->
       params.add(newParam)
       param(newParam)
     }
@@ -270,7 +269,7 @@ open class Dialect(val namingStrategy: NamingStrategy = NamingStrategy.SNAKE_CAS
     closeBlock()
   }
 
-  protected open fun <E, P : QueryParameter> StringBuilder.insertValues(
+  protected open fun <E, P : QueryParam> StringBuilder.insertValues(
     params: MutableCollection<in P>,
     insertFields: Collection<KProperty1<out E, *>>
   ) {
@@ -293,14 +292,14 @@ open class Dialect(val namingStrategy: NamingStrategy = NamingStrategy.SNAKE_CAS
     tableName(entity)
   }
 
-  protected open fun <P : QueryParameter> StringBuilder.where(params: MutableCollection<in P>, clause: SqlFilter?) {
+  protected open fun <P : QueryParam> StringBuilder.where(params: MutableCollection<in P>, clause: SqlFilter?) {
     if (clause != null) {
       append("\n\tWHERE ")
       filter(params, clause)
     }
   }
 
-  protected open fun StringBuilder.param(param: QueryParameter) {
+  protected open fun StringBuilder.param(param: QueryParam) {
     append(PARAM_CHAR)
   }
 

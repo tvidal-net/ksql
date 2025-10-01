@@ -2,10 +2,10 @@ package uk.tvidal.data
 
 import uk.tvidal.data.codec.EntityDecoder
 import uk.tvidal.data.logging.KLogging
-import uk.tvidal.data.query.Dialect
+import uk.tvidal.data.Dialect
 import uk.tvidal.data.query.SimpleQuery
 import uk.tvidal.data.query.Statement
-import uk.tvidal.data.query.TableQuery
+import uk.tvidal.data.query.EntityQuery
 import java.sql.Connection
 import kotlin.reflect.KClass
 import kotlin.reflect.full.primaryConstructor
@@ -64,7 +64,7 @@ class Database(
     }
   }
 
-  fun <E> execute(query: TableQuery<E>, value: E): Int = invoke { cnn ->
+  fun <E> execute(query: EntityQuery<E>, value: E): Int = invoke { cnn ->
     Statement(cnn, query).use {
       it.setParams(query[value])
       it.executeSingle()
@@ -73,7 +73,7 @@ class Database(
     }
   }
 
-  fun <E> execute(query: TableQuery<E>, values: Iterable<E>): IntArray = invoke { cnn ->
+  fun <E> execute(query: EntityQuery<E>, values: Iterable<E>): IntArray = invoke { cnn ->
     Statement(cnn, query).use {
       for (value in values) {
         it.setParams(query[value])

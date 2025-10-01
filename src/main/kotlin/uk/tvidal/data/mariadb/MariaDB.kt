@@ -18,14 +18,14 @@ class MariaDB(namingStrategy: NamingStrategy = NamingStrategy.SNAKE_CASE) : Dial
   }
 
   override fun <E : Any> save(
-    table: KClass<out E>,
-    updateColumns: Collection<KProperty1<out E, *>>,
-    keyColumns: Collection<KProperty1<out E, *>>
-  ) = tableQuery<E> { params ->
-    insertInto(table)
-    insertFields(updateColumns + keyColumns)
-    insertValues(params, updateColumns + keyColumns)
-    onDuplicateKey(updateColumns)
+    entity: KClass<out E>,
+    updateFields: Collection<KProperty1<out E, *>>,
+    keyFields: Collection<KProperty1<out E, *>>
+  ) = entityQuery<E> { params ->
+    insertInto(entity)
+    insertFields(updateFields + keyFields)
+    insertValues(params, updateFields + keyFields)
+    onDuplicateKey(updateFields)
   }
 
   private fun <E> StringBuilder.onDuplicateKey(fields: Collection<KProperty1<in E, *>>) {
@@ -34,10 +34,10 @@ class MariaDB(namingStrategy: NamingStrategy = NamingStrategy.SNAKE_CASE) : Dial
       if (i > 0) {
         listSeparator()
       }
-      columnName(field)
+      fieldName(field)
       append("=VALUES")
       openBlock()
-      columnName(field)
+      fieldName(field)
       closeBlock()
     }
   }

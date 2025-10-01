@@ -2,68 +2,69 @@ package uk.tvidal.data
 
 import uk.tvidal.data.filter.*
 import uk.tvidal.data.model.*
-import uk.tvidal.data.query.*
+import uk.tvidal.data.query.EntityQuery
+import uk.tvidal.data.query.QueryParam
+import uk.tvidal.data.query.SimpleQuery
 import uk.tvidal.data.query.Statement.Companion.FIRST_PARAM
-import java.util.*
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty
 import kotlin.reflect.KProperty1
 
 open class Dialect(val namingStrategy: NamingStrategy = NamingStrategy.SNAKE_CASE) {
 
-  open fun select(table: KClass<*>, whereClause: SqlFilter? = null) = simpleQuery { params ->
-    selectFrom(table)
+  open fun select(entity: KClass<*>, whereClause: SqlFilter? = null) = simpleQuery { params ->
+    selectFrom(entity)
     where(params, whereClause)
   }
 
   open fun <E : Any> save(
-    table: KClass<out E>,
-    updateColumns: Collection<KProperty1<out E, *>> = table.nonKeyColumns,
-    keyColumns: Collection<KProperty1<out E, *>> = table.keyColumns
+    entity: KClass<out E>,
+    updateFields: Collection<KProperty1<out E, *>> = entity.nonKeyFields,
+    keyFields: Collection<KProperty1<out E, *>> = entity.keyFields,
   ): EntityQuery<E> = throw NotImplementedError("saveQuery is not implemented for the default Dialect!")
 
   open fun <E : Any> delete(
-    table: KClass<out E>,
-    keyColumns: Collection<KProperty1<out E, *>> = table.keyColumns
-  ) = tableQuery<E> { params ->
-    deleteQuery(params, table, equalsFilter(keyColumns))
+    entity: KClass<out E>,
+    keyFields: Collection<KProperty1<out E, *>> = entity.keyFields,
+  ) = entityQuery<E> { params ->
+    deleteQuery(params, entity, equalsFilter(keyFields))
   }
 
-  open fun delete(table: KClass<*>, whereClause: SqlFilter) = simpleQuery { params ->
-    deleteQuery(params, table, whereClause)
+  open fun delete(entity: KClass<*>, whereClause: SqlFilter) = simpleQuery { params ->
+    deleteQuery(params, entity, whereClause)
   }
 
   open fun <E : Any> update(
     entity: KClass<out E>,
-    updateColumns: Collection<KProperty1<out E, *>>,
-    keyColumns: Collection<KProperty1<out E, *>>
-  ) = tableQuery<E> { params ->
+    updateFields: Collection<KProperty1<out E, *>> = entity.nonKeyFields,
+    keyFields: Collection<KProperty1<out E, *>> = entity.keyFields,
+  ) = entityQuery<E> { params ->
     update(entity)
-    setColumns(params, updateColumns)
-    where(params, equalsFilter(keyColumns))
+    setFields(params, updateFields)
+    where(params, equalsFilter(keyFields))
   }
 
   private fun <E : Any, P : QueryParam> StringBuilder.deleteQuery(
     params: MutableCollection<in P>,
     entity: KClass<out E>,
-    where: SqlFilter
+    whereClause: SqlFilter
   ) {
     deleteFrom(entity)
-    where(params, where)
+    where(params, whereClause)
   }
 
   open fun <E : Any> insert(
     entity: KClass<out E>,
-    insertFields: Collection<KProperty1<out E, *>>
-  ) = tableQuery<E> { params ->
+    fields: Collection<KProperty1<out E, *>> = entity.fields
+  ) = entityQuery<E> { params ->
     insertInto(entity)
-    insertFields(insertFields)
-    insertValues(params, insertFields)
+    insertFields(fields)
+    insertValues(params, fields)
   }
 
   protected inline fun simpleQuery(
     builder: QueryBuilder<QueryParam.Value>
-  ) = LinkedList<QueryParam.Value>().let { params ->
+  ) = arrayListOf<QueryParam.Value>().let { params ->
     SimpleQuery(
       sql = buildString {
         builder(params)
@@ -72,9 +73,9 @@ open class Dialect(val namingStrategy: NamingStrategy = NamingStrategy.SNAKE_CAS
     )
   }
 
-  protected inline fun <E> tableQuery(
+  protected inline fun <E> entityQuery(
     builder: QueryBuilder<EntityQuery.Param<E>>
-  ) = LinkedList<EntityQuery.Param<E>>().let { params ->
+  ) = arrayListOf<EntityQuery.Param<E>>().let { params ->
     EntityQuery(
       sql = buildString {
         builder(params)
@@ -84,24 +85,24 @@ open class Dialect(val namingStrategy: NamingStrategy = NamingStrategy.SNAKE_CAS
   }
 
   @Suppress("UNCHECKED_CAST")
-  protected fun <E, P : QueryParam> StringBuilder.setColumns(
+  protected fun <E, P : QueryParam> StringBuilder.setFields(
     params: MutableCollection<in P>,
-    columns: Collection<KProperty1<out E, *>>
+    fields: Collection<KProperty1<out E, *>>
   ) {
     append("SET ")
-    for ((i, col) in columns.withIndex()) {
+    for ((i, field) in fields.withIndex()) {
       if (i > 0) {
         listSeparator()
       }
-      columnFilter(
+      fieldFilter(
         params = params as MutableCollection<QueryParam>,
-        columnFilter = SqlPropertyParamFilter.Equals(col),
+        filter = SqlPropertyParamFilter.Equals(field),
       )
     }
   }
 
   @Suppress("UNCHECKED_CAST")
-  protected fun <E, P : QueryParam> StringBuilder.columnParams(
+  protected fun <E, P : QueryParam> StringBuilder.fieldParams(
     params: MutableCollection<in P>,
     fields: Collection<KProperty1<in E, *>>
   ) {
@@ -136,25 +137,25 @@ open class Dialect(val namingStrategy: NamingStrategy = NamingStrategy.SNAKE_CAS
         }
       }
 
-      is SqlPropertyFilter<*> -> columnFilter(
+      is SqlPropertyFilter<*> -> fieldFilter(
         params = params as MutableCollection<QueryParam>,
-        columnFilter = filter
+        filter = filter
       )
     }
   }
 
-  private fun StringBuilder.columnFilter(
+  private fun StringBuilder.fieldFilter(
     params: MutableCollection<in QueryParam>,
-    columnFilter: SqlPropertyFilter<*>
+    filter: SqlPropertyFilter<*>
   ) {
-    columnName(columnFilter.property)
-    when (columnFilter) {
-      is SqlPropertyFilter.IsNull -> append(" IS NULL")
-      is SqlPropertyFilter.IsNotNull -> append(" IS NOT NULL")
-      is SqlPropertyParamFilter<*> -> paramFilter(params, columnFilter)
-      is SqlPropertyValueFilter<*> -> valueFilter(params, columnFilter)
-      is SqlPropertyMultiValueFilter.Between<*> -> betweenFilter(params, columnFilter)
-      is SqlPropertyMultiValueFilter.In<*> -> inFilter(params, columnFilter)
+    fieldName(filter.property)
+    when (filter) {
+      is SqlPropertyFilter.IsNull -> isNull()
+      is SqlPropertyFilter.IsNotNull -> isNotNull()
+      is SqlPropertyParamFilter<*> -> paramFilter(params, filter)
+      is SqlPropertyValueFilter<*> -> valueFilter(params, filter)
+      is SqlPropertyMultiValueFilter.Between<*> -> betweenFilter(params, filter)
+      is SqlPropertyMultiValueFilter.In<*> -> inFilter(params, filter)
     }
   }
 
@@ -222,10 +223,10 @@ open class Dialect(val namingStrategy: NamingStrategy = NamingStrategy.SNAKE_CAS
   protected fun StringBuilder.tableName(entity: KClass<*>) {
     val (name, schema) = entity.tableName
     if (!schema.isNullOrBlank()) {
-      name(schema)
+      quotedName(schema)
       schemaSeparator()
     }
-    name(name)
+    quotedName(name)
   }
 
   protected fun StringBuilder.fieldNames(entity: KClass<*>) {
@@ -233,19 +234,19 @@ open class Dialect(val namingStrategy: NamingStrategy = NamingStrategy.SNAKE_CAS
   }
 
   protected fun StringBuilder.fieldNames(fields: Collection<KProperty1<*, *>>) {
-    for ((i, property) in fields.withIndex()) {
+    for ((i, field) in fields.withIndex()) {
       if (i > 0) {
         listSeparator()
       }
-      columnName(property)
+      fieldName(field)
     }
   }
 
-  protected fun StringBuilder.columnName(field: KProperty<*>) {
-    name(field.fieldName)
+  protected fun StringBuilder.fieldName(field: KProperty<*>) {
+    quotedName(field.fieldName)
   }
 
-  protected fun StringBuilder.name(name: String) {
+  protected fun StringBuilder.quotedName(name: String) {
     openQuote()
     namingStrategy.databaseName(this, name)
     closeQuote()
@@ -274,7 +275,7 @@ open class Dialect(val namingStrategy: NamingStrategy = NamingStrategy.SNAKE_CAS
     insertFields: Collection<KProperty1<out E, *>>
   ) {
     append("\n\tVALUES ")
-    columnParams(params, insertFields)
+    fieldParams(params, insertFields)
   }
 
   protected open fun StringBuilder.update(entity: KClass<*>) {
@@ -297,6 +298,14 @@ open class Dialect(val namingStrategy: NamingStrategy = NamingStrategy.SNAKE_CAS
       append("\n\tWHERE ")
       filter(params, clause)
     }
+  }
+
+  protected open fun StringBuilder.isNotNull() {
+    append(" IS NOT NULL")
+  }
+
+  protected open fun StringBuilder.isNull() {
+    append(" IS NULL")
   }
 
   protected open fun StringBuilder.param(param: QueryParam) {

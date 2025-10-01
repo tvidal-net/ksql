@@ -6,7 +6,7 @@ import uk.tvidal.data.equalsFilter
 import uk.tvidal.data.keyFilter
 import uk.tvidal.data.logging.KLogging
 import uk.tvidal.data.model.Key
-import uk.tvidal.data.sqlFilter
+import uk.tvidal.data.whereClause
 import kotlin.test.assertEquals
 
 class FilterTest {
@@ -32,7 +32,7 @@ class FilterTest {
 
   @Test
   fun testMultiKeyFilter() {
-    val expected = sqlFilter {
+    val expected = whereClause {
       MultiKeyTable::firstKey.eq()
       MultiKeyTable::secondKey.eq()
     }
@@ -55,7 +55,7 @@ class FilterTest {
         SqlPropertyParamFilter.LessThan(TestClass::key)
       )
     )
-    val actual = sqlFilter {
+    val actual = whereClause {
       TestClass::key.gt().or(TestClass::key.lt())
     }
     assertEquals(expected, actual)

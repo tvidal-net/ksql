@@ -2,7 +2,6 @@ package uk.tvidal.data
 
 import uk.tvidal.data.codec.EntityDecoder
 import uk.tvidal.data.logging.KLogging
-import uk.tvidal.data.Dialect
 import uk.tvidal.data.query.SimpleQuery
 import uk.tvidal.data.query.Statement
 import uk.tvidal.data.query.EntityQuery
@@ -86,7 +85,7 @@ class Database(
   }
 
   inline fun <reified E : Any> delete(builder: WhereClauseBuilder<E>) = execute(
-    dialect.delete(E::class, sqlFilter<E>(builder))
+    dialect.delete(E::class, whereClause<E>(builder))
   )
 
   fun beginTransaction() = currentTransaction ?: createConnection().also(connection::set)

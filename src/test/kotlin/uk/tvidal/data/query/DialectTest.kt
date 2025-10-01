@@ -8,8 +8,8 @@ import uk.tvidal.data.filter.*
 import uk.tvidal.data.model.Key
 import uk.tvidal.data.model.Table
 import uk.tvidal.data.model.fields
-import uk.tvidal.data.model.nonKeyColumns
-import uk.tvidal.data.sqlFilter
+import uk.tvidal.data.model.nonKeyFields
+import uk.tvidal.data.whereClause
 import java.util.*
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty1
@@ -29,11 +29,11 @@ class DialectTest {
     }
 
     fun fieldParams(params: MutableCollection<QueryParam>) = buildString {
-      columnParams(params, TestTable::class.fields)
+      fieldParams(params, TestTable::class.fields)
     }
 
     fun setFields(params: MutableCollection<QueryParam>) = buildString {
-      setColumns(params, TestTable::class.nonKeyColumns)
+      setFields(params, TestTable::class.nonKeyFields)
     }
 
     fun where(where: SqlFilter, params: MutableCollection<QueryParam>) = buildString {
@@ -64,14 +64,14 @@ class DialectTest {
   }
 
   @Test
-  fun testColumnNames() {
+  fun testFieldNames() {
     test("id,name") {
       fieldNames()
     }
   }
 
   @Test
-  fun testColumnParams() {
+  fun testFieldParams() {
     val params = ArrayList<QueryParam>()
     test("(?,?)") {
       fieldParams(params)
@@ -84,7 +84,7 @@ class DialectTest {
   }
 
   @Test
-  fun testSetColumns() {
+  fun testSetFields() {
     val params = ArrayList<QueryParam>()
     test("SET name = ?") {
       setFields(params)
@@ -205,7 +205,7 @@ class DialectTest {
 
   private inline fun whereFields(expected: String, builder: WhereClauseBuilder<TestTable>) {
     val params = LinkedList<QueryParam>()
-    val filter = sqlFilter(builder)
+    val filter = whereClause(builder)
     test(expected) {
       where(filter, params)
     }
@@ -216,7 +216,7 @@ class DialectTest {
 
   private inline fun whereValues(expected: String, builder: WhereClauseBuilder<TestTable>) {
     val params = LinkedList<QueryParam>()
-    val filter = sqlFilter(builder)
+    val filter = whereClause(builder)
     test(expected) {
       where(filter, params)
     }

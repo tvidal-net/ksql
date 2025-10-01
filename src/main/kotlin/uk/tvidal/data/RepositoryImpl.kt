@@ -3,8 +3,8 @@ package uk.tvidal.data
 import uk.tvidal.data.codec.EntityDecoder
 import uk.tvidal.data.filter.SqlFilter
 import uk.tvidal.data.model.fields
-import uk.tvidal.data.model.keyColumns
-import uk.tvidal.data.model.nonKeyColumns
+import uk.tvidal.data.model.keyFields
+import uk.tvidal.data.model.nonKeyFields
 import uk.tvidal.data.query.EntityQuery
 import uk.tvidal.data.query.SimpleQuery
 import kotlin.reflect.KClass
@@ -24,15 +24,15 @@ internal class RepositoryImpl<E : Any>(
   }
 
   private val save: EntityQuery<E> by lazy {
-    db.dialect.save(entity, entity.nonKeyColumns, entity.keyColumns)
+    db.dialect.save(entity, entity.nonKeyFields, entity.keyFields)
   }
 
   private val delete: EntityQuery<E> by lazy {
-    db.dialect.delete(entity, entity.keyColumns)
+    db.dialect.delete(entity, entity.keyFields)
   }
 
   private val update: EntityQuery<E> by lazy {
-    db.dialect.update(entity, entity.nonKeyColumns, entity.keyColumns)
+    db.dialect.update(entity, entity.nonKeyFields, entity.keyFields)
   }
 
   private val insert: EntityQuery<E> by lazy {

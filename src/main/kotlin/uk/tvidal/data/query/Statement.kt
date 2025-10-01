@@ -6,7 +6,7 @@ import uk.tvidal.data.logging.KLogging
 import java.sql.Connection
 import java.sql.PreparedStatement
 
-open class Statement(
+class Statement(
   val statement: PreparedStatement,
   parameters: Collection<QueryParam.Value> = emptyList()
 ) : AutoCloseable {

@@ -1,6 +1,6 @@
 package uk.tvidal.data.model
 
-internal data class TableName(
+data class TableName(
   val name: String,
   val schema: String? = null
 ) {

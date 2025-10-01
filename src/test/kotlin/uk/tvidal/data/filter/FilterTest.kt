@@ -5,15 +5,15 @@ import org.junit.jupiter.api.assertThrows
 import uk.tvidal.data.equalsFilter
 import uk.tvidal.data.keyFilter
 import uk.tvidal.data.logging.KLogging
-import uk.tvidal.data.model.Key
 import uk.tvidal.data.whereClause
+import javax.persistence.Id
 import kotlin.test.assertEquals
 
 class FilterTest {
 
   private data class TestClass(
     val name: String,
-    @Key val key: Int,
+    @Id val key: Int,
   )
 
   @Test
@@ -26,8 +26,8 @@ class FilterTest {
 
   private data class MultiKeyTable(
     val name: String,
-    @Key val firstKey: Int,
-    @Key val secondKey: Int,
+    @Id val firstKey: Int,
+    @Id val secondKey: Int,
   )
 
   @Test

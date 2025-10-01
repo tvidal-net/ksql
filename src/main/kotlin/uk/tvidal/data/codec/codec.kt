@@ -4,18 +4,14 @@ import com.fasterxml.jackson.databind.DeserializationContext
 import com.fasterxml.jackson.databind.deser.std.FromStringDeserializer
 import com.fasterxml.jackson.databind.module.SimpleModule
 import com.fasterxml.jackson.databind.ser.std.ToStringSerializer
-import uk.tvidal.data.model.Field
 import java.math.BigDecimal
+import java.sql.*
 import java.sql.Date
-import java.sql.PreparedStatement
-import java.sql.ResultSet
-import java.sql.Time
-import java.sql.Timestamp
-import java.sql.Types
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
-import java.util.UUID
+import java.util.*
+import javax.persistence.Column
 import kotlin.reflect.KCallable
 import kotlin.reflect.KClass
 import kotlin.reflect.KParameter
@@ -24,7 +20,7 @@ import kotlin.reflect.full.createInstance
 import kotlin.reflect.full.findAnnotation
 
 internal val KParameter.fieldName: String
-  get() = findAnnotation<Field>()?.name?.ifBlank { null } ?: name!!
+  get() = findAnnotation<Column>()?.name?.ifBlank { null } ?: name!!
 
 @JvmInline
 private value class ResultSetDecoderImpl<T>(val getValue: ResultSet.(String) -> T) : ResultSetDecoder<T> {

@@ -19,7 +19,7 @@ open class Dialect(val namingStrategy: NamingStrategy = NamingStrategy.SNAKE_CAS
 
   open fun <E : Any> save(
     entity: KClass<out E>,
-    updateFields: Collection<KProperty1<out E, *>> = entity.nonKeyFields,
+    updateFields: Collection<KProperty1<out E, *>> = entity.updateFields,
     keyFields: Collection<KProperty1<out E, *>> = entity.keyFields,
   ): EntityQuery<E> = throw NotImplementedError("saveQuery is not implemented for the default Dialect!")
 
@@ -36,7 +36,7 @@ open class Dialect(val namingStrategy: NamingStrategy = NamingStrategy.SNAKE_CAS
 
   open fun <E : Any> update(
     entity: KClass<out E>,
-    updateFields: Collection<KProperty1<out E, *>> = entity.nonKeyFields,
+    updateFields: Collection<KProperty1<out E, *>> = entity.updateFields,
     keyFields: Collection<KProperty1<out E, *>> = entity.keyFields,
   ) = entityQuery<E> { params ->
     update(entity)
@@ -55,7 +55,7 @@ open class Dialect(val namingStrategy: NamingStrategy = NamingStrategy.SNAKE_CAS
 
   open fun <E : Any> insert(
     entity: KClass<out E>,
-    fields: Collection<KProperty1<out E, *>> = entity.fields
+    fields: Collection<KProperty1<out E, *>> = entity.insertFields
   ) = entityQuery<E> { params ->
     insertInto(entity)
     insertFields(fields)

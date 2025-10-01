@@ -2,12 +2,12 @@ package uk.tvidal.data
 
 import uk.tvidal.data.logging.KLogger
 import uk.tvidal.data.mariadb.MariaDB
-import uk.tvidal.data.model.Key
 import uk.tvidal.data.model.RandomUUID
-import uk.tvidal.data.model.Table
 import uk.tvidal.data.model.Today
 import java.time.LocalDate
-import java.util.UUID
+import java.util.*
+import javax.persistence.Id
+import javax.persistence.Table
 
 const val DB_URL = "jdbc:mariadb://mini/test"
 const val DB_USER = "test"
@@ -26,12 +26,12 @@ data class PersonDetails(
   val dob: LocalDate
 )
 
-@Table("person")
+@Table(name = "person")
 data class DataPerson(
   val name: Name? = null,
   val age: Int = 0,
   val details: PersonDetails? = null,
-  @Key val id: UUID = RandomUUID,
+  @Id val id: UUID = RandomUUID,
 )
 
 private val dataPeople = db.repository<DataPerson>()
@@ -39,7 +39,9 @@ private val dataPeople = db.repository<DataPerson>()
 class Person(var name: String) {
   var age: Int = 0
   var details: PersonDetails? = null
-  @Key var id: UUID = RandomUUID
+
+  @Id
+  var id: UUID = RandomUUID
 
   override fun toString() = "Person(name=$name, age=$age, details=$details, id=$id)"
 }

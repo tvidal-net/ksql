@@ -1,16 +1,14 @@
-package uk.tvidal.data.query
+package uk.tvidal.data
 
 import org.junit.jupiter.api.Test
-import uk.tvidal.data.Dialect
-import uk.tvidal.data.NamingStrategy
-import uk.tvidal.data.WhereClauseBuilder
 import uk.tvidal.data.filter.*
-import uk.tvidal.data.model.Key
-import uk.tvidal.data.model.Table
 import uk.tvidal.data.model.fields
-import uk.tvidal.data.model.nonKeyFields
-import uk.tvidal.data.whereClause
+import uk.tvidal.data.model.updateFields
+import uk.tvidal.data.query.EntityQuery
+import uk.tvidal.data.query.QueryParam
 import java.util.*
+import javax.persistence.Id
+import javax.persistence.Table
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty1
 import kotlin.test.assertContentEquals
@@ -33,7 +31,7 @@ class DialectTest {
     }
 
     fun setFields(params: MutableCollection<QueryParam>) = buildString {
-      setFields(params, TestTable::class.nonKeyFields)
+      setFields(params, TestTable::class.updateFields)
     }
 
     fun where(where: SqlFilter, params: MutableCollection<QueryParam>) = buildString {
@@ -50,10 +48,10 @@ class DialectTest {
     }
   }
 
-  @Table("tableName", schema = "tableSchema")
+  @Table(name = "tableName", schema = "tableSchema")
   private data class TestTable(
     val name: String,
-    @Key val id: Int,
+    @Id val id: Int,
   )
 
   @Test

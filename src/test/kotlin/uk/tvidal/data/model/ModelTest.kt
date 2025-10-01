@@ -1,9 +1,10 @@
 package uk.tvidal.data.model
 
+import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
-import java.util.UUID
-import kotlin.test.assertContentEquals
-import kotlin.test.assertEquals
+import javax.persistence.Column
+import javax.persistence.Id
+import javax.persistence.Table
 
 class ModelTest {
 
@@ -12,102 +13,124 @@ class ModelTest {
   )
 
   @Test
-  fun testTableWithoutKeys() {
-    assertContentEquals(
-      emptyList(),
-      NoAnnotation::class.keyFields
-    )
-    assertContentEquals(
-      listOf(NoAnnotation::field),
-      NoAnnotation::class.nonKeyFields
-    )
+  fun tableWithoutId() {
+    assertThat(NoAnnotation::class.keyFields)
+      .isEmpty()
+
+    assertThat(NoAnnotation::class.insertFields)
+      .containsExactly(NoAnnotation::field)
+
+    assertThat(NoAnnotation::class.updateFields)
+      .containsExactly(NoAnnotation::field)
   }
 
   @Test
-  fun testTableNameNoAnnotation() {
-    assertEquals(
-      TableName("NoAnnotation"),
-      NoAnnotation::class.tableName
-    )
+  fun tableNameNoAnnotation() {
+    assertThat(NoAnnotation::class.tableName)
+      .isEqualTo(TableName("NoAnnotation"))
   }
 
   @Test
-  fun testFieldNameNoAnnotation() {
-    assertEquals(
-      "field",
-      NoAnnotation::field.fieldName
-    )
+  fun fieldNameNoAnnotation() {
+    assertThat(NoAnnotation::field.fieldName)
+      .isEqualTo("field")
   }
 
   @Table(name = "tableName")
-  private data class AnnotatedClass(
-    @Field(name = "fieldName")
-    val field: String,
+  private class AnnotatedClass(
+    @Column(name = "fieldName") val field: String,
   )
 
   @Test
-  fun testTableNameAnnotated() {
-    assertEquals(
-      TableName("tableName"),
-      AnnotatedClass::class.tableName
-    )
+  fun tableNameAnnotated() {
+    assertThat(AnnotatedClass::class.tableName)
+      .isEqualTo(TableName("tableName"))
   }
 
   @Test
-  fun testFieldNameAnnotated() {
-    assertEquals(
-      "fieldName",
-      AnnotatedClass::field.fieldName
-    )
+  fun fieldNameAnnotated() {
+    assertThat(AnnotatedClass::field.fieldName)
+      .isEqualTo("fieldName")
   }
 
-  @Table(name = "tableName", schema = "tableSchema")
+  @Table(name = "tableName", schema = "tableSchema", catalog = "tableCatalog")
   private class TableWithSchema
 
   @Test
-  fun testTableWithSchema() {
-    assertEquals(
-      TableName("tableName", "tableSchema"),
-      TableWithSchema::class.tableName
-    )
+  fun tableWithSchema() {
+    assertThat(TableWithSchema::class.tableName)
+      .isEqualTo(TableName("tableName", "tableSchema"))
   }
 
-  @Table(name = "", schema = "")
-  private data class EmptyAnnotatedClass(
-    @Field(name = "")
-    val field: String,
+  @Table(name = "tableName", catalog = "tableCatalog")
+  private class TableWithCatalog
+
+  @Test
+  fun tableWithCatalog() {
+    assertThat(TableWithCatalog::class.tableName)
+      .isEqualTo(TableName("tableName", "tableCatalog"))
+  }
+
+  @Table
+  private class EmptyAnnotatedClass(
+    @Column val field: String,
+    @Id val id: Long,
   )
 
   @Test
-  fun testTableWithEmptyName() {
-    assertEquals(
-      TableName("EmptyAnnotatedClass"),
-      EmptyAnnotatedClass::class.tableName
-    )
+  fun tableWithEmptyName() {
+    assertThat(EmptyAnnotatedClass::class.tableName)
+      .isEqualTo(TableName("EmptyAnnotatedClass"))
   }
 
   @Test
-  fun testFieldWithEmptyName() {
-    assertEquals(
-      "field",
-      EmptyAnnotatedClass::field.fieldName
-    )
+  fun fieldWithEmptyName() {
+    assertThat(EmptyAnnotatedClass::field.fieldName)
+      .isEqualTo("field")
+
+    assertThat(EmptyAnnotatedClass::id.fieldName)
+      .isEqualTo("id")
   }
 
-  private data class KeyClass(
-    @Key val id: UUID,
-    val name: String
+  @Test
+  fun singleKeyField() {
+    assertThat(EmptyAnnotatedClass::class.keyFields)
+      .containsExactly(EmptyAnnotatedClass::id)
+  }
+
+  private class CompositeKey(
+    val name: String,
+    @Id val type: Byte,
+    @Id val id: Long
   )
 
   @Test
-  fun testKeyAnnotatedFields() {
-    assertContentEquals(
-      listOf(KeyClass::id),
-      KeyClass::class.keyFields
-    )
-    assertContentEquals(
-      listOf(KeyClass::name),
-      KeyClass::class.nonKeyFields
-    )
+  fun compositeKeyTable() {
+    assertThat(CompositeKey::class.keyFields)
+      .contains(CompositeKey::type, CompositeKey::id)
+
+    assertThat(CompositeKey::class.insertFields)
+      .contains(CompositeKey::name, CompositeKey::type, CompositeKey::id)
+
+    assertThat(CompositeKey::class.updateFields)
+      .containsExactly(CompositeKey::name)
+  }
+
+  private class NonUpdatableFields(
+    @Column(updatable = false) val nonUpdatable: String,
+    @Column(insertable = false) val nonInsertable: String,
+    @Id val id: Long
+  )
+
+  @Test
+  fun nonUpdatableFields() {
+    assertThat(NonUpdatableFields::class.updateFields)
+      .containsExactly(NonUpdatableFields::nonInsertable)
+  }
+
+  @Test
+  fun nonInsertableFields() {
+    assertThat(NonUpdatableFields::class.insertFields)
+      .contains(NonUpdatableFields::id, NonUpdatableFields::nonUpdatable)
   }
 }

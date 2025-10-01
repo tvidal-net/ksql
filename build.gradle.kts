@@ -14,6 +14,7 @@ repositories {
 }
 
 dependencies {
+  api(libs.jpa)
   api(libs.slf4j)
   compileOnly(libs.jackson)
   compileOnly(libs.mariadb)
@@ -25,6 +26,7 @@ dependencies {
   testRuntimeOnly(libs.logback)
   testRuntimeOnly(libs.mariadb)
   testRuntimeOnly(libs.postgresql)
+  testApi(libs.assertj)
 }
 
 tasks.test {

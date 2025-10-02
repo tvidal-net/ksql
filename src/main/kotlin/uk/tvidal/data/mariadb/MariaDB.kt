@@ -4,6 +4,7 @@ import org.mariadb.jdbc.MariaDbPoolDataSource
 import uk.tvidal.data.Database
 import uk.tvidal.data.Dialect
 import uk.tvidal.data.NamingStrategy
+import uk.tvidal.data.fieldName
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty1
 
@@ -34,10 +35,10 @@ class MariaDB(namingStrategy: NamingStrategy = NamingStrategy.SnakeCase) : Diale
       if (i > 0) {
         listSeparator()
       }
-      fieldName(field)
+      quotedName(field.fieldName)
       append("=VALUES")
       openBlock()
-      fieldName(field)
+      quotedName(field.fieldName)
       closeBlock()
     }
   }

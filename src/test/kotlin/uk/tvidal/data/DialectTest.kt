@@ -61,7 +61,7 @@ class DialectTest {
 
   @Test
   fun testFieldNames() {
-    test("id,name") {
+    test("(id,name)") {
       fieldNames()
     }
   }

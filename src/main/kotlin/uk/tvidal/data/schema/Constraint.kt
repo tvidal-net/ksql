@@ -1,8 +1,6 @@
 package uk.tvidal.data.schema
 
 import uk.tvidal.data.TableName
-import uk.tvidal.data.keyFields
-import kotlin.reflect.KClass
 
 sealed interface Constraint {
 
@@ -11,14 +9,9 @@ sealed interface Constraint {
   ) : Constraint {
     constructor(
       columns: Collection<ColumnReference>,
-      name: String? = null
+      primaryKeyName: String? = null,
     ) : this(
-      Index(columns, name)
-    )
-
-    constructor(entity: KClass<*>, name: String? = null) : this(
-      name = name,
-      columns = entity.keyFields.map { it.asc },
+      Index(columns, primaryKeyName)
     )
   }
 
@@ -27,17 +20,18 @@ sealed interface Constraint {
   ) : Constraint {
     constructor(
       columns: Collection<ColumnReference>,
-      name: String? = null
+      uniqueName: String? = null,
     ) : this(
-      Index(columns, name)
+      Index(columns, uniqueName)
     )
   }
 
-  enum class ForeignKeyAction {
+  enum class ForeignKeyAction(internal val sql: String = "") {
     Default,
-    Nothing,
-    Cascade,
-    SetNull,
+    NoAction("NO ACTION"),
+    Cascade("CASCADE"),
+    SetNull("SET NULL"),
+    SetDefault("SET DEFAULT"),
   }
 
   data class ForeignKeyReference(
@@ -55,5 +49,23 @@ sealed interface Constraint {
     val deleteAction: ForeignKeyAction = ForeignKeyAction.Default,
   ) : Constraint {
     override fun toString() = "REFERENCES $table ON $references"
+  }
+
+  companion object Factory {
+
+    fun primaryKey(primaryKeyName: String? = null, vararg columns: String): Constraint =
+      PrimaryKey(columns.map(ColumnReference::asc), primaryKeyName)
+
+    fun primaryKey(primaryKeyName: String? = null, vararg columns: ColumnReference): Constraint =
+      PrimaryKey(columns.toList(), primaryKeyName)
+
+    fun unique(uniqueName: String? = null, vararg columns: String): Constraint =
+      Unique(columns.map(ColumnReference::asc), uniqueName)
+
+    fun unique(uniqueName: String? = null, vararg columns: ColumnReference): Constraint =
+      Unique(columns.toList(), uniqueName)
+
+    fun on(columnName: String, referenceColumn: String = columnName) =
+      ForeignKeyReference(columnName, referenceColumn)
   }
 }

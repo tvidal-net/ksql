@@ -8,7 +8,6 @@ import uk.tvidal.data.query.SimpleQuery
 import uk.tvidal.data.query.Statement.Companion.FIRST_PARAM
 import uk.tvidal.data.schema.*
 import kotlin.reflect.KClass
-import kotlin.reflect.KProperty
 import kotlin.reflect.KProperty1
 
 open class Dialect(val namingStrategy: NamingStrategy = NamingStrategy.SnakeCase) {
@@ -166,7 +165,7 @@ open class Dialect(val namingStrategy: NamingStrategy = NamingStrategy.SnakeCase
     params: MutableCollection<in QueryParam>,
     filter: SqlPropertyFilter<*>
   ) {
-    fieldName(filter.property)
+    quotedName(filter.property.fieldName)
     when (filter) {
       is SqlPropertyFilter.IsNull -> isNull()
       is SqlPropertyFilter.IsNotNull -> isNotNull()
@@ -255,16 +254,18 @@ open class Dialect(val namingStrategy: NamingStrategy = NamingStrategy.SnakeCase
   }
 
   protected fun StringBuilder.fieldNames(fields: Collection<KProperty1<*, *>>) {
-    for ((i, field) in fields.withIndex()) {
-      if (i > 0) {
-        listSeparator()
-      }
-      fieldName(field)
-    }
+    quotedNames(
+      fields.map { it.fieldName }
+    )
   }
 
-  protected fun StringBuilder.fieldName(field: KProperty<*>) {
-    quotedName(field.fieldName)
+  protected fun StringBuilder.quotedNames(names: Collection<String>) {
+    openBlock()
+    for ((i, name) in names.withIndex()) {
+      if (i > 0) listSeparator()
+      quotedName(name)
+    }
+    closeBlock()
   }
 
   protected fun StringBuilder.quotedName(name: String) {
@@ -285,10 +286,7 @@ open class Dialect(val namingStrategy: NamingStrategy = NamingStrategy.SnakeCase
   }
 
   protected open fun <E> StringBuilder.insertFields(fields: Collection<KProperty1<out E, *>>) {
-    space()
-    openBlock()
     fieldNames(fields)
-    closeBlock()
   }
 
   protected open fun <E, P : QueryParam> StringBuilder.insertValues(
@@ -368,7 +366,7 @@ open class Dialect(val namingStrategy: NamingStrategy = NamingStrategy.SnakeCase
     when (constraint) {
       is Constraint.PrimaryKey -> constraint("PRIMARY KEY", constraint.index)
       is Constraint.Unique -> constraint("UNIQUE", constraint.index)
-      else -> {}
+      is Constraint.ForeignKey -> foreignKey(constraint)
     }
   }
 
@@ -383,6 +381,29 @@ open class Dialect(val namingStrategy: NamingStrategy = NamingStrategy.SnakeCase
     openBlock()
     columns(index.columns)
     closeBlock()
+  }
+
+  protected open fun StringBuilder.foreignKey(foreignKey: Constraint.ForeignKey) {
+    if (foreignKey.name != null) {
+      append("CONSTRAINT FOREIGN KEY ")
+      quotedName(foreignKey.name)
+      space()
+    } else {
+      append("FOREIGN KEY ")
+    }
+    quotedNames(foreignKey.references.map(Constraint.ForeignKeyReference::columnName))
+    append(" REFERENCES ")
+    tableName(foreignKey.table)
+    space()
+    quotedNames(foreignKey.references.map(Constraint.ForeignKeyReference::referenceColumn))
+    if (foreignKey.deleteAction != Constraint.ForeignKeyAction.Default) {
+      append(" ON DELETE ")
+      append(foreignKey.deleteAction.sql)
+    }
+    if (foreignKey.updateAction != Constraint.ForeignKeyAction.Default) {
+      append(" ON UPDATE ")
+      append(foreignKey.updateAction.sql)
+    }
   }
 
   protected open fun StringBuilder.columns(columns: Collection<ColumnReference>) {

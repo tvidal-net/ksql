@@ -4,10 +4,12 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import uk.tvidal.data.codec.DataType
 import uk.tvidal.data.schema.ColumnReference.Factory.desc
+import uk.tvidal.data.schema.Constraint
+import uk.tvidal.data.schema.Constraint.Factory.on
+import uk.tvidal.data.schema.Constraint.Factory.primaryKey
+import uk.tvidal.data.schema.Constraint.Factory.unique
 import uk.tvidal.data.schema.SchemaColumn
 import uk.tvidal.data.schema.SchemaTable
-import uk.tvidal.data.schema.primaryKey
-import uk.tvidal.data.schema.unique
 
 class DialectSchemaTest {
 
@@ -72,6 +74,39 @@ class DialectSchemaTest {
     )
     assertThat(dialect.create(table, false).actual)
       .isEqualTo("CREATE TABLE test.table (, PRIMARY KEY (id), UNIQUE (name DESC) )")
+  }
+
+  @Test
+  fun anonymousForeignKey() {
+    val fk = Constraint.ForeignKey(
+      table = testTable.name,
+      references = listOf(on("id"))
+    )
+    assertThat(dialect.constraint(fk))
+      .isEqualTo(", FOREIGN KEY (id) REFERENCES test.table (id)")
+  }
+
+  @Test
+  fun namedForeignKeyWithDeleteAction() {
+    val fk = Constraint.ForeignKey(
+      table = testTable.name,
+      name = "test_fk",
+      deleteAction = Constraint.ForeignKeyAction.SetNull,
+      references = listOf(on("id")),
+    )
+    assertThat(dialect.constraint(fk))
+      .isEqualTo(", CONSTRAINT FOREIGN KEY test_fk (id) REFERENCES test.table (id) ON DELETE SET NULL")
+  }
+
+  @Test
+  fun foreignKeyWithUpdateAction() {
+    val fk = Constraint.ForeignKey(
+      table = testTable.name,
+      updateAction = Constraint.ForeignKeyAction.Cascade,
+      references = listOf(on("id"), on("type")),
+    )
+    assertThat(dialect.constraint(fk))
+      .isEqualTo(", FOREIGN KEY (id,type) REFERENCES test.table (id,type) ON UPDATE CASCADE")
   }
 
   @Test

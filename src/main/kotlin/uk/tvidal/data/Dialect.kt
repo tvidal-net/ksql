@@ -52,6 +52,16 @@ open class Dialect(val namingStrategy: NamingStrategy = NamingStrategy.SnakeCase
 
   fun create(table: SchemaTable, ifNotExists: Boolean = true) = simpleQuery { _ ->
     createTable(table, ifNotExists)
+    table.indices.forEach {
+      terminate()
+      createIndex(table.name, it)
+    }
+    terminate()
+  }
+
+  fun create(table: TableName, index: Index) = simpleQuery { _ ->
+    createIndex(table, index)
+    terminate()
   }
 
   fun <E : Any> drop(entity: KClass<out E>, ifExists: Boolean = true) =
@@ -59,6 +69,7 @@ open class Dialect(val namingStrategy: NamingStrategy = NamingStrategy.SnakeCase
 
   fun drop(table: TableName, ifExists: Boolean = true) = simpleQuery { _ ->
     dropTable(table, ifExists)
+    terminate()
   }
 
   open fun <E : Any> insert(
@@ -341,6 +352,18 @@ open class Dialect(val namingStrategy: NamingStrategy = NamingStrategy.SnakeCase
     closeBlock()
   }
 
+  protected open fun StringBuilder.createIndex(table: TableName, index: Index) {
+    append("CREATE INDEX")
+    if (index.name != null) {
+      space()
+      quotedName(index.name)
+    }
+    append(" ON ")
+    tableName(table)
+    space()
+    columns(index.columns)
+  }
+
   protected open fun StringBuilder.dropTable(table: TableName, ifExists: Boolean) {
     append("DROP TABLE ")
     if (ifExists) {
@@ -378,9 +401,7 @@ open class Dialect(val namingStrategy: NamingStrategy = NamingStrategy.SnakeCase
     }
     append(type)
     space()
-    openBlock()
     columns(index.columns)
-    closeBlock()
   }
 
   protected open fun StringBuilder.foreignKey(foreignKey: Constraint.ForeignKey) {
@@ -407,11 +428,13 @@ open class Dialect(val namingStrategy: NamingStrategy = NamingStrategy.SnakeCase
   }
 
   protected open fun StringBuilder.columns(columns: Collection<ColumnReference>) {
+    openBlock()
     for ((i, col) in columns.withIndex()) {
       if (i > 0) listSeparator()
       quotedName(col.name)
       if (col is ColumnReference.Descending) append(" DESC")
     }
+    closeBlock()
   }
 
   protected open fun StringBuilder.notNull(notNull: Boolean) {
@@ -446,6 +469,11 @@ open class Dialect(val namingStrategy: NamingStrategy = NamingStrategy.SnakeCase
 
   protected open fun StringBuilder.schemaSeparator() {
     append('.')
+  }
+
+  protected fun StringBuilder.terminate() {
+    append(';')
+    newLine()
   }
 
   protected fun StringBuilder.newLine() {

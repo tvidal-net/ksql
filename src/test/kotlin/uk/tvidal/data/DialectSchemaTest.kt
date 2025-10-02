@@ -3,11 +3,13 @@ package uk.tvidal.data
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import uk.tvidal.data.codec.DataType
+import uk.tvidal.data.schema.ColumnReference.Factory.asc
 import uk.tvidal.data.schema.ColumnReference.Factory.desc
 import uk.tvidal.data.schema.Constraint
 import uk.tvidal.data.schema.Constraint.Factory.on
 import uk.tvidal.data.schema.Constraint.Factory.primaryKey
 import uk.tvidal.data.schema.Constraint.Factory.unique
+import uk.tvidal.data.schema.Index
 import uk.tvidal.data.schema.SchemaColumn
 import uk.tvidal.data.schema.SchemaTable
 
@@ -29,13 +31,13 @@ class DialectSchemaTest {
   @Test
   fun createTableIfNotExists() {
     assertThat(dialect.create(testTable, true).actual)
-      .isEqualTo("CREATE TABLE IF NOT EXISTS test.table ( name VARCHAR(20) NOT NULL, id UUID NOT NULL, PRIMARY KEY (id) )")
+      .isEqualTo("CREATE TABLE IF NOT EXISTS test.table ( name VARCHAR(20) NOT NULL, id UUID NOT NULL, PRIMARY KEY (id) ); ")
   }
 
   @Test
   fun createTableWithNamedPrimaryKey() {
     assertThat(dialect.create(testTable, false).actual)
-      .isEqualTo("CREATE TABLE test.table ( name VARCHAR(20) NOT NULL, id UUID NOT NULL, PRIMARY KEY (id) )")
+      .isEqualTo("CREATE TABLE test.table ( name VARCHAR(20) NOT NULL, id UUID NOT NULL, PRIMARY KEY (id) ); ")
   }
 
   @Test
@@ -73,7 +75,7 @@ class DialectSchemaTest {
       )
     )
     assertThat(dialect.create(table, false).actual)
-      .isEqualTo("CREATE TABLE test.table (, PRIMARY KEY (id), UNIQUE (name DESC) )")
+      .isEqualTo("CREATE TABLE test.table (, PRIMARY KEY (id), UNIQUE (name DESC) ); ")
   }
 
   @Test
@@ -112,12 +114,26 @@ class DialectSchemaTest {
   @Test
   fun dropTableIfExists() {
     assertThat(dialect.drop(testTable.name, true).actual)
-      .isEqualTo("DROP TABLE IF EXISTS test.table")
+      .isEqualTo("DROP TABLE IF EXISTS test.table; ")
+  }
+
+  @Test
+  fun anonymousIndex() {
+    val index = Index(listOf(asc("id"), desc("name")))
+    assertThat(dialect.create(testTable.name, index).actual)
+      .isEqualTo("CREATE INDEX ON test.table (id,name DESC); ")
+  }
+
+  @Test
+  fun namedIndex() {
+    val index = Index(listOf(asc("id"), asc("name")), "test_idx")
+    assertThat(dialect.create(testTable.name, index).actual)
+      .isEqualTo("CREATE INDEX test_idx ON test.table (id,name); ")
   }
 
   @Test
   fun dropTable() {
     assertThat(dialect.drop(testTable.name, false).actual)
-      .isEqualTo("DROP TABLE test.table")
+      .isEqualTo("DROP TABLE test.table; ")
   }
 }

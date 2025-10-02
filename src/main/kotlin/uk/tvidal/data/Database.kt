@@ -56,6 +56,14 @@ class Database(
       .use(decoder)
   }
 
+  fun execute(sql: String): Int = invoke { cnn ->
+    Statement(cnn, sql).use {
+      it.executeSingle()
+    }.also {
+      log.info("executed: affected={}, {}", it, sql)
+    }
+  }
+
   fun execute(query: SimpleQuery): Int = invoke { cnn ->
     Statement(cnn, query).use {
       it.executeSingle()

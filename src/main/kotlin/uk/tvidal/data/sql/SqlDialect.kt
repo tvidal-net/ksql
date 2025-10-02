@@ -12,9 +12,6 @@ import uk.tvidal.data.query.SimpleQuery
 import uk.tvidal.data.query.SqlQuery
 import uk.tvidal.data.schema.ColumnReference
 import uk.tvidal.data.schema.Constraint
-import uk.tvidal.data.schema.Constraint.ConstraintKeyType
-import uk.tvidal.data.schema.Constraint.ForeignKeyAction
-import uk.tvidal.data.schema.Constraint.ForeignKeyReference
 import uk.tvidal.data.schema.Index
 import uk.tvidal.data.schema.SchemaColumn
 import uk.tvidal.data.schema.SchemaTable
@@ -75,12 +72,12 @@ open class SqlDialect(
   protected inline fun sqlQuery(
     builder: Appendable.() -> Unit
   ) = SqlQuery(
-    sql = buildString {
-      builder()
-    }
+      sql = buildString {
+          builder()
+      }
   )
 
-  override fun select(
+    override fun select(
     entity: KClass<*>,
     whereClause: SqlFilter?
   ) = simpleQuery { params ->
@@ -107,12 +104,12 @@ open class SqlDialect(
   protected inline fun simpleQuery(
     builder: Appendable.(MutableCollection<QueryParam.Value>) -> Unit
   ) = arrayListOf<QueryParam.Value>().let { params ->
-    SimpleQuery(
-      sql = buildString {
-        builder(params)
-      },
-      params = params
-    )
+      SimpleQuery(
+          sql = buildString {
+              builder(params)
+          },
+          params = params
+      )
   }
 
   override fun <E : Any> save(
@@ -176,12 +173,12 @@ open class SqlDialect(
   protected inline fun <E> entityQuery(
     builder: Appendable.(MutableCollection<EntityQuery.Param<E>>) -> Unit
   ) = arrayListOf<EntityQuery.Param<E>>().let { params ->
-    EntityQuery(
-      sql = buildString {
-        builder(params)
-      },
-      params = params
-    )
+      EntityQuery(
+          sql = buildString {
+              builder(params)
+          },
+          params = params
+      )
   }
 
   private fun <P : QueryParam> Appendable.deleteQuery(
@@ -196,13 +193,13 @@ open class SqlDialect(
 
   protected fun Appendable.schemaConstraint(constraint: Constraint) {
     when (constraint) {
-      is Constraint.PrimaryKey -> schemaConstraintKey(ConstraintKeyType.PrimaryKey, constraint.index)
-      is Constraint.UniqueKey -> schemaConstraintKey(ConstraintKeyType.UniqueKey, constraint.index)
+      is Constraint.PrimaryKey -> schemaConstraintKey(Constraint.ConstraintKeyType.PrimaryKey, constraint.index)
+      is Constraint.UniqueKey -> schemaConstraintKey(Constraint.ConstraintKeyType.UniqueKey, constraint.index)
       is Constraint.ForeignKey -> schemaForeignKey(constraint)
     }
   }
 
-  protected open fun Appendable.schemaConstraintKey(keyType: ConstraintKeyType, index: Index) {
+  protected open fun Appendable.schemaConstraintKey(keyType: Constraint.ConstraintKeyType, index: Index) {
     if (index.name != null) {
       append("CONSTRAINT ")
       quotedName(index.name)
@@ -221,20 +218,20 @@ open class SqlDialect(
     }
     quotedNames(
       foreignKey.references
-        .map(ForeignKeyReference::columnName)
+        .map(Constraint.ForeignKeyReference::columnName)
     )
     append(" REFERENCES ")
     tableName(foreignKey.table)
     space()
     quotedNames(
       foreignKey.references
-        .map(ForeignKeyReference::referenceColumn)
+        .map(Constraint.ForeignKeyReference::referenceColumn)
     )
-    if (foreignKey.deleteAction != ForeignKeyAction.Default) {
+    if (foreignKey.deleteAction != Constraint.ForeignKeyAction.Default) {
       append(" ON DELETE ")
       append(foreignKey.deleteAction.sql)
     }
-    if (foreignKey.updateAction != ForeignKeyAction.Default) {
+    if (foreignKey.updateAction != Constraint.ForeignKeyAction.Default) {
       append(" ON UPDATE ")
       append(foreignKey.updateAction.sql)
     }

@@ -11,6 +11,10 @@ class Statement(
   parameters: Collection<QueryParam.Value> = emptyList()
 ) : AutoCloseable {
 
+  constructor(cnn: Connection, sql: String) : this(
+    statement = cnn.prepareStatement(sql)
+  )
+
   constructor(cnn: Connection, query: SimpleQuery) : this(
     statement = cnn.prepareStatement(query.sql),
     parameters = query.params.filterIsInstance<QueryParam.Value>()

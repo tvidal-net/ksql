@@ -9,6 +9,7 @@ jackson = "2.20.0"
 assertj = "3.27.6"
 postgresql = "42.7.8"
 mariadb = "3.5.6"
+h2 = "2.4.240"
 kotlin = "2.1.20"
 
 [libraries]
@@ -21,3 +22,4 @@ jackson-kotlin = { group = "com.fasterxml.jackson.module", name = "jackson-modul
 assertj = { group = "org.assertj", name = "assertj-core", version.ref = "assertj" }
 postgresql = { group = "org.postgresql", name = "postgresql", version.ref = "postgresql" }
 mariadb = { group = "org.mariadb.jdbc", name = "mariadb-java-client", version.ref = "mariadb" }
+h2 = { group = "com.h2database", name = "h2", version.ref = "h2" }

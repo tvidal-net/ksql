@@ -1,7 +1,7 @@
 package uk.tvidal.data
 
 import uk.tvidal.data.logging.KLogger
-import uk.tvidal.data.mariadb.MariaDB
+import uk.tvidal.data.database.MariaDB
 import java.time.LocalDate
 import java.util.*
 import javax.persistence.Id

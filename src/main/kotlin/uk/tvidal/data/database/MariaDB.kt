@@ -1,4 +1,4 @@
-package uk.tvidal.data.mariadb
+package uk.tvidal.data.database
 
 import org.mariadb.jdbc.MariaDbPoolDataSource
 import uk.tvidal.data.Database
@@ -48,7 +48,6 @@ class MariaDB(namingStrategy: NamingStrategy = NamingStrategy.SnakeCase) : SqlDi
 
     val Default = MariaDB()
 
-    @Suppress("UsePropertyAccessSyntax")
     fun createDatabase(
       url: String,
       username: String? = null,

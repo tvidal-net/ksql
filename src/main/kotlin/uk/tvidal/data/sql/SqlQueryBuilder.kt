@@ -173,19 +173,20 @@ abstract class SqlQueryBuilder(val namingStrategy: NamingStrategy) {
     quotedName(name)
   }
 
-  protected fun Appendable.fieldNames(fields: Collection<KProperty1<*, *>>) {
+  protected fun Appendable.fieldNames(fields: Collection<KProperty1<*, *>>, block: Boolean = true) {
     quotedNames(
-      fields.map { it.fieldName }
+      fields.map { it.fieldName },
+      block
     )
   }
 
-  protected fun Appendable.quotedNames(names: Collection<String>) {
-    openBlock()
+  protected fun Appendable.quotedNames(names: Collection<String>, block: Boolean = true) {
+    if (block) openBlock()
     for ((i, name) in names.withIndex()) {
       if (i > 0) listSeparator()
       quotedName(name)
     }
-    closeBlock()
+    if (block) closeBlock()
   }
 
   protected open fun Appendable.quotedName(name: String) {

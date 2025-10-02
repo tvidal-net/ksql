@@ -85,7 +85,7 @@ open class SqlDialect(
     whereClause: SqlFilter?
   ) = simpleQuery { params ->
     append("SELECT ")
-    fieldNames(entity.fields)
+    fieldNames(entity.fields, false)
     from(entity)
     where(params, whereClause)
   }
@@ -158,6 +158,7 @@ open class SqlDialect(
     appendLine()
     indent()
     tableName(table)
+    space()
     fieldNames(insertFields)
     insertValues(params, insertFields)
   }

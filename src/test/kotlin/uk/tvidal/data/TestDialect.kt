@@ -3,7 +3,6 @@ package uk.tvidal.data
 import org.assertj.core.api.AbstractStringAssert
 import org.assertj.core.api.AbstractThrowableAssert
 import org.assertj.core.api.Assertions
-import org.assertj.core.api.ListAssert
 import uk.tvidal.data.codec.DataType
 import uk.tvidal.data.filter.SqlFilter
 import uk.tvidal.data.query.QueryParam
@@ -53,7 +52,7 @@ class TestDialect : SqlDialect(NamingStrategy.AsIs) {
   }
 
   companion object SqlAssertions {
-    val newLines = Regex("[\\n\\r]+\\s*", RegexOption.MULTILINE)
+    val newLines = Regex("[\\n\\r]+\\s?", RegexOption.MULTILINE)
     val spaces = Regex("\\s+")
 
     private val String.actual: String
@@ -64,8 +63,8 @@ class TestDialect : SqlDialect(NamingStrategy.AsIs) {
     private fun sql(builder: Appendable.() -> Unit) =
       buildString(builder).actual
 
-    fun assertQuery(builder: TestDialect.() -> SqlQuery): ListAssert<String> = Assertions.assertThat(
-      builder(TestDialect()).sql.actual.split(";\n")
+    fun assertQuery(builder: TestDialect.() -> SqlQuery): AbstractStringAssert<*> = Assertions.assertThat(
+      builder(TestDialect()).sql.actual
     )
 
     fun assertThrows(builder: TestDialect.() -> SqlQuery): AbstractThrowableAssert<*, out Throwable> = Assertions.assertThatThrownBy {

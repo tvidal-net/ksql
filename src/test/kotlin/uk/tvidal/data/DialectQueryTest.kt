@@ -16,42 +16,51 @@ class DialectQueryTest {
 
   @Test
   fun selectAllQuery() {
-    assertQuery { select(entity) }
+    assertQuery { select(person) }
+      .isEqualTo("SELECT age,id,name FROM Person")
   }
 
   @Test
   fun selectByKeyQuery() {
-    TODO("not implemented")
+    assertQuery { select(person, person.keyFilter) }
+      .isEqualTo("SELECT age,id,name FROM Person WHERE id = ?")
   }
 
   @Test
   fun deleteWithFilter() {
-    TODO("not implemented")
+    val filter = whereClause {
+      Person::age.gt(10)
+    }
+    assertQuery { delete(person, filter) }
+      .isEqualTo("DELETE FROM Person WHERE age > ?")
   }
 
   @Test
   fun deleteQuery() {
-    TODO("not implemented")
+    assertQuery { delete(person) }
+      .isEqualTo("DELETE FROM Person WHERE id = ?")
   }
 
   @Test
   fun updateQuery() {
-    TODO("not implemented")
+    assertQuery { update(person) }
+      .isEqualTo("UPDATE Person SET age = ?,name = ? WHERE id = ?")
   }
 
   @Test
   fun insertQuery() {
-    TODO("not implemented")
+    assertQuery { insert(person) }
+      .isEqualTo("INSERT INTO Person (age,id,name) VALUES (?,?,?)")
   }
 
   @Test
   fun saveFailsOnDefaultDialect() {
-    assertThrows { save(entity) }
+    assertThrows { save(person) }
       .isExactlyInstanceOf(NotImplementedError::class.java)
       .hasMessageContaining("saveQuery is not implemented")
   }
 
   companion object {
-    val entity = Person::class
+    val person = Person::class
   }
 }

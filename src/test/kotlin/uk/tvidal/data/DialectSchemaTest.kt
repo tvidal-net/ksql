@@ -13,24 +13,26 @@ import uk.tvidal.data.schema.Constraint.Factory.unique
 import uk.tvidal.data.schema.Index
 import uk.tvidal.data.schema.SchemaColumn
 import uk.tvidal.data.schema.SchemaTable
+import javax.persistence.Id
 
 class DialectSchemaTest {
 
   @Test
   fun createTableIfNotExists() {
-    assertQuery { create(TestTable, true) }
-      .isEqualTo("CREATE TABLE IF NOT EXISTS $TABLE ($NAME,$ID,$PK,$UQ);")
+    data class Person(val name: String, @Id val id: Int)
+    assertQuery { create(Person::class) }
+      .isEqualTo("CREATE TABLE IF NOT EXISTS Person ( id INTEGER NOT NULL, name NVARCHAR(255) NOT NULL, PRIMARY KEY (id));")
   }
 
   @Test
   fun createTable() {
     assertQuery { create(TestTable, false) }
-      .isEqualTo("CREATE TABLE $TABLE ($NAME,$ID,$PK,$UQ);")
+      .isEqualTo("CREATE TABLE $TABLE ( $NAME, $ID, $PK, $UQ);")
   }
 
   @Test
   fun dropTableIfExists() {
-    assertQuery { drop(tableName, true) }
+    assertQuery { drop(tableName) }
       .isEqualTo("DROP TABLE IF EXISTS $TABLE")
   }
 

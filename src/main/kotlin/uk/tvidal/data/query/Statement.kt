@@ -13,7 +13,7 @@ class Statement(
 
   constructor(cnn: Connection, query: SimpleQuery) : this(
     statement = cnn.prepareStatement(query.sql),
-    parameters = query.parameters.filterIsInstance<QueryParam.Value>()
+    parameters = query.params.filterIsInstance<QueryParam.Value>()
   )
 
   init {

@@ -2,15 +2,16 @@ package uk.tvidal.data
 
 import uk.tvidal.data.codec.EntityDecoder
 import uk.tvidal.data.logging.KLogging
+import uk.tvidal.data.query.EntityQuery
 import uk.tvidal.data.query.SimpleQuery
 import uk.tvidal.data.query.Statement
-import uk.tvidal.data.query.EntityQuery
+import uk.tvidal.data.sql.SqlDialect
 import java.sql.Connection
 import kotlin.reflect.KClass
 import kotlin.reflect.full.primaryConstructor
 
 class Database(
-  val dialect: Dialect,
+  val dialect: SqlDialect,
   private val createConnection: () -> Connection,
 ) {
 

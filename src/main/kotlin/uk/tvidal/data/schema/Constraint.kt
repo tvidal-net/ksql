@@ -4,9 +4,7 @@ import uk.tvidal.data.TableName
 
 sealed interface Constraint {
 
-  data class PrimaryKey(
-    val index: Index
-  ) : Constraint {
+  data class PrimaryKey(val index: Index) : Constraint {
     constructor(
       columns: Collection<ColumnReference>,
       primaryKeyName: String? = null,
@@ -15,15 +13,18 @@ sealed interface Constraint {
     )
   }
 
-  data class Unique(
-    val index: Index
-  ) : Constraint {
+  data class UniqueKey(val index: Index) : Constraint {
     constructor(
       columns: Collection<ColumnReference>,
       uniqueName: String? = null,
     ) : this(
       Index(columns, uniqueName)
     )
+  }
+
+  enum class ConstraintKeyType(internal val sql: String) {
+    PrimaryKey("PRIMARY KEY"),
+    UniqueKey("UNIQUE");
   }
 
   enum class ForeignKeyAction(internal val sql: String = "") {
@@ -60,10 +61,10 @@ sealed interface Constraint {
       PrimaryKey(columns.toList(), primaryKeyName)
 
     fun unique(uniqueName: String? = null, vararg columns: String): Constraint =
-      Unique(columns.map(ColumnReference::asc), uniqueName)
+      UniqueKey(columns.map(ColumnReference::asc), uniqueName)
 
     fun unique(uniqueName: String? = null, vararg columns: ColumnReference): Constraint =
-      Unique(columns.toList(), uniqueName)
+      UniqueKey(columns.toList(), uniqueName)
 
     fun on(columnName: String, referenceColumn: String = columnName) =
       ForeignKeyReference(columnName, referenceColumn)

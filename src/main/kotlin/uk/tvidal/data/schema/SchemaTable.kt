@@ -12,14 +12,14 @@ data class SchemaTable(
   val indices: Collection<Index> = listOf(),
 ) {
 
-  val primaryKey: Constraint.PrimaryKey?
-    get() = constraints.filterIsInstance<Constraint.PrimaryKey>().singleOrNull()
+  val primaryKey: Constraint.PrimaryKey
+    get() = constraints.filterIsInstance<Constraint.PrimaryKey>().single()
+
+  val uniqueKeys: Collection<Constraint.UniqueKey>
+    get() = constraints.filterIsInstance<Constraint.UniqueKey>()
 
   val foreignKeys: Collection<Constraint.ForeignKey>
     get() = constraints.filterIsInstance<Constraint.ForeignKey>()
-
-  val uniqueKeys: Collection<Constraint.Unique>
-    get() = TODO()
 
   companion object Factory {
 

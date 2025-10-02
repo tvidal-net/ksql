@@ -7,7 +7,7 @@ import uk.tvidal.data.filter.SqlPropertyParamFilter
 import java.lang.reflect.Field
 import java.time.LocalDate
 import java.time.LocalDateTime
-import java.util.*
+import java.util.UUID
 import javax.persistence.Column
 import javax.persistence.Entity
 import javax.persistence.Id
@@ -20,8 +20,6 @@ import kotlin.reflect.full.findAnnotation
 import kotlin.reflect.full.hasAnnotation
 import kotlin.reflect.full.memberProperties
 import kotlin.reflect.jvm.javaField
-
-internal typealias QueryBuilder<P> = StringBuilder.(MutableCollection<in P>) -> Unit
 
 typealias WhereClauseBuilder<E> = SqlFilterBuilder<E>.(KClass<out E>) -> Unit
 

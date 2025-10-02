@@ -28,7 +28,7 @@ class DialectQueryTest {
 
   @Test
   fun deleteWithFilter() {
-    val filter = whereClause {
+    val filter = where {
       Person::age.gt(10)
     }
     assertQuery { delete(person, filter) }

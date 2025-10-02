@@ -2,7 +2,7 @@ package uk.tvidal.data.schema
 
 import uk.tvidal.data.codec.DataType
 import uk.tvidal.data.fieldName
-import uk.tvidal.data.nullable
+import uk.tvidal.data.isNullable
 import kotlin.reflect.KProperty
 
 data class SchemaColumn<T>(
@@ -20,7 +20,7 @@ data class SchemaColumn<T>(
     fun from(property: KProperty<*>, config: SchemaConfig = SchemaConfig.Default) = SchemaColumn(
       name = property.fieldName,
       dataType = DataType.from(property, config),
-      nullable = property.nullable
+      nullable = property.isNullable
     )
   }
 }

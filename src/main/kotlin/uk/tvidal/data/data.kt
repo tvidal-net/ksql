@@ -23,9 +23,6 @@ import kotlin.reflect.jvm.javaField
 
 typealias WhereClauseBuilder<E> = SqlFilterBuilder<E>.(KClass<out E>) -> Unit
 
-val <E : Any> KClass<out E>.keyFilter: SqlFilter
-  get() = equalsFilter(keyFields)
-
 val RandomUUID: UUID
   get() = UUID.randomUUID()
 
@@ -36,6 +33,37 @@ val Today: LocalDate
 
 val Now: LocalDateTime
   get() = LocalDateTime.now()
+
+@Suppress("UNCHECKED_CAST")
+internal fun <T : Any> KCallable<T?>.returnTypeClass(): KClass<out T> =
+  returnType.classifier as? KClass<out T> ?: returnType as KClass<out T>
+
+private inline fun <reified T : Annotation> Field?.findAnnotation(): T? =
+  this?.getAnnotation<T>(T::class.java)
+
+private inline fun <reified T : Annotation> Field?.hasAnnotation(): Boolean =
+  this?.findAnnotation<T>() != null
+
+internal fun Column?.fieldName(fallback: String) =
+  this?.name?.ifBlank { null } ?: fallback
+
+internal val Column.nullablePrecision: Int?
+  get() = if (precision != 0) precision else null
+
+internal val KProperty<*>.column: Column?
+  get() = findAnnotation() ?: javaField.findAnnotation()
+
+internal val KProperty<*>.isNullable: Boolean
+  get() = returnType.isMarkedNullable || column?.nullable ?: false
+
+internal val KProperty<*>.isKeyField: Boolean
+  get() = hasAnnotation<Id>() || javaField.hasAnnotation<Id>()
+
+internal val KProperty<*>.isTransient: Boolean
+  get() = hasAnnotation<Transient>() || javaField.hasAnnotation<Transient>()
+
+internal val KProperty<*>.fieldName: String
+  get() = column.fieldName(name)
 
 private fun Table?.tableName(fallback: String) = TableName(
   name = this?.name?.ifBlank { null } ?: fallback,
@@ -50,36 +78,8 @@ internal val KClass<*>.tableName: TableName
     findAnnotation<Entity>().tableName(simpleName!!)
   )
 
-@Suppress("UNCHECKED_CAST")
-internal fun <T : Any> KCallable<T?>.returnTypeClass(): KClass<out T> =
-  returnType.classifier as? KClass<out T> ?: returnType as KClass<out T>
-
-private inline fun <reified T : Annotation> Field?.findAnnotation(): T? =
-  this?.getAnnotation<T>(T::class.java)
-
-private inline fun <reified T : Annotation> Field?.hasAnnotation(): Boolean =
-  this?.findAnnotation<T>() != null
-
-internal val KProperty<*>.column: Column?
-  get() = findAnnotation() ?: javaField.findAnnotation()
-
-internal val KProperty<*>.nullable: Boolean
-  get() = returnType.isMarkedNullable || column?.nullable ?: false
-
-internal fun Column?.fieldName(fallback: String) =
-  this?.name?.ifBlank { null } ?: fallback
-
-internal val Column.nullablePrecision: Int?
-  get() = if (precision != 0) precision else null
-
-internal val KProperty<*>.fieldName: String
-  get() = column.fieldName(name)
-
 internal val <E : Any> KClass<out E>.fields: Collection<KProperty1<out E, *>>
-  get() = memberProperties
-
-internal val KProperty<*>.isKeyField: Boolean
-  get() = hasAnnotation<Id>() || javaField.hasAnnotation<Id>()
+  get() = memberProperties.filterNot(KProperty<*>::isTransient)
 
 internal val <E : Any> KClass<out E>.insertFields: Collection<KProperty1<out E, *>>
   get() = fields.filterNot { it.column?.insertable == false }
@@ -89,6 +89,9 @@ internal val <E : Any> KClass<out E>.updateFields: Collection<KProperty1<out E, 
 
 internal val <E : Any> KClass<out E>.keyFields: Collection<KProperty1<out E, *>>
   get() = fields.filter(KProperty<*>::isKeyField)
+
+internal val <E : Any> KClass<out E>.keyFilter: SqlFilter
+  get() = equalsFilter(keyFields)
 
 internal fun equalsFilter(filterColumns: Collection<KProperty1<*, *>>): SqlFilter {
   if (filterColumns.isEmpty()) {
@@ -104,10 +107,10 @@ internal fun equalsFilter(filterColumns: Collection<KProperty1<*, *>>): SqlFilte
   }
 }
 
-inline fun <reified E : Any> whereClause(builder: WhereClauseBuilder<E>): SqlFilter =
+inline fun <reified E : Any> where(builder: WhereClauseBuilder<E>): SqlFilter =
   SqlFilterBuilder<E>()
     .apply { builder(E::class) }
     .build()
 
-inline fun <reified E : Any> Repository<E>.where(builder: WhereClauseBuilder<E>) =
-  select(whereClause(builder))
+inline fun <reified E : Any> Repository<E>.selectWhere(builder: WhereClauseBuilder<E>) =
+  select(where(builder))

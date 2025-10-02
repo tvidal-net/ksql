@@ -86,7 +86,7 @@ class Database(
   }
 
   inline fun <reified E : Any> delete(builder: WhereClauseBuilder<E>) = execute(
-    dialect.delete(E::class, whereClause<E>(builder))
+    dialect.delete(E::class, where<E>(builder))
   )
 
   fun beginTransaction() = currentTransaction ?: createConnection().also(connection::set)

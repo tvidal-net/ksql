@@ -5,7 +5,7 @@ import org.junit.jupiter.api.assertThrows
 import uk.tvidal.data.equalsFilter
 import uk.tvidal.data.keyFilter
 import uk.tvidal.data.logging.KLogging
-import uk.tvidal.data.whereClause
+import uk.tvidal.data.where
 import javax.persistence.Id
 import kotlin.test.assertEquals
 
@@ -32,7 +32,7 @@ class FilterTest {
 
   @Test
   fun testMultiKeyFilter() {
-    val expected = whereClause {
+    val expected = where {
       MultiKeyTable::firstKey.eq()
       MultiKeyTable::secondKey.eq()
     }
@@ -55,7 +55,7 @@ class FilterTest {
         SqlPropertyParamFilter.LessThan(TestClass::key)
       )
     )
-    val actual = whereClause {
+    val actual = where {
       TestClass::key.gt().or(TestClass::key.lt())
     }
     assertEquals(expected, actual)

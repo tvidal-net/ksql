@@ -24,7 +24,7 @@ interface EntityDecoder<out E> {
     override fun invoke(rs: ResultSet): E = constructor.callBy(
       constructorParams.mapValues { (param, decodeValue) ->
         val fieldName = namingStrategy[param.fieldName]
-        decodeValue(rs, fieldName)
+        decodeValue.getResultSetValue(rs, fieldName)
       }
     )
   }
@@ -51,7 +51,7 @@ interface EntityDecoder<out E> {
       fields.forEach { (field, decodeValue) ->
         val fieldName = namingStrategy[field.fieldName]
         if (fieldName in existing) {
-          val value = decodeValue(rs, fieldName)
+          val value = decodeValue.getResultSetValue(rs, fieldName)
           field.set(instance, value)
         }
       }

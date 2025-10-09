@@ -27,7 +27,7 @@ class TestDialect : SqlDialect(NamingStrategy.AsIs) {
     schemaColumn(it)
   }
 
-  fun dataType(it: DataType<*>) = sql {
+  fun dataType(it: DataType<*, *>) = sql {
     dataType(it)
   }
 

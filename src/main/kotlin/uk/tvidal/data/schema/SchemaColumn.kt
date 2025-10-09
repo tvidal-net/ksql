@@ -7,7 +7,7 @@ import kotlin.reflect.KProperty
 
 data class SchemaColumn<T>(
   val name: String,
-  val dataType: DataType<T>,
+  val dataType: DataType<*, T>,
   val nullable: Boolean = true,
 ) {
 

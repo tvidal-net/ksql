@@ -13,8 +13,8 @@ class JsonDecoder<out T : Any>(type: KClass<out T>) : ResultSetDecoder<T> {
 
   private val reader = json.readerFor(type.java)
 
-  override fun invoke(rs: ResultSet, fieldName: String): T? =
-    rs.getString(fieldName)
+  override fun getResultSetValue(rs: ResultSet, columnLabel: String): T? =
+    rs.getString(columnLabel)
       ?.let(reader::readValue)
 
   companion object {

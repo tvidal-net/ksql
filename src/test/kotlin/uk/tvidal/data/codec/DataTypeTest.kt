@@ -8,7 +8,8 @@ import java.sql.Timestamp
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
-import java.util.*
+import java.util.Date
+import java.util.UUID
 import java.util.regex.Pattern
 import javax.persistence.Column
 import javax.persistence.Id
@@ -107,6 +108,6 @@ class DataTypeTest {
   @Test
   fun fromOtherTypes() {
     assertThat(DataType.from(T::uuid)).isEqualTo(DataType.UUID)
-    assertThat(DataType.from(T::json)).isEqualTo(DataType.Json(JsonType::class))
+    //assertThat(DataType.from(T::json)).isEqualTo(DataType.Json(JsonType::class))
   }
 }

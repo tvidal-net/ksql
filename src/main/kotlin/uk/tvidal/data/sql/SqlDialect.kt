@@ -258,7 +258,7 @@ open class SqlDialect(
     notNull(!column.nullable)
   }
 
-  protected open fun Appendable.dataType(dataType: DataType<*>) {
+  protected open fun Appendable.dataType(dataType: DataType<*, *>) {
     append(dataType.toString())
   }
 }

@@ -4,5 +4,5 @@ import java.sql.ResultSet
 
 @FunctionalInterface
 interface ResultSetDecoder<out T> {
-  operator fun invoke(rs: ResultSet, fieldName: String): T?
+  fun getResultSetValue(rs: ResultSet, columnLabel: String): T?
 }

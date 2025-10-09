@@ -10,7 +10,7 @@ internal class RepositoryImpl<E : Any>(
   override val db: Database,
   val decoder: EntityDecoder<E>,
   override val entity: KClass<out E>,
-) : Repository<E> {
+) : EntityRepository<E> {
 
   private val selectByKey: SimpleQuery by lazy {
     selectQuery(entity.keyFilter)

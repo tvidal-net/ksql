@@ -112,5 +112,5 @@ inline fun <reified E : Any> where(builder: WhereClauseBuilder<E>): SqlFilter =
     .apply { builder(E::class) }
     .build()
 
-inline fun <reified E : Any> Repository<E>.selectWhere(builder: WhereClauseBuilder<E>) =
-  select(where(builder))
+inline fun <reified E : Any> Repository<E>.where(builder: WhereClauseBuilder<E>) =
+  select(uk.tvidal.data.where(builder))

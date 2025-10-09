@@ -113,24 +113,24 @@ open class SqlDialect(
   }
 
   override fun <E : Any> save(
-    entity: KClass<out E>,
-    updateFields: Collection<KProperty1<out E, *>>,
-    keyFields: Collection<KProperty1<out E, *>>
+    entity: KClass<E>,
+    updateFields: Collection<KProperty1<E, *>>,
+    keyFields: Collection<KProperty1<E, *>>
   ): EntityQuery<E> = throw NotImplementedError(
     "saveQuery is not implemented for the default Dialect!"
   )
 
   override fun <E : Any> delete(
-    entity: KClass<out E>,
-    keyFields: Collection<KProperty1<out E, *>>
+    entity: KClass<E>,
+    keyFields: Collection<KProperty1<E, *>>
   ) = entityQuery<E> { params ->
     deleteQuery(params, entity.tableName, equalsFilter(keyFields))
   }
 
   override fun <E : Any> update(
-    entity: KClass<out E>,
-    updateFields: Collection<KProperty1<out E, *>>,
-    keyFields: Collection<KProperty1<out E, *>>
+    entity: KClass<E>,
+    updateFields: Collection<KProperty1<E, *>>,
+    keyFields: Collection<KProperty1<E, *>>
   ) = entityQuery<E> { params ->
     append("UPDATE ")
     tableName(entity.tableName)
@@ -140,8 +140,8 @@ open class SqlDialect(
   }
 
   override fun <E : Any> insert(
-    entity: KClass<out E>,
-    insertFields: Collection<KProperty1<out E, *>>
+    entity: KClass<E>,
+    insertFields: Collection<KProperty1<E, *>>
   ) = entityQuery<E> { params ->
     insertInto(entity.tableName, params, insertFields)
   }
@@ -149,7 +149,7 @@ open class SqlDialect(
   protected open fun <E, P : QueryParam> Appendable.insertInto(
     table: TableName,
     params: MutableCollection<in P>,
-    insertFields: Collection<KProperty1<out E, *>>
+    insertFields: Collection<KProperty1<E, *>>
   ) {
     append("INSERT INTO ")
     appendLine()
@@ -162,7 +162,7 @@ open class SqlDialect(
 
   protected open fun <E, P : QueryParam> Appendable.insertValues(
     params: MutableCollection<in P>,
-    insertFields: Collection<KProperty1<out E, *>>
+    insertFields: Collection<KProperty1<E, *>>
   ) {
     appendLine()
     indent()

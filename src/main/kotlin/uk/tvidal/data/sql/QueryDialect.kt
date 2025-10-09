@@ -17,14 +17,14 @@ interface QueryDialect {
   ): SimpleQuery
 
   fun <E : Any> save(
-    entity: KClass<out E>,
-    updateFields: Collection<KProperty1<out E, *>> = entity.updateFields,
-    keyFields: Collection<KProperty1<out E, *>> = entity.keyFields
+    entity: KClass<E>,
+    updateFields: Collection<KProperty1<E, *>> = entity.updateFields,
+    keyFields: Collection<KProperty1<E, *>> = entity.keyFields
   ): EntityQuery<E>
 
   fun <E : Any> delete(
-    entity: KClass<out E>,
-    keyFields: Collection<KProperty1<out E, *>> = entity.keyFields,
+    entity: KClass<E>,
+    keyFields: Collection<KProperty1<E, *>> = entity.keyFields,
   ): EntityQuery<E>
 
   fun delete(
@@ -33,13 +33,13 @@ interface QueryDialect {
   ): SimpleQuery
 
   fun <E : Any> update(
-    entity: KClass<out E>,
-    updateFields: Collection<KProperty1<out E, *>> = entity.updateFields,
-    keyFields: Collection<KProperty1<out E, *>> = entity.keyFields,
+    entity: KClass<E>,
+    updateFields: Collection<KProperty1<E, *>> = entity.updateFields,
+    keyFields: Collection<KProperty1<E, *>> = entity.keyFields,
   ): EntityQuery<E>
 
   fun <E : Any> insert(
-    entity: KClass<out E>,
-    insertFields: Collection<KProperty1<out E, *>> = entity.insertFields
+    entity: KClass<E>,
+    insertFields: Collection<KProperty1<E, *>> = entity.insertFields
   ): EntityQuery<E>
 }

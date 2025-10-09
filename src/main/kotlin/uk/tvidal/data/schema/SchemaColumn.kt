@@ -3,9 +3,12 @@ package uk.tvidal.data.schema
 import uk.tvidal.data.codec.DataType
 import uk.tvidal.data.fieldName
 import uk.tvidal.data.isNullable
-import kotlin.reflect.KProperty
+import uk.tvidal.data.keyFields
+import uk.tvidal.data.valueType
+import kotlin.reflect.KClass
+import kotlin.reflect.KProperty1
 
-data class SchemaColumn<T>(
+data class SchemaColumn<T : Any>(
   val name: String,
   val dataType: DataType<*, T>,
   val nullable: Boolean = true,
@@ -17,9 +20,23 @@ data class SchemaColumn<T>(
     fun nullDef(nullable: Boolean) =
       (if (!nullable) "NOT " else "") + "NULL"
 
-    fun from(property: KProperty<*>, config: SchemaConfig = SchemaConfig.Default) = SchemaColumn(
+    private fun keyType(entity: KClass<*>, config: SchemaConfig): DataType<*, *> {
+      val keyFields = entity.keyFields
+      require(keyFields.size == 1) {
+        "Referenced entity ${entity.qualifiedName} must have exactly ONE Id Field"
+      }
+      return requireNotNull(DataType.from(keyFields.single(), config)) {
+        "Unable to get a DataType for ${keyFields.single()}"
+      }
+    }
+
+    private fun dataType(property: KProperty1<*, *>, config: SchemaConfig): DataType<*, *> {
+      return DataType.from(property) ?: keyType(property.valueType(), config)
+    }
+
+    fun from(property: KProperty1<*, *>, config: SchemaConfig = SchemaConfig.Default) = SchemaColumn(
       name = property.fieldName,
-      dataType = DataType.from(property, config),
+      dataType = dataType(property, config),
       nullable = property.isNullable
     )
   }

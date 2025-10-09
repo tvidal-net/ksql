@@ -20,15 +20,15 @@ class MariaDB(namingStrategy: NamingStrategy = NamingStrategy.SnakeCase) : SqlDi
   }
 
   override fun <E : Any> save(
-    entity: KClass<out E>,
-    updateFields: Collection<KProperty1<out E, *>>,
-    keyFields: Collection<KProperty1<out E, *>>
+    entity: KClass<E>,
+    updateFields: Collection<KProperty1<E, *>>,
+    keyFields: Collection<KProperty1<E, *>>
   ) = entityQuery<E> { params ->
     insertInto(entity.tableName, params, updateFields + keyFields)
     onDuplicateKey(updateFields)
   }
 
-  private fun <E> Appendable.onDuplicateKey(fields: Collection<KProperty1<out E, *>>) {
+  private fun <E> Appendable.onDuplicateKey(fields: Collection<KProperty1<E, *>>) {
     appendLine()
     indent()
     append("ON DUPLICATE KEY UPDATE ")

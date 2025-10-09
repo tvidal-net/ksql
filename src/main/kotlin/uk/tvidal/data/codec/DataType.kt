@@ -2,6 +2,7 @@ package uk.tvidal.data.codec
 
 import uk.tvidal.data.nullablePrecision
 import uk.tvidal.data.schema.SchemaConfig
+import uk.tvidal.data.valueType
 import java.sql.PreparedStatement
 import java.sql.ResultSet
 import java.sql.Types
@@ -9,8 +10,10 @@ import java.time.LocalDateTime
 import javax.persistence.Column
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty
+import kotlin.reflect.full.allSupertypes
+import kotlin.reflect.full.isSubclassOf
 
-open class DataType<J, T>(
+open class DataType<J, T : Any>(
   val sqlDataType: String,
   val codec: JdbcValueCodec<J, T>,
   val setParam: SetParamValue<J>,
@@ -33,7 +36,7 @@ open class DataType<J, T>(
     }
   }
 
-  open class Primitive<T>(
+  open class Primitive<T : Any>(
     sqlDataType: String,
     setParam: SetParamValue<T>,
     getValue: GetResultSetValue<T>,
@@ -86,7 +89,7 @@ open class DataType<J, T>(
     getValue = ResultSet::getFloat,
   )
 
-  open class SqlTimestamp<T>(
+  open class SqlTimestamp<T : Any>(
     codec: JdbcValueCodec<java.sql.Timestamp, T>,
   ) : DataType<java.sql.Timestamp, T>(
     codec = codec,
@@ -107,7 +110,7 @@ open class DataType<J, T>(
     codec = JdbcValueCodec.InstantCodec
   )
 
-  open class SqlDate<T>(
+  open class SqlDate<T : Any>(
     codec: JdbcValueCodec<java.sql.Date, T>,
   ) : DataType<java.sql.Date, T>(
     codec = codec,
@@ -124,7 +127,7 @@ open class DataType<J, T>(
     codec = JdbcValueCodec.LocalDateCodec
   )
 
-  open class SqlTime<T>(
+  open class SqlTime<T : Any>(
     codec: JdbcValueCodec<java.sql.Time, T>,
   ) : DataType<java.sql.Time, T>(
     codec = codec,
@@ -148,10 +151,13 @@ open class DataType<J, T>(
     getValue = ResultSet::getString,
   )
 
-  data class EnumType<E : Enum<E>>(val enumClass: KClass<E>) : ShortString<E>(
+  data class EnumType<E : Enum<E>>(
+    val enumClass: KClass<E>,
+    val ignoreCase: kotlin.Boolean = true
+  ) : ShortString<E>(
     decoder = { value ->
       enumClass.java.enumConstants.single {
-        value.equals(it.name, ignoreCase = true)
+        value.equals(it.name, ignoreCase)
       }
     }
   )
@@ -212,6 +218,14 @@ open class DataType<J, T>(
     constructor(column: Column) : this(column.scale, column.nullablePrecision)
   }
 
+  private fun valueType(): KClass<T> {
+    val dataType = this::class.allSupertypes
+      .single { it.classifier == DataType::class }
+
+    @Suppress("UNCHECKED_CAST")
+    return dataType.arguments.last().type!!.classifier!! as KClass<T>
+  }
+
   override fun toString() = sqlDataType
 
   companion object {
@@ -222,11 +236,25 @@ open class DataType<J, T>(
     const val DEFAULT_SCALE = 11
     const val DEFAULT_PRECISION = 2
 
+    private val dataTypes: Collection<DataType<*, *>>
+      get() = DataType::class.nestedClasses
+        .mapNotNull { it.objectInstance }
+        .filterIsInstance<DataType<*, *>>()
+
     private fun nullable(precision: Int?) =
       if (precision == null) "" else ",$precision"
 
-    fun <T> from(property: KProperty<T>, config: SchemaConfig = SchemaConfig.Default): DataType<*, T> {
-      TODO()
+    @Suppress("UNCHECKED_CAST")
+    fun from(property: KProperty<*>, config: SchemaConfig = SchemaConfig.Default): DataType<*, *>? {
+      val valueType = property.valueType()
+      return when {
+        valueType.java.isEnum -> EnumType(valueType as KClass<out Enum<*>>, config.enumIgnoreCase)
+        valueType.isSubclassOf(CharSequence::class) -> config.stringDataType
+        valueType.isSubclassOf(BigDecimal::class) -> config.decimalDataType
+        else -> dataTypes.firstOrNull {
+          it.valueType().isSubclassOf(valueType)
+        }
+      }
     }
   }
 }

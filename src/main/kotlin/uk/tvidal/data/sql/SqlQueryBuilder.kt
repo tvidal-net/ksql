@@ -31,7 +31,7 @@ abstract class SqlQueryBuilder(val namingStrategy: NamingStrategy) {
   @Suppress("UNCHECKED_CAST")
   protected fun <E, P : QueryParam> Appendable.setFields(
     params: MutableCollection<in P>,
-    fields: Collection<KProperty1<out E, *>>
+    fields: Collection<KProperty1<E, *>>
   ) {
     append("SET ")
     for ((i, field) in fields.withIndex()) {

@@ -35,7 +35,7 @@ val Now: LocalDateTime
   get() = LocalDateTime.now()
 
 @Suppress("UNCHECKED_CAST")
-internal fun <T : Any> KCallable<T?>.returnTypeClass(): KClass<out T> =
+internal fun <T : Any> KCallable<T?>.valueType(): KClass<out T> =
   returnType.classifier as? KClass<out T> ?: returnType as KClass<out T>
 
 private inline fun <reified T : Annotation> Field?.findAnnotation(): T? =
@@ -78,19 +78,19 @@ internal val KClass<*>.tableName: TableName
     findAnnotation<Entity>().tableName(simpleName!!)
   )
 
-internal val <E : Any> KClass<out E>.fields: Collection<KProperty1<out E, *>>
+internal val <E : Any> KClass<E>.fields: Collection<KProperty1<E, *>>
   get() = memberProperties.filterNot(KProperty<*>::isTransient)
 
-internal val <E : Any> KClass<out E>.insertFields: Collection<KProperty1<out E, *>>
+internal val <E : Any> KClass<E>.insertFields: Collection<KProperty1<E, *>>
   get() = fields.filterNot { it.column?.insertable == false }
 
-internal val <E : Any> KClass<out E>.updateFields: Collection<KProperty1<out E, *>>
+internal val <E : Any> KClass<E>.updateFields: Collection<KProperty1<E, *>>
   get() = fields.filterNot { it.isKeyField || it.column?.updatable == false }
 
-internal val <E : Any> KClass<out E>.keyFields: Collection<KProperty1<out E, *>>
+internal val <E : Any> KClass<E>.keyFields: Collection<KProperty1<E, *>>
   get() = fields.filter(KProperty<*>::isKeyField)
 
-internal val <E : Any> KClass<out E>.keyFilter: SqlFilter
+internal val <E : Any> KClass<E>.keyFilter: SqlFilter
   get() = equalsFilter(keyFields)
 
 internal fun equalsFilter(filterColumns: Collection<KProperty1<*, *>>): SqlFilter {

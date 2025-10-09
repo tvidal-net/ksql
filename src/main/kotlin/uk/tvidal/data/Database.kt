@@ -35,7 +35,7 @@ class Database(
   )
 
   fun <E : Any> repository(
-    entity: KClass<out E>,
+    entity: KClass<E>,
     decoder: EntityDecoder<E>,
   ): EntityRepository<E> = RepositoryImpl(
     db = this,

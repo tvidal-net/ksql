@@ -11,9 +11,9 @@ import kotlin.reflect.KProperty1
 class H2DB(namingStrategy: NamingStrategy = NamingStrategy.SnakeCase) : SqlDialect(namingStrategy) {
 
   override fun <E : Any> save(
-    entity: KClass<out E>,
-    updateFields: Collection<KProperty1<out E, *>>,
-    keyFields: Collection<KProperty1<out E, *>>
+    entity: KClass<E>,
+    updateFields: Collection<KProperty1<E, *>>,
+    keyFields: Collection<KProperty1<E, *>>
   ) = entityQuery<E> { params ->
     append("MERGE INTO ")
     tableName(entity.tableName)

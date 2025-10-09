@@ -6,7 +6,7 @@ import kotlin.reflect.KClass
 interface Repository<E : Any> : Iterable<E> {
 
   val db: Database
-  val entity: KClass<out E>
+  val entity: KClass<E>
 
   fun one(vararg keyValues: Any): E?
 

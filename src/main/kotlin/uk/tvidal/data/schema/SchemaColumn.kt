@@ -31,7 +31,11 @@ data class SchemaColumn<T : Any>(
     }
 
     private fun dataType(property: KProperty1<*, *>, config: SchemaConfig): DataType<*, *> {
-      return DataType.from(property) ?: keyType(property.valueType(), config)
+      val dataType = DataType.from(property) ?: keyType(property.valueType(), config)
+      return when (dataType) {
+        is DataType.EnumType<*> -> config.shortStringDataType
+        else -> dataType
+      }
     }
 
     fun from(property: KProperty1<*, *>, config: SchemaConfig = SchemaConfig.Default) = SchemaColumn(

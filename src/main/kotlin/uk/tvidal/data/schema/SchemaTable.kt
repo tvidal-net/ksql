@@ -1,8 +1,11 @@
 package uk.tvidal.data.schema
 
 import uk.tvidal.data.TableName
+import uk.tvidal.data.fieldName
 import uk.tvidal.data.fields
+import uk.tvidal.data.keyFields
 import uk.tvidal.data.tableName
+import uk.tvidal.data.valueType
 import kotlin.reflect.KClass
 
 data class SchemaTable(
@@ -23,10 +26,29 @@ data class SchemaTable(
 
   companion object Factory {
 
+    fun foreignKeys(entity: KClass<*>) = entity.fields.mapNotNull { field ->
+      val entity = field.valueType()
+      val keyFields = entity.keyFields
+      if (keyFields.size == 1) {
+        val idField = keyFields.single()
+        Constraint.ForeignKey(
+          table = entity.tableName,
+          references = listOf(
+            Constraint.ForeignKeyReference(
+              columnName = field.fieldName,
+              referenceColumn = idField.fieldName
+            )
+          )
+        )
+      } else {
+        null
+      }
+    }
+
     fun from(entity: KClass<*>, config: SchemaConfig = SchemaConfig.Default) = SchemaTable(
       name = entity.tableName,
       columns = entity.fields.map { SchemaColumn.from(it, config) },
-      constraints = listOfNotNull(entity.primaryKey)
+      constraints = listOfNotNull(entity.primaryKey) + foreignKeys(entity)
     )
   }
 }

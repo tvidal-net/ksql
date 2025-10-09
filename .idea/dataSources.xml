@@ -13,7 +13,7 @@
       </jdbc-additional-properties>
       <working-dir>$ProjectFileDir$</working-dir>
     </data-source>
-    <data-source source="LOCAL" name="default" uuid="489bcbd7-95c8-4cda-98a1-93a6714ec2ce">
+    <data-source source="LOCAL" name="h2:mem" uuid="489bcbd7-95c8-4cda-98a1-93a6714ec2ce">
       <driver-ref>h2.unified</driver-ref>
       <synchronize>true</synchronize>
       <jdbc-driver>org.h2.Driver</jdbc-driver>

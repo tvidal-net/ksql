@@ -1,9 +1,9 @@
 package uk.tvidal.data.query
 
 open class SimpleQuery(
-  sql: String,
+  val sql: String,
   open val params: Collection<QueryParam> = emptyList()
-) : SqlQuery(sql), Iterable<QueryParam> {
+) : Iterable<QueryParam> {
 
   override fun iterator() = params.iterator()
 

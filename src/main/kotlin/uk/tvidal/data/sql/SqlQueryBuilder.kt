@@ -195,6 +195,18 @@ abstract class SqlQueryBuilder(val namingStrategy: NamingStrategy) {
     closeQuote()
   }
 
+  protected fun Appendable.ifExists(value: Boolean) {
+    if (value) {
+      append("IF EXISTS ")
+    }
+  }
+
+  protected fun Appendable.ifNotExists(value: Boolean) {
+    if (value) {
+      append("IF NOT EXISTS ")
+    }
+  }
+
   protected fun Appendable.notNull(notNull: Boolean) {
     if (notNull) {
       append(" NOT NULL")

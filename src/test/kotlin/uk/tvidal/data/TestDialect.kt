@@ -6,7 +6,7 @@ import org.assertj.core.api.Assertions
 import uk.tvidal.data.codec.DataType
 import uk.tvidal.data.filter.SqlFilter
 import uk.tvidal.data.query.QueryParam
-import uk.tvidal.data.query.SqlQuery
+import uk.tvidal.data.query.SimpleQuery
 import uk.tvidal.data.schema.ColumnReference
 import uk.tvidal.data.schema.Constraint
 import uk.tvidal.data.schema.SchemaColumn
@@ -63,12 +63,20 @@ class TestDialect : SqlDialect(NamingStrategy.AsIs) {
     private fun sql(builder: Appendable.() -> Unit) =
       buildString(builder).actual
 
-    fun assertQuery(builder: TestDialect.() -> SqlQuery): AbstractStringAssert<*> = Assertions.assertThat(
+    fun assertQuery(builder: TestDialect.() -> SimpleQuery): AbstractStringAssert<*> = Assertions.assertThat(
       builder(TestDialect()).sql.actual
     )
 
-    fun assertThrows(builder: TestDialect.() -> SqlQuery): AbstractThrowableAssert<*, out Throwable> = Assertions.assertThatThrownBy {
+    fun assertSql(builder: TestDialect.() -> String): AbstractStringAssert<*> = Assertions.assertThat(
+      builder(TestDialect()).actual
+    )
+
+    fun assertThrows(builder: TestDialect.() -> SimpleQuery): AbstractThrowableAssert<*, out Throwable> = Assertions.assertThatThrownBy {
       builder(TestDialect()).sql.actual
+    }
+
+    fun assertSqlThrows(builder: TestDialect.() -> String): AbstractThrowableAssert<*, out Throwable> = Assertions.assertThatThrownBy {
+      builder(TestDialect()).actual
     }
 
     fun assertThat(builder: TestDialect.() -> String): AbstractStringAssert<*> = Assertions.assertThat(

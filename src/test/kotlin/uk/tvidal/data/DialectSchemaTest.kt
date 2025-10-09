@@ -2,6 +2,7 @@ package uk.tvidal.data
 
 import org.junit.jupiter.api.Test
 import uk.tvidal.data.TestDialect.SqlAssertions.assertQuery
+import uk.tvidal.data.TestDialect.SqlAssertions.assertSql
 import uk.tvidal.data.TestDialect.SqlAssertions.assertThat
 import uk.tvidal.data.codec.DataType
 import uk.tvidal.data.schema.ColumnReference.Factory.asc
@@ -20,25 +21,25 @@ class DialectSchemaTest {
   @Test
   fun createTableIfNotExists() {
     data class Person(val name: String, @Id val id: Int)
-    assertQuery { create(Person::class) }
+    assertSql { create(Person::class) }
       .isEqualTo("CREATE TABLE IF NOT EXISTS Person ( id INTEGER NOT NULL, name NVARCHAR(255) NOT NULL, PRIMARY KEY (id));")
   }
 
   @Test
   fun createTable() {
-    assertQuery { create(TestTable, false) }
+    assertSql { create(TestTable, false) }
       .isEqualTo("CREATE TABLE $TABLE ( $NAME, $ID, $PK, $UQ);")
   }
 
   @Test
   fun dropTableIfExists() {
-    assertQuery { drop(tableName) }
+    assertSql { drop(tableName) }
       .isEqualTo("DROP TABLE IF EXISTS $TABLE")
   }
 
   @Test
   fun dropTable() {
-    assertQuery { drop(tableName, false) }
+    assertSql { drop(tableName, false) }
       .isEqualTo("DROP TABLE $TABLE")
   }
 
@@ -105,14 +106,14 @@ class DialectSchemaTest {
   @Test
   fun anonymousIndex() {
     val index = Index(listOf(asc("id"), desc("name")))
-    assertQuery { create(tableName, index) }
+    assertSql { create(index, tableName) }
       .isEqualTo("CREATE INDEX ON $TABLE (id,name DESC)")
   }
 
   @Test
   fun namedIndex() {
     val index = Index(listOf(asc("id"), asc("name")), "test_idx")
-    assertQuery { create(tableName, index) }
+    assertSql { create(index, tableName) }
       .isEqualTo("CREATE INDEX test_idx ON $TABLE (id,name)")
   }
 

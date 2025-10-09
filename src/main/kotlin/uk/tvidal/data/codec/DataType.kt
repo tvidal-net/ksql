@@ -144,9 +144,12 @@ open class DataType<J, T : Any>(
     codec = JdbcValueCodec.LocalTimeCodec
   )
 
-  open class ShortString<T : Any>(decoder: (String) -> T) : DataType<String, T>(
+  open class ShortString<T : Any>(
+    decoder: (String) -> T,
+    sqlDataType: String = "VARCHAR($SHORT_STRING)",
+  ) : DataType<String, T>(
     codec = JdbcValueCodec.StringCodec(decoder),
-    sqlDataType = "VARCHAR($SHORT_STRING)",
+    sqlDataType = sqlDataType,
     setParam = PreparedStatement::setString,
     getValue = ResultSet::getString,
   )
@@ -169,7 +172,8 @@ open class DataType<J, T : Any>(
   )
 
   object UUID : ShortString<java.util.UUID>(
-    decoder = java.util.UUID::fromString
+    decoder = java.util.UUID::fromString,
+    sqlDataType = "UUID",
   )
 
   object Duration : ShortString<java.time.Duration>(
@@ -182,6 +186,8 @@ open class DataType<J, T : Any>(
     getValue = ResultSet::getString,
   ) {
     constructor(column: Column) : this(column.length)
+
+    override fun toString() = sqlDataType
   }
 
   data class NVarChar(val length: Int) : Primitive<String>(
@@ -190,6 +196,8 @@ open class DataType<J, T : Any>(
     getValue = ResultSet::getNString
   ) {
     constructor(column: Column) : this(column.length)
+
+    override fun toString() = sqlDataType
   }
 
   abstract class BigDecimal(
@@ -207,6 +215,8 @@ open class DataType<J, T : Any>(
     sqlDataType = "NUMERIC$scale${nullable(precision)}"
   ) {
     constructor(column: Column) : this(column.scale, column.nullablePrecision)
+
+    override fun toString() = sqlDataType
   }
 
   data class Decimal(
@@ -216,6 +226,8 @@ open class DataType<J, T : Any>(
     sqlDataType = "DECIMAL($scale${nullable(precision)})"
   ) {
     constructor(column: Column) : this(column.scale, column.nullablePrecision)
+
+    override fun toString() = sqlDataType
   }
 
   private fun valueType(): KClass<T> {
@@ -250,9 +262,11 @@ open class DataType<J, T : Any>(
       return when {
         valueType.java.isEnum -> EnumType(valueType as KClass<out Enum<*>>, config.enumIgnoreCase)
         valueType.isSubclassOf(CharSequence::class) -> config.stringDataType
-        valueType.isSubclassOf(BigDecimal::class) -> config.decimalDataType
         else -> dataTypes.firstOrNull {
           it.valueType().isSubclassOf(valueType)
+        } ?: when {
+          valueType.isSubclassOf(Number::class) -> config.decimalDataType
+          else -> null
         }
       }
     }

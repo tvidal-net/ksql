@@ -9,7 +9,6 @@ import uk.tvidal.data.filter.SqlFilter
 import uk.tvidal.data.query.EntityQuery
 import uk.tvidal.data.query.QueryParam
 import uk.tvidal.data.query.SimpleQuery
-import uk.tvidal.data.query.SqlQuery
 import uk.tvidal.data.schema.ColumnReference
 import uk.tvidal.data.schema.Constraint
 import uk.tvidal.data.schema.Index
@@ -25,7 +24,7 @@ open class SqlDialect(
 
   override fun create(table: SchemaTable, ifNotExists: Boolean) = sqlQuery {
     append("CREATE TABLE ")
-    if (ifNotExists) append("IF NOT EXISTS ")
+    ifNotExists(ifNotExists)
     tableName(table.name)
     space()
     openBlock()
@@ -46,38 +45,46 @@ open class SqlDialect(
     terminate()
     table.indices.forEach { index ->
       appendLine()
-      create(table.name, index)
+      create(index, table.name)
       terminate()
     }
   }
 
   override fun drop(table: TableName, ifExists: Boolean) = sqlQuery {
     append("DROP TABLE ")
-    if (ifExists) append("IF EXISTS ")
+    ifExists(ifExists)
     tableName(table)
   }
 
-  override fun create(table: TableName, index: Index) = sqlQuery {
-    append("CREATE INDEX")
+  override fun create(index: Index, table: TableName, ifNotExists: Boolean) = sqlQuery {
+    append("CREATE INDEX ")
+    ifNotExists(ifNotExists)
     if (index.name != null) {
-      space()
       quotedName(index.name)
+      space()
     }
-    append(" ON ")
+    append("ON ")
     tableName(table)
     space()
     columns(index.columns)
   }
 
+  override fun drop(index: Index, table: TableName, ifExists: Boolean) = sqlQuery {
+    requireNotNull(index.name) {
+      "Cannot drop index without a name"
+    }
+    append("DROP INDEX")
+    ifExists(ifExists)
+    quotedName(index.name)
+  }
+
   protected inline fun sqlQuery(
     builder: Appendable.() -> Unit
-  ) = SqlQuery(
-      sql = buildString {
-          builder()
-      }
-  )
+  ) = buildString {
+    builder()
+  }
 
-    override fun select(
+  override fun select(
     entity: KClass<*>,
     whereClause: SqlFilter?
   ) = simpleQuery { params ->
@@ -104,12 +111,12 @@ open class SqlDialect(
   protected inline fun simpleQuery(
     builder: Appendable.(MutableCollection<QueryParam.Value>) -> Unit
   ) = arrayListOf<QueryParam.Value>().let { params ->
-      SimpleQuery(
-          sql = buildString {
-              builder(params)
-          },
-          params = params
-      )
+    SimpleQuery(
+      sql = buildString {
+        builder(params)
+      },
+      params = params
+    )
   }
 
   override fun <E : Any> save(
@@ -173,12 +180,12 @@ open class SqlDialect(
   protected inline fun <E> entityQuery(
     builder: Appendable.(MutableCollection<EntityQuery.Param<E>>) -> Unit
   ) = arrayListOf<EntityQuery.Param<E>>().let { params ->
-      EntityQuery(
-          sql = buildString {
-              builder(params)
-          },
-          params = params
-      )
+    EntityQuery(
+      sql = buildString {
+        builder(params)
+      },
+      params = params
+    )
   }
 
   private fun <P : QueryParam> Appendable.deleteQuery(

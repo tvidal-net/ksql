@@ -60,7 +60,7 @@ class Database(
     Statement(cnn, sql).use {
       it.executeSingle()
     }.also {
-      log.info("executed: affected={}, {}", it, sql)
+      log.info("executed: affected={}\n{}", it, sql)
     }
   }
 
@@ -68,7 +68,7 @@ class Database(
     Statement(cnn, query).use {
       it.executeSingle()
     }.also {
-      log.info("executed: affected={}, {}", it, query)
+      log.info("executed: affected={}\n{}", it, query)
     }
   }
 
@@ -77,7 +77,7 @@ class Database(
       it.setParams(query[value])
       it.executeSingle()
     }.also {
-      log.info("executed: affected={}, {}", it, query)
+      log.info("executed: affected={}\n{}", it, query)
     }
   }
 

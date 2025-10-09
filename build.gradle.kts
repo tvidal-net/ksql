@@ -23,7 +23,7 @@ dependencies {
   implementation(kotlin("reflect"))
 
   testImplementation(kotlin("test"))
-  testRuntimeOnly(libs.jackson.kotlin)
+  testImplementation(libs.jackson.kotlin)
   testRuntimeOnly(libs.logback)
   testRuntimeOnly(libs.h2)
   testRuntimeOnly(libs.mariadb)

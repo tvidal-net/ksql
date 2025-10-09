@@ -24,6 +24,7 @@ dependencies {
 
   testImplementation(kotlin("test"))
   testImplementation(libs.jackson.kotlin)
+  testImplementation(libs.mockito)
   testRuntimeOnly(libs.logback)
   testRuntimeOnly(libs.h2)
   testRuntimeOnly(libs.mariadb)

@@ -2,15 +2,16 @@
 
 [versions]
 
-slf4j = "2.0.17"
-jpa = "2.2"
-logback = "1.5.18"
-jackson = "2.20.0"
 assertj = "3.27.6"
-postgresql = "42.7.8"
-mariadb = "3.5.6"
 h2 = "2.4.240"
+jackson = "2.20.0"
+jpa = "2.2"
 kotlin = "2.1.20"
+logback = "1.5.18"
+mariadb = "3.5.6"
+mockito = "6.1.0"
+postgresql = "42.7.8"
+slf4j = "2.0.17"
 
 [libraries]
 
@@ -23,3 +24,4 @@ assertj = { group = "org.assertj", name = "assertj-core", version.ref = "assertj
 postgresql = { group = "org.postgresql", name = "postgresql", version.ref = "postgresql" }
 mariadb = { group = "org.mariadb.jdbc", name = "mariadb-java-client", version.ref = "mariadb" }
 h2 = { group = "com.h2database", name = "h2", version.ref = "h2" }
+mockito = { group = "org.mockito.kotlin", name = "mockito-kotlin", version.ref = "mockito" }

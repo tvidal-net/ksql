@@ -1,13 +1,12 @@
 package uk.tvidal.data.codec
 
-import uk.tvidal.data.nullablePrecision
+import uk.tvidal.data.column
 import uk.tvidal.data.schema.SchemaConfig
 import uk.tvidal.data.valueType
 import java.sql.PreparedStatement
 import java.sql.ResultSet
 import java.sql.Types
 import java.time.LocalDateTime
-import javax.persistence.Column
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty
 import kotlin.reflect.full.allSupertypes
@@ -19,6 +18,9 @@ open class DataType<J, T : Any>(
   val setParam: SetParamValue<J>,
   val getValue: GetResultSetValue<J>,
 ) : ParamValueEncoder<T>, ResultSetDecoder<T> {
+
+  open val length: Int?
+    get() = null
 
   override fun setParamValue(ps: PreparedStatement, parameterIndex: Int, value: T?) {
     if (value != null) {
@@ -146,7 +148,8 @@ open class DataType<J, T : Any>(
 
   open class ShortString<T : Any>(
     decoder: (String) -> T,
-    sqlDataType: String = "VARCHAR($SHORT_STRING)",
+    override val length: Int = SHORT_STRING,
+    sqlDataType: String = "VARCHAR($length)",
   ) : DataType<String, T>(
     codec = JdbcValueCodec.StringCodec(decoder),
     sqlDataType = sqlDataType,
@@ -156,14 +159,19 @@ open class DataType<J, T : Any>(
 
   data class EnumType<E : Enum<E>>(
     val enumClass: KClass<E>,
+    override val length: Int = SHORT_STRING,
     val ignoreCase: kotlin.Boolean = true
   ) : ShortString<E>(
+    length = length,
+    sqlDataType = "VARCHAR($length)",
     decoder = { value ->
       enumClass.java.enumConstants.single {
         value.equals(it.name, ignoreCase)
       }
     }
-  )
+  ) {
+    override fun toString() = sqlDataType
+  }
 
   object Text : Primitive<String>(
     sqlDataType = "TEXT",
@@ -180,23 +188,19 @@ open class DataType<J, T : Any>(
     decoder = java.time.Duration::parse
   )
 
-  data class VarChar(val length: Int) : Primitive<String>(
+  data class VarChar(override val length: Int) : Primitive<String>(
     sqlDataType = "VARCHAR($length)",
     setParam = PreparedStatement::setString,
     getValue = ResultSet::getString,
   ) {
-    constructor(column: Column) : this(column.length)
-
     override fun toString() = sqlDataType
   }
 
-  data class NVarChar(val length: Int) : Primitive<String>(
+  data class NVarChar(override val length: Int) : Primitive<String>(
     sqlDataType = "NVARCHAR($length)",
     setParam = PreparedStatement::setNString,
     getValue = ResultSet::getNString
   ) {
-    constructor(column: Column) : this(column.length)
-
     override fun toString() = sqlDataType
   }
 
@@ -214,8 +218,6 @@ open class DataType<J, T : Any>(
   ) : BigDecimal(
     sqlDataType = "NUMERIC$scale${nullable(precision)}"
   ) {
-    constructor(column: Column) : this(column.scale, column.nullablePrecision)
-
     override fun toString() = sqlDataType
   }
 
@@ -225,8 +227,6 @@ open class DataType<J, T : Any>(
   ) : BigDecimal(
     sqlDataType = "DECIMAL($scale${nullable(precision)})"
   ) {
-    constructor(column: Column) : this(column.scale, column.nullablePrecision)
-
     override fun toString() = sqlDataType
   }
 
@@ -242,10 +242,10 @@ open class DataType<J, T : Any>(
 
   companion object {
 
-    const val SHORT_STRING = 0x40
-    const val STRING_LENGTH = 0x80
+    const val SHORT_STRING = 0x20
+    const val STRING_LENGTH = 0x400
 
-    const val DEFAULT_SCALE = 11
+    const val DEFAULT_SCALE = 13
     const val DEFAULT_PRECISION = 2
 
     private val dataTypes: Collection<DataType<*, *>>
@@ -256,16 +256,15 @@ open class DataType<J, T : Any>(
     private fun nullable(precision: Int?) =
       if (precision == null) "" else ",$precision"
 
-    @Suppress("UNCHECKED_CAST")
     fun from(property: KProperty<*>, config: SchemaConfig = SchemaConfig.Default): DataType<*, *>? {
       val valueType = property.valueType()
       return when {
-        valueType.java.isEnum -> EnumType(valueType as KClass<out Enum<*>>, config.enumIgnoreCase)
-        valueType.isSubclassOf(CharSequence::class) -> config.stringDataType
+        valueType.java.isEnum -> config.enumType(valueType, property.column)
+        valueType.isSubclassOf(CharSequence::class) -> config.string(property.column)
         else -> dataTypes.firstOrNull {
           it.valueType().isSubclassOf(valueType)
         } ?: when {
-          valueType.isSubclassOf(Number::class) -> config.decimalDataType
+          valueType.isSubclassOf(Number::class) -> config.decimal(property.column)
           else -> null
         }
       }

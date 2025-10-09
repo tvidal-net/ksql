@@ -14,7 +14,6 @@ import java.util.regex.Pattern
 import javax.persistence.Column
 import javax.persistence.Id
 
-@Suppress("AssertBetweenInconvertibleTypes")
 class DataTypeTest {
 
   val config = SchemaConfig.Default
@@ -87,22 +86,22 @@ class DataTypeTest {
 
   @Test
   fun fromDecimal() {
-    assertThat(DataType.from(T::decimal)).isEqualTo(config.decimal())
+    assertThat(DataType.from(T::decimal)).isEqualTo(config.decimal(null))
     assertThat(DataType.from(T::scaledDecimal)).isEqualTo(DataType.Decimal(3))
     assertThat(DataType.from(T::precisionDecimal)).isEqualTo(DataType.Decimal(5, 2))
   }
 
   @Test
   fun fromString() {
-    assertThat(DataType.from(T::string)).isEqualTo(config.string())
+    assertThat(DataType.from(T::string)).isEqualTo(config.string(null))
     assertThat(DataType.from(T::regex)).isEqualTo(DataType.Text)
     assertThat(DataType.from(T::pattern)).isEqualTo(DataType.Text)
-    assertThat(DataType.from(T::enum)).isEqualTo(config.shortString())
+    assertThat(DataType.from(T::enum)).isEqualTo(config.shortString(null))
   }
 
   @Test
   fun fromNullable() {
-    assertThat(DataType.from(T::nullableString)).isEqualTo(config.string())
+    assertThat(DataType.from(T::nullableString)).isEqualTo(config.string(null))
   }
 
   @Test

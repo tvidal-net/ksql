@@ -1,7 +1,6 @@
 package uk.tvidal.data
 
 import org.junit.jupiter.api.Test
-import uk.tvidal.data.TestDialect.SqlAssertions.assertQuery
 import uk.tvidal.data.TestDialect.SqlAssertions.assertSql
 import uk.tvidal.data.TestDialect.SqlAssertions.assertThat
 import uk.tvidal.data.codec.DataType

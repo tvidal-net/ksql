@@ -9,7 +9,7 @@ import kotlin.reflect.KClass
 class KLogger(val logger: Logger) : Logger by logger {
 
   constructor(logger: String) : this(LoggerFactory.getLogger(logger))
-  constructor(logger: Class<*>) : this(logger.name.substringBefore('$'))
+  constructor(logger: Class<*>) : this(logger.loggerName)
   constructor(logger: KClass<*>) : this(logger.java)
 
   override fun makeLoggingEventBuilder(level: Level): LoggingEventBuilder = logger.makeLoggingEventBuilder(level)
@@ -47,5 +47,9 @@ class KLogger(val logger: Logger) : Logger by logger {
 
   companion object {
     const val TEMPLATE_EXCEPTION = "{}: {}"
+
+    val Class<*>.loggerName: String
+      get() = name.substringBefore('$')
+        .removeSuffix("Kt")
   }
 }

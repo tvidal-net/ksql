@@ -2,6 +2,7 @@ package uk.tvidal.data.test
 
 import uk.tvidal.data.allTables
 import uk.tvidal.data.database.H2DB
+import uk.tvidal.data.execute
 
 private val h2 = H2DB.Default
 
@@ -13,10 +14,10 @@ private val db = H2DB.createDatabase(
 fun main() {
   db {
     allTables.forEach { table ->
-      db.execute(h2.create(table))
+      it.execute { h2.create(table) }
     }
     allTables.reversed().forEach { table ->
-      db.execute(h2.drop(table))
+      it.execute { h2.drop(table) }
     }
   }
 }

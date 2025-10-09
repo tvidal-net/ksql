@@ -1,10 +1,14 @@
 package uk.tvidal.data
 
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 import uk.tvidal.data.filter.SqlFilter
 import uk.tvidal.data.filter.SqlFilterBuilder
 import uk.tvidal.data.filter.SqlMultiFilter
 import uk.tvidal.data.filter.SqlPropertyParamFilter
+import uk.tvidal.data.logging.KLogger.Companion.loggerName
 import java.lang.reflect.Field
+import java.sql.Connection
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.util.UUID
@@ -46,9 +50,6 @@ private inline fun <reified T : Annotation> Field?.hasAnnotation(): Boolean =
 
 internal fun Column?.fieldName(fallback: String) =
   this?.name?.ifBlank { null } ?: fallback
-
-internal val Column.nullablePrecision: Int?
-  get() = if (precision != 0) precision else null
 
 internal val KProperty<*>.column: Column?
   get() = findAnnotation() ?: javaField.findAnnotation()
@@ -94,8 +95,8 @@ internal val <E : Any> KClass<E>.keyFilter: SqlFilter
   get() = equalsFilter(keyFields)
 
 internal fun equalsFilter(filterColumns: Collection<KProperty1<*, *>>): SqlFilter {
-  if (filterColumns.isEmpty()) {
-    throw IllegalArgumentException("filterColumns cannot be empty!")
+  require(filterColumns.isNotEmpty()) {
+    "filterColumns cannot be empty!"
   }
   val keyFilters = filterColumns.map { col ->
     SqlPropertyParamFilter.Equals(col)
@@ -114,3 +115,16 @@ inline fun <reified E : Any> where(builder: WhereClauseBuilder<E>): SqlFilter =
 
 inline fun <reified E : Any> Repository<E>.where(builder: WhereClauseBuilder<E>) =
   select(uk.tvidal.data.where(builder))
+
+inline fun Connection.execute(
+  log: Logger = LoggerFactory.getLogger({}::class.java.loggerName),
+  builder: () -> String
+): Boolean = builder().let { sql ->
+  prepareStatement(
+    sql
+  ).use { st ->
+    st.execute().also { result ->
+      log.info("executed: {}\n{}", result, sql)
+    }
+  }
+}

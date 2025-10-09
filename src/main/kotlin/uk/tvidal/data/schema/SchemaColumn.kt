@@ -16,7 +16,7 @@ data class SchemaColumn<T : Any>(
 
   override fun toString() = "$name $dataType ${nullDef(nullable)}"
 
-  companion object {
+  companion object Factory {
     fun nullDef(nullable: Boolean) =
       (if (!nullable) "NOT " else "") + "NULL"
 
@@ -30,17 +30,9 @@ data class SchemaColumn<T : Any>(
       }
     }
 
-    private fun dataType(property: KProperty1<*, *>, config: SchemaConfig): DataType<*, *> {
-      val dataType = DataType.from(property) ?: keyType(property.valueType(), config)
-      return when (dataType) {
-        is DataType.EnumType<*> -> config.shortStringDataType
-        else -> dataType
-      }
-    }
-
     fun from(property: KProperty1<*, *>, config: SchemaConfig = SchemaConfig.Default) = SchemaColumn(
       name = property.fieldName,
-      dataType = dataType(property, config),
+      dataType = DataType.from(property) ?: keyType(property.valueType(), config),
       nullable = property.isNullable
     )
   }

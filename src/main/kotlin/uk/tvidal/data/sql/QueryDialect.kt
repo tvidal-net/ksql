@@ -4,12 +4,18 @@ import uk.tvidal.data.filter.SqlFilter
 import uk.tvidal.data.insertFields
 import uk.tvidal.data.keyFields
 import uk.tvidal.data.query.EntityQuery
+import uk.tvidal.data.query.From
 import uk.tvidal.data.query.SimpleQuery
 import uk.tvidal.data.updateFields
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty1
 
 interface QueryDialect {
+
+  fun select(
+    from: Collection<From>,
+    whereClause: SqlFilter? = null
+  ): SimpleQuery
 
   fun select(
     entity: KClass<*>,

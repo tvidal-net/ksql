@@ -51,6 +51,14 @@ class TestDialect : SqlDialect(NamingStrategy.AsIs) {
     fieldNames(entity.fields)
   }
 
+  override fun Appendable.openQuote() {
+    append('[')
+  }
+
+  override fun Appendable.closeQuote() {
+    append(']')
+  }
+
   companion object SqlAssertions {
     val newLines = Regex("[\\n\\r]+\\s?", RegexOption.MULTILINE)
     val spaces = Regex("\\s+")

@@ -21,7 +21,7 @@ class DialectSchemaTest {
   fun createTableIfNotExists() {
     data class Person(val name: String, @Id val id: Int)
     assertSql { create(Person::class) }
-      .isEqualTo("CREATE TABLE IF NOT EXISTS Person ( id INTEGER NOT NULL, name NVARCHAR(255) NOT NULL, PRIMARY KEY (id));")
+      .isEqualTo("CREATE TABLE IF NOT EXISTS [Person] ( [id] INTEGER NOT NULL, [name] NVARCHAR(1024) NOT NULL, PRIMARY KEY ([id]));")
   }
 
   @Test
@@ -46,27 +46,27 @@ class DialectSchemaTest {
   fun namedPrimaryKey() {
     val pk = primaryKey("test_pk", "id", "type")
     assertThat { constraint(pk) }
-      .isEqualTo("CONSTRAINT test_pk PRIMARY KEY (id,type)")
+      .isEqualTo("CONSTRAINT [test_pk] PRIMARY KEY ([id],[type])")
   }
 
   @Test
   fun anonymousPrimaryKey() {
     assertThat { constraint(TestTable.primaryKey) }
-      .isEqualTo("PRIMARY KEY (id)")
+      .isEqualTo("PRIMARY KEY ([id])")
   }
 
   @Test
   fun namedUnique() {
     val uq = unique("test_uq", "id", "type")
     assertThat { constraint(uq) }
-      .isEqualTo("CONSTRAINT test_uq UNIQUE (id,type)")
+      .isEqualTo("CONSTRAINT [test_uq] UNIQUE ([id],[type])")
   }
 
   @Test
   fun anonymousUnique() {
     val uq = unique(null, "name")
     assertThat { constraint(uq) }
-      .isEqualTo("UNIQUE (name)")
+      .isEqualTo("UNIQUE ([name])")
   }
 
   @Test
@@ -76,7 +76,7 @@ class DialectSchemaTest {
       references = listOf(on("id", "other"))
     )
     assertThat { constraint(fk) }
-      .isEqualTo("FOREIGN KEY (id) REFERENCES $TABLE (other)")
+      .isEqualTo("FOREIGN KEY ([id]) REFERENCES $TABLE ([other])")
   }
 
   @Test
@@ -88,7 +88,7 @@ class DialectSchemaTest {
       references = listOf(on("id")),
     )
     assertThat { constraint(fk) }
-      .isEqualTo("FOREIGN KEY test_fk (id) REFERENCES $TABLE (id) ON DELETE SET NULL")
+      .isEqualTo("FOREIGN KEY [test_fk] ([id]) REFERENCES $TABLE ([id]) ON DELETE SET NULL")
   }
 
   @Test
@@ -99,21 +99,21 @@ class DialectSchemaTest {
       references = listOf(on("id"), on("type")),
     )
     assertThat { constraint(fk) }
-      .isEqualTo("FOREIGN KEY (id,type) REFERENCES $TABLE (id,type) ON UPDATE CASCADE")
+      .isEqualTo("FOREIGN KEY ([id],[type]) REFERENCES $TABLE ([id],[type]) ON UPDATE CASCADE")
   }
 
   @Test
   fun anonymousIndex() {
     val index = Index(listOf(asc("id"), desc("name")))
     assertSql { create(index, tableName) }
-      .isEqualTo("CREATE INDEX ON $TABLE (id,name DESC)")
+      .isEqualTo("CREATE INDEX IF NOT EXISTS ON $TABLE ([id],[name] DESC)")
   }
 
   @Test
   fun namedIndex() {
     val index = Index(listOf(asc("id"), asc("name")), "test_idx")
     assertSql { create(index, tableName) }
-      .isEqualTo("CREATE INDEX test_idx ON $TABLE (id,name)")
+      .isEqualTo("CREATE INDEX IF NOT EXISTS [test_idx] ON $TABLE ([id],[name])")
   }
 
   companion object {
@@ -129,10 +129,10 @@ class DialectSchemaTest {
       constraints = listOf(pk, uq)
     )
 
-    const val TABLE = "test.table"
-    const val NAME = "name VARCHAR(20)"
-    const val ID = "id UUID NOT NULL"
-    const val PK = "PRIMARY KEY (id)"
-    const val UQ = "UNIQUE (name DESC,id)"
+    const val TABLE = "[test].[table]"
+    const val NAME = "[name] VARCHAR(20)"
+    const val ID = "[id] UUID NOT NULL"
+    const val PK = "PRIMARY KEY ([id])"
+    const val UQ = "UNIQUE ([name] DESC,[id])"
   }
 }

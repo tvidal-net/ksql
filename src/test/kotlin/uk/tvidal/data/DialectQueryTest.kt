@@ -17,13 +17,13 @@ class DialectQueryTest {
   @Test
   fun selectAllQuery() {
     assertQuery { select(person) }
-      .isEqualTo("SELECT age,id,name FROM Person")
+      .isEqualTo("SELECT [age],[id],[name] FROM [Person]")
   }
 
   @Test
   fun selectByKeyQuery() {
     assertQuery { select(person, person.keyFilter) }
-      .isEqualTo("SELECT age,id,name FROM Person WHERE id = ?")
+      .isEqualTo("SELECT [age],[id],[name] FROM [Person] WHERE [id] = ?")
   }
 
   @Test
@@ -32,25 +32,25 @@ class DialectQueryTest {
       Person::age.gt(10)
     }
     assertQuery { delete(person, filter) }
-      .isEqualTo("DELETE FROM Person WHERE age > ?")
+      .isEqualTo("DELETE FROM [Person] WHERE [age] > ?")
   }
 
   @Test
   fun deleteQuery() {
     assertQuery { delete(person) }
-      .isEqualTo("DELETE FROM Person WHERE id = ?")
+      .isEqualTo("DELETE FROM [Person] WHERE [id] = ?")
   }
 
   @Test
   fun updateQuery() {
     assertQuery { update(person) }
-      .isEqualTo("UPDATE Person SET age = ?,name = ? WHERE id = ?")
+      .isEqualTo("UPDATE [Person] SET [age] = ?,[name] = ? WHERE [id] = ?")
   }
 
   @Test
   fun insertQuery() {
     assertQuery { insert(person) }
-      .isEqualTo("INSERT INTO Person (age,id,name) VALUES (?,?,?)")
+      .isEqualTo("INSERT INTO [Person] ([age],[id],[name]) VALUES (?,?,?)")
   }
 
   @Test

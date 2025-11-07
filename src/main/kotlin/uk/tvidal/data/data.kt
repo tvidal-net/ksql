@@ -7,6 +7,7 @@ import uk.tvidal.data.filter.SqlFilterBuilder
 import uk.tvidal.data.filter.SqlMultiFilter
 import uk.tvidal.data.filter.SqlPropertyParamFilter
 import uk.tvidal.data.logging.KLogger.Companion.loggerName
+import uk.tvidal.data.sql.SqlQueryBuilder.Constants.SCHEMA_SEP
 import java.lang.reflect.Field
 import java.sql.Connection
 import java.time.LocalDate
@@ -38,6 +39,12 @@ val Today: LocalDate
 val Now: LocalDateTime
   get() = LocalDateTime.now()
 
+internal fun String?.whenNotNull(suffix: Any?): String =
+  this?.let { "$it$suffix" } ?: ""
+
+internal val String?.dot: String
+  get() = whenNotNull(SCHEMA_SEP)
+
 @Suppress("UNCHECKED_CAST")
 internal fun <T : Any> KCallable<T?>.valueType(): KClass<out T> =
   returnType.classifier as? KClass<out T> ?: returnType as KClass<out T>
@@ -65,6 +72,9 @@ internal val KProperty<*>.isTransient: Boolean
 
 internal val KProperty<*>.fieldName: String
   get() = column.fieldName(name)
+
+internal fun KProperty<*>.fieldName(alias: String? = null) =
+  (alias?.let { "${it}_" } ?: "").let { "${it}${fieldName}" }
 
 private fun Table?.tableName(fallback: String) = TableName(
   name = this?.name?.ifBlank { null } ?: fallback,

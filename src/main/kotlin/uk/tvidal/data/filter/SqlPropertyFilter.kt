@@ -1,16 +1,17 @@
 package uk.tvidal.data.filter
 
-import kotlin.reflect.KProperty1
+import kotlin.reflect.KProperty
 
 sealed class SqlPropertyFilter<out V> : SqlFilter {
 
-  abstract val property: KProperty1<*, V>
+  abstract val alias: String?
+  abstract val property: KProperty<V>
 
-  data class IsNull(override val property: KProperty1<*, Any>) : SqlPropertyFilter<Any>() {
+  data class IsNull(override val property: KProperty<Any>, override val alias: String? = null) : SqlPropertyFilter<Any>() {
     override fun toString() = "${property.name}${SqlFilter.IS_NULL}"
   }
 
-  data class IsNotNull(override val property: KProperty1<*, Any>) : SqlPropertyFilter<Any>() {
+  data class IsNotNull(override val property: KProperty<Any>, override val alias: String? = null) : SqlPropertyFilter<Any>() {
     override fun toString() = "${property.name}${SqlFilter.IS_NOT_NULL}"
   }
 }

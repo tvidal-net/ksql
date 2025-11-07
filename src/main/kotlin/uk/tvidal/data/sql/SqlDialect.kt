@@ -7,6 +7,7 @@ import uk.tvidal.data.equalsFilter
 import uk.tvidal.data.fields
 import uk.tvidal.data.filter.SqlFilter
 import uk.tvidal.data.query.EntityQuery
+import uk.tvidal.data.query.From
 import uk.tvidal.data.query.QueryParam
 import uk.tvidal.data.query.SimpleQuery
 import uk.tvidal.data.schema.ColumnReference
@@ -85,6 +86,25 @@ open class SqlDialect(
   }
 
   override fun select(
+    from: Collection<From>,
+    whereClause: SqlFilter?
+  ) = simpleQuery { params ->
+    select(from)
+    from.filterIsInstance<From.Entity<*>>().let { e ->
+      require(e.size == 1) {
+        "Invalid from clause, expected a single one, received $e"
+      }
+      e.single().let {
+        from(it.entity, it.alias)
+      }
+    }
+    for (join in from.filterIsInstance<From.Join>()) {
+      join(params, join)
+    }
+    where(params, whereClause)
+  }
+
+  override fun select(
     entity: KClass<*>,
     whereClause: SqlFilter?
   ) = simpleQuery { params ->
@@ -94,11 +114,38 @@ open class SqlDialect(
     where(params, whereClause)
   }
 
-  protected open fun Appendable.from(entity: KClass<*>) {
+  protected open fun Appendable.from(entity: KClass<*>, alias: String? = null) {
     appendLine()
     indent()
     append("FROM ")
     tableName(entity.tableName)
+    alias?.let {
+      append(" AS ")
+      quotedName(it)
+    }
+  }
+
+  protected open fun <P : QueryParam> Appendable.join(
+    params: MutableCollection<in P>,
+    join: From.Join,
+  ) {
+    appendLine()
+    indent()
+    append(join.type)
+    space()
+    join.from.let {
+      if (it is From.Entity<*>) {
+        tableName(it.entity.tableName)
+      }
+      append(" AS ")
+      quotedName(it.alias)
+    }
+    appendLine()
+    indent()
+    append("ON ")
+    join.on?.let {
+      filter(params, it, join.alias)
+    }
   }
 
   override fun delete(

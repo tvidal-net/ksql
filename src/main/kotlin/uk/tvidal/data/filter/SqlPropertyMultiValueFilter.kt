@@ -1,6 +1,7 @@
 package uk.tvidal.data.filter
 
-import kotlin.reflect.KProperty1
+import uk.tvidal.data.dot
+import kotlin.reflect.KProperty
 
 sealed class SqlPropertyMultiValueFilter<out V> : SqlPropertyFilter<V>() {
 
@@ -8,24 +9,25 @@ sealed class SqlPropertyMultiValueFilter<out V> : SqlPropertyFilter<V>() {
   abstract val values: Collection<V>
 
   data class Between<T>(
-    override val property: KProperty1<*, T>,
+    override val property: KProperty<T>,
     val fromValue: T,
-    val toValue: T
+    val toValue: T,
+    override val alias: String? = null,
   ) : SqlPropertyMultiValueFilter<T>() {
     override val operator: String
       get() = SqlFilter.BETWEEN
-
     override val values: Collection<T>
       get() = listOf(fromValue, toValue)
   }
 
   data class In<T>(
-    override val property: KProperty1<*, T>,
-    override val values: Collection<T>
+    override val property: KProperty<T>,
+    override val values: Collection<T>,
+    override val alias: String? = null,
   ) : SqlPropertyMultiValueFilter<T>() {
     override val operator: String
       get() = SqlFilter.IN
   }
 
-  override fun toString() = "${property.name}$operator$values"
+  override fun toString() = "${alias.dot}${property.name}$operator$values"
 }

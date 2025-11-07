@@ -6,10 +6,12 @@ import uk.tvidal.data.fieldName
 import uk.tvidal.data.filter.SqlFilter
 import uk.tvidal.data.filter.SqlMultiFilter
 import uk.tvidal.data.filter.SqlPropertyFilter
+import uk.tvidal.data.filter.SqlPropertyJoinFilter
 import uk.tvidal.data.filter.SqlPropertyMultiValueFilter
 import uk.tvidal.data.filter.SqlPropertyParamFilter
 import uk.tvidal.data.filter.SqlPropertyValueFilter
 import uk.tvidal.data.query.EntityQuery
+import uk.tvidal.data.query.From
 import uk.tvidal.data.query.QueryParam
 import uk.tvidal.data.query.Statement.Companion.FIRST_PARAM
 import kotlin.reflect.KProperty1
@@ -66,7 +68,8 @@ abstract class SqlQueryBuilder(val namingStrategy: NamingStrategy) {
   @Suppress("UNCHECKED_CAST")
   protected fun <P : QueryParam> Appendable.filter(
     params: MutableCollection<in P>,
-    filter: SqlFilter
+    filter: SqlFilter,
+    alias: String? = null,
   ) {
     when (filter) {
       is SqlMultiFilter -> {
@@ -84,19 +87,23 @@ abstract class SqlQueryBuilder(val namingStrategy: NamingStrategy) {
 
       is SqlPropertyFilter<*> -> fieldFilter(
         params = params as MutableCollection<QueryParam>,
-        filter = filter
+        filter = filter,
+        alias = alias,
       )
     }
   }
 
   private fun Appendable.fieldFilter(
     params: MutableCollection<in QueryParam>,
-    filter: SqlPropertyFilter<*>
+    filter: SqlPropertyFilter<*>,
+    alias: String? = null,
   ) {
+    alias(alias)
     quotedName(filter.property.fieldName)
     when (filter) {
       is SqlPropertyFilter.IsNull -> isNull()
       is SqlPropertyFilter.IsNotNull -> isNotNull()
+      is SqlPropertyJoinFilter -> joinFilter(filter)
       is SqlPropertyParamFilter<*> -> paramFilter(params, filter)
       is SqlPropertyValueFilter<*> -> valueFilter(params, filter)
       is SqlPropertyMultiValueFilter.Between<*> -> betweenFilter(params, filter)
@@ -104,12 +111,18 @@ abstract class SqlQueryBuilder(val namingStrategy: NamingStrategy) {
     }
   }
 
+  private fun Appendable.joinFilter(joinFilter: SqlPropertyJoinFilter<*>) {
+    append(joinFilter.operator)
+    alias(joinFilter.alias)
+    quotedName(joinFilter.target.fieldName)
+  }
+
   private fun Appendable.paramFilter(
     params: MutableCollection<in QueryParam>,
-    paramFilter: SqlPropertyParamFilter<*>
+    paramFilter: SqlPropertyParamFilter<*>,
   ) {
     append(paramFilter.operator)
-    fieldParam(params, paramFilter.property)
+    fieldParam(params, paramFilter.property as KProperty1<*, *>)
   }
 
   private fun Appendable.valueFilter(
@@ -173,20 +186,56 @@ abstract class SqlQueryBuilder(val namingStrategy: NamingStrategy) {
     quotedName(name)
   }
 
-  protected fun Appendable.fieldNames(fields: Collection<KProperty1<*, *>>, block: Boolean = true) {
+  protected fun Appendable.select(selectFrom: Collection<From>) {
+    append("SELECT ")
+    for ((i, from) in selectFrom.withIndex()) {
+      if (i > 0) listSeparator()
+      for ((j, field) in from.fields.withIndex()) {
+        if (j > 0) listSeparator()
+        aliasName(field.fieldName, from.alias)
+      }
+    }
+  }
+
+  protected fun Appendable.fieldNames(
+    fields: Collection<KProperty1<*, *>>,
+    block: Boolean = true
+  ) {
     quotedNames(
       fields.map { it.fieldName },
       block
     )
   }
 
-  protected fun Appendable.quotedNames(names: Collection<String>, block: Boolean = true) {
+  protected fun Appendable.quotedNames(names: Collection<String>, block: Boolean = true, alias: String? = null) {
     if (block) openBlock()
     for ((i, name) in names.withIndex()) {
       if (i > 0) listSeparator()
-      quotedName(name)
+      aliasName(name, alias)
     }
     if (block) closeBlock()
+  }
+
+  protected open fun Appendable.append(join: From.Join.Type) {
+    append(join.sql)
+  }
+
+  protected open fun Appendable.aliasName(name: String, alias: String? = null) {
+    alias(alias)
+    openQuote()
+    alias?.let {
+      namingStrategy.databaseName(this, it)
+      nameSeparator()
+    }
+    namingStrategy.databaseName(this, name)
+    closeQuote()
+  }
+
+  protected fun Appendable.alias(alias: String?, separator: Char = SCHEMA_SEP) {
+    alias?.let {
+      quotedName(it)
+      append(separator)
+    }
   }
 
   protected open fun Appendable.quotedName(name: String) {
@@ -248,7 +297,7 @@ abstract class SqlQueryBuilder(val namingStrategy: NamingStrategy) {
   }
 
   protected fun Appendable.schemaSeparator() {
-    append('.')
+    append(SCHEMA_SEP)
   }
 
   protected fun Appendable.terminate() {
@@ -270,6 +319,7 @@ abstract class SqlQueryBuilder(val namingStrategy: NamingStrategy) {
   companion object Constants {
 
     const val PARAM_CHAR = '?'
+    const val SCHEMA_SEP = '.'
 
     private val Collection<*>.nextIndex: Int
       get() = size + FIRST_PARAM

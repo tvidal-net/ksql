@@ -1,6 +1,7 @@
 package uk.tvidal.data.sql
 
 import uk.tvidal.data.NamingStrategy
+import uk.tvidal.data.NamingStrategy.Constants.NAME_SEP
 import uk.tvidal.data.TableName
 import uk.tvidal.data.fieldName
 import uk.tvidal.data.filter.SqlFilter
@@ -293,7 +294,7 @@ abstract class SqlQueryBuilder(val namingStrategy: NamingStrategy) {
   }
 
   protected fun Appendable.nameSeparator() {
-    append('_')
+    append(NAME_SEP)
   }
 
   protected fun Appendable.schemaSeparator() {

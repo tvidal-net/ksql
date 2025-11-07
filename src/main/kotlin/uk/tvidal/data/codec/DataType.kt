@@ -23,19 +23,12 @@ open class DataType<J, T : Any>(
     get() = null
 
   override fun setParamValue(ps: PreparedStatement, parameterIndex: Int, value: T?) {
-    if (value != null) {
-      setParam(ps, parameterIndex, codec.encode(value))
-    } else {
-      ps.setNull(parameterIndex, Types.NULL)
-    }
+    if (value != null) setParam(ps, parameterIndex, codec.encode(value))
+    else ps.setNull(parameterIndex, Types.NULL)
   }
 
   override fun getResultSetValue(rs: ResultSet, columnLabel: String): T? = getValue(rs, columnLabel)?.let {
-    if (rs.wasNull()) {
-      null
-    } else {
-      codec.decode(it)
-    }
+    if (rs.wasNull()) null else codec.decode(it)
   }
 
   open class Primitive<T : Any>(
@@ -254,18 +247,25 @@ open class DataType<J, T : Any>(
         .filterIsInstance<DataType<*, *>>()
 
     private fun nullable(precision: Int?) =
-      if (precision == null) "" else ",$precision"
+      precision?.let { ",$precision" } ?: ""
 
     fun from(property: KProperty<*>, config: SchemaConfig = SchemaConfig.Default): DataType<*, *>? {
       val valueType = property.valueType()
       return when {
-        valueType.java.isEnum -> config.enumType(valueType, property.column)
-        valueType.isSubclassOf(CharSequence::class) -> config.string(property.column)
+        valueType.java.isEnum ->
+          config.enumType(valueType, property.column)
+
+        valueType.isSubclassOf(CharSequence::class) ->
+          config.string(property.column)
+
         else -> dataTypes.firstOrNull {
           it.valueType().isSubclassOf(valueType)
         } ?: when {
-          valueType.isSubclassOf(Number::class) -> config.decimal(property.column)
-          else -> null
+          valueType.isSubclassOf(Number::class) ->
+            config.decimal(property.column)
+
+          else ->
+            null
         }
       }
     }

@@ -43,7 +43,7 @@ enum class NamingStrategy {
   ScreamingSnakeCase {
     override fun databaseName(s: Appendable, name: CharSequence) {
       for ((i, ch) in name.withIndex()) {
-        if (ch.isUpperCase() && i > 0) s.append('_')
+        if (ch.isUpperCase() && i > 0) s.append(NAME_SEP)
         s.append(ch.uppercaseChar())
       }
     }
@@ -52,7 +52,7 @@ enum class NamingStrategy {
   SnakeCase {
     override fun databaseName(s: Appendable, name: CharSequence) {
       for ((i, ch) in name.withIndex()) {
-        if (ch.isUpperCase() && i > 0) s.append('_')
+        if (ch.isUpperCase() && i > 0) s.append(NAME_SEP)
         s.append(ch.lowercaseChar())
       }
     }
@@ -62,5 +62,9 @@ enum class NamingStrategy {
 
   operator fun get(name: CharSequence) = buildString(name.length) {
     databaseName(this, name)
+  }
+
+  companion object Constants {
+    const val NAME_SEP = '_'
   }
 }

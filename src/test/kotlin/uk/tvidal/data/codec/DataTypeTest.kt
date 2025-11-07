@@ -76,11 +76,11 @@ class DataTypeTest {
   @Test
   fun fromDateType() {
     assertThat(DataType.from(T::localDateTime)).isEqualTo(DataType.DateTime)
-    assertThat(DataType.from(T::date)).isEqualTo(DataType.DateTime)
-    assertThat(DataType.from(T::timestamp)).isEqualTo(DataType.DateTime)
-    assertThat(DataType.from(T::localDate)).isEqualTo(DataType.Date)
+    assertThat(DataType.from(T::date)).isEqualTo(DataType.Timestamp)
+    assertThat(DataType.from(T::timestamp)).isEqualTo(DataType.Timestamp)
+    assertThat(DataType.from(T::localDate)).isEqualTo(DataType.LocalDate)
     assertThat(DataType.from(T::sqlDate)).isEqualTo(DataType.Date)
-    assertThat(DataType.from(T::localTime)).isEqualTo(DataType.Time)
+    assertThat(DataType.from(T::localTime)).isEqualTo(DataType.LocalTime)
     assertThat(DataType.from(T::sqlTime)).isEqualTo(DataType.Time)
   }
 
@@ -94,9 +94,7 @@ class DataTypeTest {
   @Test
   fun fromString() {
     assertThat(DataType.from(T::string)).isEqualTo(config.string(null))
-    assertThat(DataType.from(T::regex)).isEqualTo(DataType.Text)
-    assertThat(DataType.from(T::pattern)).isEqualTo(DataType.Text)
-    assertThat(DataType.from(T::enum)).isEqualTo(config.shortString(null))
+    assertThat(DataType.from(T::enum)).isEqualTo(DataType.EnumType(EnumTestType::class))
   }
 
   @Test

@@ -4,5 +4,5 @@ import java.sql.PreparedStatement
 
 @FunctionalInterface
 interface ParamValueEncoder {
-  fun setParamValue(st: PreparedStatement, parameterIndex: Int, value: Any?)
+  fun setParamValue(st: PreparedStatement, index: Int, value: Any?)
 }

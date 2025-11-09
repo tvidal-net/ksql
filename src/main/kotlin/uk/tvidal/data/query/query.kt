@@ -5,6 +5,7 @@ import uk.tvidal.data.filter.SqlFilter
 import uk.tvidal.data.filter.SqlPropertyJoinFilter
 import uk.tvidal.data.receiverType
 import uk.tvidal.data.table
+import java.sql.PreparedStatement
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty1
 
@@ -47,3 +48,9 @@ fun <V> KProperty1<*, V>.eq(target: KProperty1<out Any, V>, alias: String?) = Sq
   target = target,
   alias = alias ?: target.receiverType.table.name
 )
+
+fun setParamValues(st: PreparedStatement, params: Iterable<QueryParam>, values: Iterable<Any?>) {
+  params.zip(values) { param, value ->
+    param.encoder.setParamValue(st, param.index, value)
+  }
+}

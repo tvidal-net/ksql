@@ -1,22 +1,28 @@
 package uk.tvidal.data.query
 
 import uk.tvidal.data.codec.ParamValueEncoder
-import uk.tvidal.data.fieldName
 import java.sql.Connection
 import java.sql.PreparedStatement
 import kotlin.reflect.KProperty1
 
 class EntityQuery<in E>(
-  val sql: String,
-  val params: Collection<Param<E>>,
-) {
-  fun execute(cnn: Connection, entity: E): Int = cnn.prepareStatement(sql).use { st ->
-    setParamValues(st, entity)
+  override val sql: String,
+  override val params: Collection<Param<E>>,
+) : Query {
+
+  fun execute(
+    cnn: Connection,
+    value: E
+  ): Int = cnn.prepareStatement(sql).use { st ->
+    setParamValues(st, value)
     st.executeUpdate()
   }
 
-  fun execute(cnn: Connection, entities: Iterable<E>): IntArray = cnn.prepareStatement(sql).use { st ->
-    for (entity in entities) {
+  fun execute(
+    cnn: Connection,
+    values: Iterable<E>
+  ): IntArray = cnn.prepareStatement(sql).use { st ->
+    for (entity in values) {
       params.forEach {
         it.setParamValue(st, entity)
       }
@@ -29,14 +35,13 @@ class EntityQuery<in E>(
     it.setParamValue(st, entity)
   }
 
-  class Param<in E>(
-    val index: Int,
-    val encoder: ParamValueEncoder,
-    val property: KProperty1<in E, *>,
-  ) {
+  override fun toString() = "${this::class.simpleName}[$sql\n] params=$params"
 
-    val name: String
-      get() = property.fieldName
+  class Param<in E>(
+    index: Int,
+    encoder: ParamValueEncoder,
+    val property: KProperty1<in E, *>,
+  ) : QueryParam(index, property.name, encoder) {
 
     fun setParamValue(st: PreparedStatement, entity: E) {
       val value = property(entity)

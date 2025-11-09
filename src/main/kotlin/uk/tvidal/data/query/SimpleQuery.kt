@@ -1,16 +1,16 @@
 package uk.tvidal.data.query
 
-import uk.tvidal.data.codec.ParamValueEncoder
-import java.sql.PreparedStatement
+import java.sql.Connection
 
-open class SimpleQuery(
-  val sql: String,
-  open val encoders: Collection<ParamValueEncoder<Any>>
-) {
+class SimpleQuery(
+  override val sql: String,
+  override val params: Collection<QueryParam> = emptyList(),
+) : Query {
 
-  fun setParamValues(st: PreparedStatement) {
-
+  fun execute(cnn: Connection, vararg paramValues: Any?) = cnn.prepareStatement(sql).use { st ->
+    setParamValues(st, params, paramValues.toList())
+    st.execute()
   }
 
-  override fun toString() = sql
+  override fun toString() = "${this::class.simpleName}[$sql\n] params=$params"
 }

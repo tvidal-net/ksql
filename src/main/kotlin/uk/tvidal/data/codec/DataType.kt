@@ -19,12 +19,12 @@ open class DataType<J, T : Any>(
   val codec: JdbcValueCodec<J, T>,
   val setParam: SetParamValue<J>,
   val getValue: GetResultSetValue<J>,
-) : ParamValueEncoder<T>, ResultSetDecoder<T> {
+) : ParamValueEncoder, ResultSetDecoder<T> {
 
   open val length: Int?
     get() = null
 
-  override fun setParamValue(st: PreparedStatement, parameterIndex: Int, value: T?) {
+  override fun setParamValue(st: PreparedStatement, index: Int, value: Any?) {
     if (value != null) {
       val encodedValue = codec.encode(value).debug {
         "setParamValue(index=$parameterIndex, value=${str(value)}) encoded=${str(it)}"

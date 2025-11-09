@@ -5,7 +5,6 @@ import uk.tvidal.data.codec.EntityDecoder
 import uk.tvidal.data.logging.KLogging
 import uk.tvidal.data.query.EntityQuery
 import uk.tvidal.data.query.SimpleQuery
-import uk.tvidal.data.query.Statement
 import uk.tvidal.data.sql.SqlDialect
 import java.sql.Connection
 import kotlin.reflect.KClass
@@ -25,7 +24,7 @@ class Database(
 
   fun <E : Any> repository(
     entity: KClass<E>,
-    decoder: EntityDecoder<E>,
+    decoder: EntityDecoder<E> = codecs.decoder(entity)
   ): EntityRepository<E> = RepositoryImpl(
     db = this,
     entity = entity,
@@ -39,45 +38,31 @@ class Database(
     decoder = decoder
   )
 
-  fun <T> select(query: SimpleQuery, decoder: Statement.() -> T): T = invoke { cnn ->
-    info { "select: $query" }
-    Statement(cnn, query)
-      .use(decoder)
-  }
+  fun execute(
+    sql: String,
+    vararg paramValues: Any?
+  ): Boolean = execute(
+    SimpleQuery(sql),
+    *paramValues
+  )
 
-  fun execute(sql: String): Boolean = invoke { cnn ->
-    Statement(cnn, sql).use {
-      it.execute()
-    }.info {
-      "executed: $it\n$sql"
-    }
-  }
-
-  fun execute(query: SimpleQuery): Int = invoke { cnn ->
-    Statement(cnn, query).use {
-      it.executeSingle()
-    }.info {
+  fun execute(
+    query: SimpleQuery,
+    vararg paramValues: Any?
+  ): Boolean = invoke { cnn ->
+    query.execute(cnn, *paramValues).info {
       "executed: affected$it\n$query"
     }
   }
 
   fun <E> execute(query: EntityQuery<E>, value: E): Int = invoke { cnn ->
-    Statement(cnn, query).use {
-      it.setParams(query[value])
-      it.executeSingle()
-    }.info {
+    query.execute(cnn, value).info {
       "executed: affected=$it\n$query"
     }
   }
 
   fun <E> execute(query: EntityQuery<E>, values: Iterable<E>): IntArray = invoke { cnn ->
-    Statement(cnn, query).use {
-      for (value in values) {
-        it.setParams(query[value])
-        it.statement.addBatch()
-      }
-      it.executeBatch()
-    }.info {
+    query.execute(cnn, values).info {
       "executed: affected=${it.sum()}\n$query"
     }
   }

@@ -1,7 +1,6 @@
 package uk.tvidal.data.query
 
 import uk.tvidal.data.codec.EntityDecoder
-import uk.tvidal.data.codec.setParamValue
 import uk.tvidal.data.logging.KLogging
 import java.sql.Connection
 import java.sql.PreparedStatement
@@ -24,23 +23,11 @@ class Statement(
     setParams(parameters)
   }
 
-  fun setParams(vararg values: Any?) {
-    if (values.isNotEmpty()) {
-      debug { "setParams: ${values.contentToString()}" }
-      for ((i, value) in values.withIndex()) {
-        statement.setParamValue(FIRST_PARAM + i, value)
-      }
-    }
-  }
-
   fun setParams(parameters: Collection<QueryParam.Value>) {
     if (parameters.isNotEmpty()) {
-      debug { "setParams: $parameters" }
+      debug { "setParams: [\n\t${parameters.joinToString("\n\t")}\n]" }
       for (param in parameters) {
-        statement.setParamValue(
-          index = param.index,
-          value = param.value,
-        )
+        param.setParamValue(statement, param.index)
       }
     }
   }
@@ -66,6 +53,11 @@ class Statement(
           .also { if (!it && !rs.isClosed) close() }
       }
     }
+  }
+
+  fun execute(): Boolean {
+    trace { "execute: $this" }
+    return statement.execute()
   }
 
   fun executeSingle(): Int {

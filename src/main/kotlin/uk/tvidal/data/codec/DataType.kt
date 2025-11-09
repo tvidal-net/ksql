@@ -1,7 +1,9 @@
 package uk.tvidal.data.codec
 
+import uk.tvidal.data.Config
 import uk.tvidal.data.column
-import uk.tvidal.data.schema.SchemaConfig
+import uk.tvidal.data.logging.KLogging
+import uk.tvidal.data.str
 import uk.tvidal.data.valueType
 import java.sql.PreparedStatement
 import java.sql.ResultSet
@@ -22,13 +24,26 @@ open class DataType<J, T : Any>(
   open val length: Int?
     get() = null
 
-  override fun setParamValue(ps: PreparedStatement, parameterIndex: Int, value: T?) {
-    if (value != null) setParam(ps, parameterIndex, codec.encode(value))
-    else ps.setNull(parameterIndex, Types.NULL)
+  override fun setParamValue(st: PreparedStatement, parameterIndex: Int, value: T?) {
+    if (value != null) {
+      val encodedValue = codec.encode(value).debug {
+        "setParamValue(index=$parameterIndex, value=${str(value)}) encoded=${str(it)}"
+      }
+      setParam(st, parameterIndex, encodedValue)
+    } else {
+      debug { "setParamValue(index=$parameterIndex, value=${str(value)}" }
+      st.setNull(parameterIndex, Types.NULL)
+    }
   }
 
-  override fun getResultSetValue(rs: ResultSet, columnLabel: String): T? = getValue(rs, columnLabel)?.let {
-    if (rs.wasNull()) null else codec.decode(it)
+  override fun getResultSetValue(rs: ResultSet, field: String): T? = getValue(rs, field)?.let {
+    if (rs.wasNull()) {
+      null
+    } else {
+      codec.decode(it)
+    }.debug { value ->
+      "getResultSetValue(field=${str(field)} value=${str(it)} decoded=${str(value)}"
+    }
   }
 
   open class Primitive<T : Any>(
@@ -150,7 +165,7 @@ open class DataType<J, T : Any>(
     getValue = ResultSet::getString,
   )
 
-  data class EnumType<E : Enum<E>>(
+  class EnumType<E : Enum<E>>(
     val enumClass: KClass<E>,
     override val length: Int = SHORT_STRING,
     val ignoreCase: kotlin.Boolean = true
@@ -162,9 +177,7 @@ open class DataType<J, T : Any>(
         value.equals(it.name, ignoreCase)
       }
     }
-  ) {
-    override fun toString() = sqlDataType
-  }
+  )
 
   object Text : Primitive<String>(
     sqlDataType = "TEXT",
@@ -181,21 +194,17 @@ open class DataType<J, T : Any>(
     decoder = java.time.Duration::parse
   )
 
-  data class VarChar(override val length: Int) : Primitive<String>(
+  class VarChar(override val length: Int) : Primitive<String>(
     sqlDataType = "VARCHAR($length)",
     setParam = PreparedStatement::setString,
     getValue = ResultSet::getString,
-  ) {
-    override fun toString() = sqlDataType
-  }
+  )
 
-  data class NVarChar(override val length: Int) : Primitive<String>(
+  class NVarChar(override val length: Int) : Primitive<String>(
     sqlDataType = "NVARCHAR($length)",
     setParam = PreparedStatement::setNString,
     getValue = ResultSet::getNString
-  ) {
-    override fun toString() = sqlDataType
-  }
+  )
 
   abstract class BigDecimal(
     sqlDataType: String,
@@ -205,25 +214,21 @@ open class DataType<J, T : Any>(
     getValue = ResultSet::getBigDecimal,
   )
 
-  data class Numeric(
+  class Numeric(
     val scale: Int,
     val precision: Int? = null
   ) : BigDecimal(
     sqlDataType = "NUMERIC$scale${nullable(precision)}"
-  ) {
-    override fun toString() = sqlDataType
-  }
+  )
 
-  data class Decimal(
+  class Decimal(
     val scale: Int,
     val precision: Int? = null
   ) : BigDecimal(
     sqlDataType = "DECIMAL($scale${nullable(precision)})"
-  ) {
-    override fun toString() = sqlDataType
-  }
+  )
 
-  private fun valueType(): KClass<T> {
+  internal fun valueType(): KClass<T> {
     val dataType = this::class.allSupertypes
       .single { it.classifier == DataType::class }
 
@@ -231,9 +236,9 @@ open class DataType<J, T : Any>(
     return dataType.arguments.last().type!!.classifier!! as KClass<T>
   }
 
-  override fun toString() = sqlDataType
+  override fun toString() = "${this::class.simpleName} $sqlDataType"
 
-  companion object {
+  companion object : KLogging() {
 
     const val SHORT_STRING = 0x20
     const val STRING_LENGTH = 0x400
@@ -241,16 +246,25 @@ open class DataType<J, T : Any>(
     const val DEFAULT_SCALE = 13
     const val DEFAULT_PRECISION = 2
 
-    private val dataTypes: Collection<DataType<*, *>>
-      get() = DataType::class.nestedClasses
-        .mapNotNull { it.objectInstance }
-        .filterIsInstance<DataType<*, *>>()
+    val All = DataType::class
+      .nestedClasses
+      .mapNotNull { it.objectInstance }
+      .filterIsInstance<DataType<*, *>>()
+      .map { it.valueType() to it }
+
+    fun from(type: KClass<*>) = All.firstNotNullOfOrNull { (valueType, dataType) ->
+      if (valueType.isSubclassOf(type)) {
+        dataType
+      } else {
+        null
+      }
+    }
 
     private fun nullable(precision: Int?) =
       precision?.let { ",$precision" } ?: ""
 
-    fun from(property: KProperty<*>, config: SchemaConfig = SchemaConfig.Default): DataType<*, *>? {
-      val valueType = property.valueType()
+    fun from(property: KProperty<*>, config: Config = Config.Default): DataType<*, *>? {
+      val valueType = property.valueType
       return when {
         valueType.java.isEnum ->
           config.enumType(valueType, property.column)
@@ -258,9 +272,7 @@ open class DataType<J, T : Any>(
         valueType.isSubclassOf(CharSequence::class) ->
           config.string(property.column)
 
-        else -> dataTypes.firstOrNull {
-          it.valueType().isSubclassOf(valueType)
-        } ?: when {
+        else -> from(valueType) ?: when {
           valueType.isSubclassOf(Number::class) ->
             config.decimal(property.column)
 

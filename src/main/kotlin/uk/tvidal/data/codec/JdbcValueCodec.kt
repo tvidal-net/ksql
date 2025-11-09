@@ -15,7 +15,6 @@ import kotlin.reflect.KClass
 interface JdbcValueCodec<J, T> {
 
   fun decode(value: J): T
-
   fun encode(value: T): J
 
   class Primitive<T> : JdbcValueCodec<T, T> {

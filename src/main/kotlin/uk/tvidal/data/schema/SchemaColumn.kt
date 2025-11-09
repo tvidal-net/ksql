@@ -1,5 +1,6 @@
 package uk.tvidal.data.schema
 
+import uk.tvidal.data.Config
 import uk.tvidal.data.codec.DataType
 import uk.tvidal.data.fieldName
 import uk.tvidal.data.isNullable
@@ -20,7 +21,7 @@ data class SchemaColumn<T : Any>(
     fun nullDef(nullable: Boolean) =
       (if (!nullable) "NOT " else "") + "NULL"
 
-    private fun keyType(entity: KClass<*>, config: SchemaConfig): DataType<*, *> {
+    private fun keyType(entity: KClass<*>, config: Config): DataType<*, *> {
       val keyFields = entity.keyFields
       require(keyFields.size == 1) {
         "Referenced entity ${entity.qualifiedName} must have exactly ONE Id Field"
@@ -30,9 +31,9 @@ data class SchemaColumn<T : Any>(
       }
     }
 
-    fun from(property: KProperty1<*, *>, config: SchemaConfig = SchemaConfig.Default) = SchemaColumn(
+    fun from(property: KProperty1<*, *>, config: Config = Config.Default) = SchemaColumn(
       name = property.fieldName,
-      dataType = DataType.from(property) ?: keyType(property.valueType(), config),
+      dataType = DataType.from(property) ?: keyType(property.valueType, config),
       nullable = property.isNullable
     )
   }

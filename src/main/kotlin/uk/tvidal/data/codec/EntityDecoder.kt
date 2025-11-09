@@ -1,60 +1,56 @@
 package uk.tvidal.data.codec
 
-import uk.tvidal.data.NamingStrategy
-import uk.tvidal.data.fieldName
-import uk.tvidal.data.fields
 import java.sql.ResultSet
-import java.sql.ResultSetMetaData
 import kotlin.reflect.KCallable
-import kotlin.reflect.KFunction
 import kotlin.reflect.KMutableProperty1
+import kotlin.reflect.KParameter
 
+@Suppress("UNCHECKED_CAST")
 interface EntityDecoder<out E> {
 
   operator fun invoke(rs: ResultSet): E
 
-  class ByConstructor<out E>(
-    val constructor: KFunction<E>,
-    val namingStrategy: NamingStrategy,
+  class ByConstructor<E>(
+    val constructor: KCallable<E>,
+    val parameterDecoders: Collection<ParameterDecoder<*>>,
+    val overrides: Map<String, Any?> = mapOf(),
   ) : EntityDecoder<E> {
-
-    private val constructorParams = constructor.parameters
-      .associateWith { it.resultSetDecoder }
-
     override fun invoke(rs: ResultSet): E = constructor.callBy(
-      constructorParams.mapValues { (param, decodeValue) ->
-        val fieldName = namingStrategy[param.fieldName]
-        decodeValue.getResultSetValue(rs, fieldName)
+      parameterDecoders.associate {
+        it.parameter to it.parameter.name.let { name ->
+          if (name in overrides) overrides[name]
+          else it.readValue(rs)
+        }
       }
     )
   }
 
-  class ByProperties<out E>(
-    val constructor: KCallable<E>,
-    val namingStrategy: NamingStrategy,
-    val constructorArgs: Array<out Any?> = emptyArray(),
+  class ParameterDecoder<out T>(
+    val parameter: KParameter,
+    val decode: FieldDecoder<T>,
+  ) {
+    fun readValue(rs: ResultSet): T? =
+      decode(rs)
+  }
+
+  class ByProperties<E>(
+    val constructor: (ResultSet) -> E,
+    val propertyDecoders: Collection<PropertyDecoder<E, *>>,
   ) : EntityDecoder<E> {
-
-    private val fields = constructor.entity.fields.filterIsInstance<KMutableProperty1<in E, Any?>>()
-      .associateWith { it.resultSetDecoder }
-
-    private fun ResultSetMetaData.columnNames() = buildSet {
-      for (i in 1..columnCount) {
-        add(
-          getColumnName(i)
-        )
+    override fun invoke(rs: ResultSet): E = constructor(rs).also { entity ->
+      propertyDecoders.forEach {
+        it.setValue(rs, entity)
       }
     }
+  }
 
-    override fun invoke(rs: ResultSet): E = constructor.call(*constructorArgs).also { instance ->
-      val existing = rs.metaData.columnNames()
-      fields.forEach { (field, decodeValue) ->
-        val fieldName = namingStrategy[field.fieldName]
-        if (fieldName in existing) {
-          val value = decodeValue.getResultSetValue(rs, fieldName)
-          field.set(instance, value)
-        }
-      }
+  class PropertyDecoder<in E, T>(
+    val property: KMutableProperty1<in E, T?>,
+    val decode: FieldDecoder<T>,
+  ) {
+    fun setValue(rs: ResultSet, receiver: E) {
+      val value = decode(rs)
+      property.set(receiver, value)
     }
   }
 }

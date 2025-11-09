@@ -5,7 +5,7 @@ import uk.tvidal.data.Database
 import uk.tvidal.data.NamingStrategy
 import uk.tvidal.data.fieldName
 import uk.tvidal.data.sql.SqlDialect
-import uk.tvidal.data.tableName
+import uk.tvidal.data.table
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty1
 
@@ -24,7 +24,7 @@ class MariaDB(namingStrategy: NamingStrategy = NamingStrategy.SnakeCase) : SqlDi
     updateFields: Collection<KProperty1<E, *>>,
     keyFields: Collection<KProperty1<E, *>>
   ) = entityQuery<E> { params ->
-    insertInto(entity.tableName, params, updateFields + keyFields)
+    insertInto(entity.table, params, updateFields + keyFields)
     onDuplicateKey(updateFields)
   }
 

@@ -1,15 +1,18 @@
 package uk.tvidal.data.query
 
+import uk.tvidal.data.codec.ParamValueEncoder
+
 sealed interface QueryParam {
 
   val index: Int
   val name: String
+  val encoder: ParamValueEncoder
 
-  data class Value(
+  class Value(
     override val index: Int,
     override val name: String,
-    val value: Any?,
+    override val encoder: ParamValueEncoder,
   ) : QueryParam {
-    override fun toString() = "$index:$name=$value"
+    override fun toString() = "$index:$name"
   }
 }

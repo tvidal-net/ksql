@@ -60,7 +60,11 @@ enum class NamingStrategy {
 
   abstract fun databaseName(s: Appendable, name: CharSequence)
 
-  operator fun get(name: CharSequence) = buildString(name.length) {
+  operator fun get(name: CharSequence, alias: String? = null) = buildString {
+    alias?.let {
+      append(databaseName(this, it))
+      append(NAME_SEP)
+    }
     databaseName(this, name)
   }
 

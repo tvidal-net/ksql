@@ -1,27 +1,27 @@
 package uk.tvidal.data.sql
 
-import uk.tvidal.data.NamingStrategy
 import uk.tvidal.data.TableName
+import uk.tvidal.data.codec.CodecFactory
 import uk.tvidal.data.codec.DataType
 import uk.tvidal.data.equalsFilter
-import uk.tvidal.data.fields
 import uk.tvidal.data.filter.SqlFilter
 import uk.tvidal.data.query.EntityQuery
 import uk.tvidal.data.query.From
 import uk.tvidal.data.query.QueryParam
 import uk.tvidal.data.query.SimpleQuery
+import uk.tvidal.data.query.from
 import uk.tvidal.data.schema.ColumnReference
 import uk.tvidal.data.schema.Constraint
 import uk.tvidal.data.schema.Index
 import uk.tvidal.data.schema.SchemaColumn
 import uk.tvidal.data.schema.SchemaTable
-import uk.tvidal.data.tableName
+import uk.tvidal.data.table
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty1
 
 open class SqlDialect(
-  namingStrategy: NamingStrategy = NamingStrategy.SnakeCase
-) : SqlQueryBuilder(namingStrategy), QueryDialect, SchemaDialect {
+  codecFactory: CodecFactory
+) : SqlQueryBuilder(codecFactory), QueryDialect, SchemaDialect {
 
   override fun create(table: SchemaTable, ifNotExists: Boolean) = sqlQuery {
     append("CREATE TABLE ")
@@ -91,11 +91,8 @@ open class SqlDialect(
   ) = simpleQuery { params ->
     select(from)
     from.filterIsInstance<From.Entity<*>>().let { e ->
-      require(e.size == 1) {
-        "Invalid from clause, expected a single one, received $e"
-      }
       e.single().let {
-        from(it.entity, it.alias)
+        from(it.entity, alias(it, from.size))
       }
     }
     for (join in from.filterIsInstance<From.Join>()) {
@@ -107,22 +104,16 @@ open class SqlDialect(
   override fun select(
     entity: KClass<*>,
     whereClause: SqlFilter?
-  ) = simpleQuery { params ->
-    append("SELECT ")
-    fieldNames(entity.fields, false)
-    from(entity)
-    where(params, whereClause)
-  }
+  ) = select(
+    listOf(from(entity)),
+    whereClause
+  )
 
   protected open fun Appendable.from(entity: KClass<*>, alias: String? = null) {
     appendLine()
     indent()
     append("FROM ")
-    tableName(entity.tableName)
-    alias?.let {
-      append(" AS ")
-      quotedName(it)
-    }
+    tableName(entity.table, alias)
   }
 
   protected open fun <P : QueryParam> Appendable.join(
@@ -133,12 +124,9 @@ open class SqlDialect(
     indent()
     append(join.type)
     space()
-    join.from.let {
-      if (it is From.Entity<*>) {
-        tableName(it.entity.tableName)
-      }
-      append(" AS ")
-      quotedName(it.alias)
+    when (val from = join.from) {
+      is From.Entity<*> -> tableName(from.entity.table, from.alias)
+      else -> throw IllegalArgumentException("Invalid join type: $from")
     }
     appendLine()
     indent()
@@ -152,7 +140,7 @@ open class SqlDialect(
     entity: KClass<*>,
     whereClause: SqlFilter
   ) = simpleQuery { params ->
-    deleteQuery(params, entity.tableName, whereClause)
+    deleteQuery(params, entity.table, whereClause)
   }
 
   protected inline fun simpleQuery(
@@ -171,14 +159,14 @@ open class SqlDialect(
     updateFields: Collection<KProperty1<E, *>>,
     keyFields: Collection<KProperty1<E, *>>
   ): EntityQuery<E> = throw NotImplementedError(
-    "saveQuery is not implemented for the default Dialect!"
+    "save is not implemented for the default Dialect!"
   )
 
   override fun <E : Any> delete(
     entity: KClass<E>,
     keyFields: Collection<KProperty1<E, *>>
   ) = entityQuery<E> { params ->
-    deleteQuery(params, entity.tableName, equalsFilter(keyFields))
+    deleteQuery(params, entity.table, equalsFilter(keyFields))
   }
 
   override fun <E : Any> update(
@@ -187,7 +175,7 @@ open class SqlDialect(
     keyFields: Collection<KProperty1<E, *>>
   ) = entityQuery<E> { params ->
     append("UPDATE ")
-    tableName(entity.tableName)
+    tableName(entity.table)
     space()
     setFields(params, updateFields)
     where(params, equalsFilter(keyFields))
@@ -197,7 +185,7 @@ open class SqlDialect(
     entity: KClass<E>,
     insertFields: Collection<KProperty1<E, *>>
   ) = entityQuery<E> { params ->
-    insertInto(entity.tableName, params, insertFields)
+    insertInto(entity.table, params, insertFields)
   }
 
   protected open fun <E, P : QueryParam> Appendable.insertInto(
@@ -313,6 +301,6 @@ open class SqlDialect(
   }
 
   protected open fun Appendable.dataType(dataType: DataType<*, *>) {
-    append(dataType.toString())
+    append(dataType.sqlDataType)
   }
 }

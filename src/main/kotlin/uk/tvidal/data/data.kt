@@ -23,6 +23,7 @@ import kotlin.reflect.KProperty
 import kotlin.reflect.KProperty1
 import kotlin.reflect.full.findAnnotation
 import kotlin.reflect.full.hasAnnotation
+import kotlin.reflect.full.instanceParameter
 import kotlin.reflect.full.memberProperties
 import kotlin.reflect.jvm.javaField
 
@@ -46,8 +47,8 @@ internal val String?.dot: String
   get() = whenNotNull(SCHEMA_SEP)
 
 @Suppress("UNCHECKED_CAST")
-internal fun <T : Any> KCallable<T?>.valueType(): KClass<out T> =
-  returnType.classifier as? KClass<out T> ?: returnType as KClass<out T>
+internal val <T : Any> KCallable<T?>.valueType: KClass<out T>
+  get() = returnType.classifier as? KClass<out T> ?: returnType as KClass<out T>
 
 private inline fun <reified T : Annotation> Field?.findAnnotation(): T? =
   this?.getAnnotation<T>(T::class.java)
@@ -57,6 +58,10 @@ private inline fun <reified T : Annotation> Field?.hasAnnotation(): Boolean =
 
 internal fun Column?.fieldName(fallback: String) =
   this?.name?.ifBlank { null } ?: fallback
+
+@Suppress("UNCHECKED_CAST")
+internal val <E : Any> KProperty1<E, *>.receiverType: KClass<E>
+  get() = instanceParameter!!.type.classifier as KClass<E>
 
 internal val KProperty<*>.column: Column?
   get() = findAnnotation() ?: javaField.findAnnotation()
@@ -73,20 +78,17 @@ internal val KProperty<*>.isTransient: Boolean
 internal val KProperty<*>.fieldName: String
   get() = column.fieldName(name)
 
-internal fun KProperty<*>.fieldName(alias: String? = null) =
-  (alias?.let { "${it}_" } ?: "").let { "${it}${fieldName}" }
-
-private fun Table?.tableName(fallback: String) = TableName(
+private fun Table?.table(fallback: String) = TableName(
   name = this?.name?.ifBlank { null } ?: fallback,
   schema = this?.schema?.ifBlank { null } ?: this?.catalog?.ifBlank { null },
 )
 
-private fun Entity?.tableName(fallback: String) =
+private fun Entity?.table(fallback: String) =
   this?.name?.ifBlank { null } ?: fallback
 
-internal val KClass<*>.tableName: TableName
-  get() = findAnnotation<Table>().tableName(
-    findAnnotation<Entity>().tableName(simpleName!!)
+internal val KClass<*>.table: TableName
+  get() = findAnnotation<Table>().table(
+    findAnnotation<Entity>().table(simpleName!!)
   )
 
 internal val <E : Any> KClass<E>.fields: Collection<KProperty1<E, *>>
@@ -126,15 +128,8 @@ inline fun <reified E : Any> where(builder: WhereClauseBuilder<E>): SqlFilter =
 inline fun <reified E : Any> Repository<E>.where(builder: WhereClauseBuilder<E>) =
   select(uk.tvidal.data.where(builder))
 
-inline fun Connection.execute(
-  log: Logger = LoggerFactory.getLogger({}::class.java.loggerName),
-  builder: () -> String
-): Boolean = builder().let { sql ->
-  prepareStatement(
-    sql
-  ).use { st ->
-    st.execute().also { result ->
-      log.info("executed: {}\n{}", result, sql)
-    }
-  }
+internal fun str(value: Any?): String = when (value) {
+  null -> "NULL"
+  is Number -> "$value"
+  else -> "'$value'"
 }

@@ -2,7 +2,7 @@ package uk.tvidal.data.codec
 
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
-import uk.tvidal.data.schema.SchemaConfig
+import uk.tvidal.data.Config
 import java.math.BigDecimal
 import java.sql.Timestamp
 import java.time.LocalDate
@@ -16,7 +16,7 @@ import javax.persistence.Id
 
 class DataTypeTest {
 
-  val config = SchemaConfig.Default
+  val config = Config.Default
 
   enum class EnumTestType {
     NONE,

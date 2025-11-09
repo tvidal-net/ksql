@@ -4,7 +4,7 @@ import org.h2.jdbcx.JdbcDataSource
 import uk.tvidal.data.Database
 import uk.tvidal.data.NamingStrategy
 import uk.tvidal.data.sql.SqlDialect
-import uk.tvidal.data.tableName
+import uk.tvidal.data.table
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty1
 
@@ -16,15 +16,13 @@ class H2DB(namingStrategy: NamingStrategy = NamingStrategy.SnakeCase) : SqlDiale
     keyFields: Collection<KProperty1<E, *>>
   ) = entityQuery<E> { params ->
     append("MERGE INTO ")
-    tableName(entity.tableName)
+    tableName(entity.table)
+    space()
+    fieldNames(updateFields + keyFields)
     appendLine()
     indent()
-    fieldNames(updateFields)
     append("KEY ")
     fieldNames(keyFields)
-    appendLine()
-    indent()
-    append("VALUES ")
     insertValues(params, updateFields + keyFields)
   }
 
@@ -42,7 +40,7 @@ class H2DB(namingStrategy: NamingStrategy = NamingStrategy.SnakeCase) : SqlDiale
       setUser(username)
       setPassword(password)
     }.let { ds ->
-      Database(dialect, ds::getConnection)
+      Database(dialect, createConnection = ds::getConnection)
     }
   }
 }

@@ -3,7 +3,7 @@ package uk.tvidal.data.sql
 import uk.tvidal.data.TableName
 import uk.tvidal.data.schema.Index
 import uk.tvidal.data.schema.SchemaTable
-import uk.tvidal.data.tableName
+import uk.tvidal.data.table
 import kotlin.reflect.KClass
 
 interface SchemaDialect {
@@ -51,7 +51,7 @@ interface SchemaDialect {
     entity: KClass<out E>,
     ifExists: Boolean = true
   ) = drop(
-    entity.tableName,
+    entity.table,
     ifExists
   )
 

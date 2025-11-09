@@ -2,7 +2,7 @@ package uk.tvidal.data.sql
 
 import org.junit.jupiter.api.Test
 import uk.tvidal.data.TestDialect.SqlAssertions.assertQuery
-import uk.tvidal.data.filter.SqlPropertyJoinFilter
+import uk.tvidal.data.query.eq
 import uk.tvidal.data.query.from
 import uk.tvidal.data.query.innerJoin
 import java.util.UUID
@@ -23,6 +23,34 @@ class SqlDialectSelectFromTest {
   )
 
   @Test
+  fun testSimpleSelectFrom() {
+    assertQuery {
+      select(listOf(from(Account::class)))
+    }.isEqualTo(
+      "SELECT [id],[name] FROM [Account]"
+    )
+  }
+
+  @Test
+  fun testLookupJoin() {
+    val from = listOf(
+      from(
+        entity = Transaction::class
+      ),
+      innerJoin(
+        entity = Account::class,
+        fields = listOf(Account::name),
+        on = Account::id eq Transaction::credit
+      ),
+    )
+    assertQuery { select(from) }.isEqualTo(
+      "SELECT [Transaction].[Transaction_credit],[Transaction].[Transaction_debit]," +
+        "[Transaction].[Transaction_description],[Transaction].[Transaction_id],[Account].[Account_name] " +
+        "FROM [Transaction] INNER JOIN [Account] ON [Account].[id] = [Transaction].[credit]"
+    )
+  }
+
+  @Test
   fun testDoubleJoin() {
     val from = listOf(
       from(
@@ -31,12 +59,12 @@ class SqlDialectSelectFromTest {
       ),
       innerJoin(
         entity = Account::class,
-        on = SqlPropertyJoinFilter.Equals(Account::id, "t", Transaction::credit),
-        alias = "ac"
+        on = Account::id.eq(Transaction::credit, "t"),
+        alias = "ac",
       ),
       innerJoin(
         entity = Account::class,
-        on = SqlPropertyJoinFilter.Equals(Account::id, "t", Transaction::debit),
+        on = Account::id.eq(Transaction::debit, "t"),
         alias = "ad"
       ),
     )

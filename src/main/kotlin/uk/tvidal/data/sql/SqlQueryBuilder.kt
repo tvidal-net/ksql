@@ -3,6 +3,7 @@ package uk.tvidal.data.sql
 import uk.tvidal.data.NamingStrategy
 import uk.tvidal.data.NamingStrategy.Constants.NAME_SEP
 import uk.tvidal.data.TableName
+import uk.tvidal.data.codec.CodecFactory
 import uk.tvidal.data.fieldName
 import uk.tvidal.data.filter.SqlFilter
 import uk.tvidal.data.filter.SqlMultiFilter
@@ -17,7 +18,10 @@ import uk.tvidal.data.query.QueryParam
 import uk.tvidal.data.query.Statement.Companion.FIRST_PARAM
 import kotlin.reflect.KProperty1
 
-abstract class SqlQueryBuilder(val namingStrategy: NamingStrategy) {
+abstract class SqlQueryBuilder(val codecs: CodecFactory) {
+
+  protected val namingStrategy: NamingStrategy
+    get() = codecs.databaseName
 
   protected fun <P : QueryParam> Appendable.where(
     params: MutableCollection<in P>,
@@ -178,22 +182,27 @@ abstract class SqlQueryBuilder(val namingStrategy: NamingStrategy) {
     }
   }
 
-  protected fun Appendable.tableName(table: TableName) {
+  protected fun Appendable.tableName(table: TableName, alias: String? = null) {
     val (name, schema) = table
     if (!schema.isNullOrBlank()) {
       quotedName(schema)
       schemaSeparator()
     }
     quotedName(name)
+    if (alias != null && alias != name) {
+      append(" AS ")
+      quotedName(alias)
+    }
   }
 
   protected fun Appendable.select(selectFrom: Collection<From>) {
     append("SELECT ")
     for ((i, from) in selectFrom.withIndex()) {
       if (i > 0) listSeparator()
+      val alias = alias(from, selectFrom.size)
       for ((j, field) in from.fields.withIndex()) {
         if (j > 0) listSeparator()
-        aliasName(field.fieldName, from.alias)
+        aliasName(field.fieldName, alias)
       }
     }
   }
@@ -324,5 +333,8 @@ abstract class SqlQueryBuilder(val namingStrategy: NamingStrategy) {
 
     private val Collection<*>.nextIndex: Int
       get() = size + FIRST_PARAM
+
+    internal fun alias(from: From, count: Int): String? =
+      from.alias ?: if (count == 1) null else from.name
   }
 }

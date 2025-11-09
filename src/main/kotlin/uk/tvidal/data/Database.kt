@@ -1,5 +1,6 @@
 package uk.tvidal.data
 
+import uk.tvidal.data.codec.CodecFactory
 import uk.tvidal.data.codec.EntityDecoder
 import uk.tvidal.data.logging.KLogging
 import uk.tvidal.data.query.EntityQuery
@@ -8,31 +9,19 @@ import uk.tvidal.data.query.Statement
 import uk.tvidal.data.sql.SqlDialect
 import java.sql.Connection
 import kotlin.reflect.KClass
-import kotlin.reflect.full.primaryConstructor
 
 class Database(
   val dialect: SqlDialect,
+  val config: Config = Config.Default,
   private val createConnection: () -> Connection,
 ) {
-
   private val connection = ThreadLocal<Connection>()
+
+  val codecs: CodecFactory
+    get() = dialect.codecs
 
   val currentTransaction: Connection?
     get() = connection.get()
-
-  inline fun <reified E : Any> byConstructor(): EntityDecoder<E> = EntityDecoder.ByConstructor(
-    constructor = E::class.primaryConstructor!!,
-    namingStrategy = dialect.namingStrategy,
-  )
-
-  // inject factory method / supplier
-  inline fun <reified E : Any> byProperties(
-    vararg constructorArgs: Any?
-  ): EntityDecoder<E> = EntityDecoder.ByProperties(
-    constructor = E::class.primaryConstructor!!,
-    namingStrategy = dialect.namingStrategy,
-    constructorArgs = constructorArgs,
-  )
 
   fun <E : Any> repository(
     entity: KClass<E>,
@@ -44,7 +33,7 @@ class Database(
   )
 
   inline fun <reified E : Any> repository(
-    decoder: EntityDecoder<E> = byConstructor()
+    decoder: EntityDecoder<E> = codecs.decoder(E::class)
   ) = repository(
     entity = E::class,
     decoder = decoder
@@ -56,19 +45,19 @@ class Database(
       .use(decoder)
   }
 
-  fun execute(sql: String): Int = invoke { cnn ->
+  fun execute(sql: String): Boolean = invoke { cnn ->
     Statement(cnn, sql).use {
-      it.executeSingle()
-    }.also {
-      log.info("executed: affected={}\n{}", it, sql)
+      it.execute()
+    }.info {
+      "executed: $it\n$sql"
     }
   }
 
   fun execute(query: SimpleQuery): Int = invoke { cnn ->
     Statement(cnn, query).use {
       it.executeSingle()
-    }.also {
-      log.info("executed: affected={}\n{}", it, query)
+    }.info {
+      "executed: affected$it\n$query"
     }
   }
 
@@ -76,8 +65,8 @@ class Database(
     Statement(cnn, query).use {
       it.setParams(query[value])
       it.executeSingle()
-    }.also {
-      log.info("executed: affected={}\n{}", it, query)
+    }.info {
+      "executed: affected=$it\n$query"
     }
   }
 
@@ -88,8 +77,8 @@ class Database(
         it.statement.addBatch()
       }
       it.executeBatch()
-    }.also {
-      info { "executed: affected=${it.sum()}, $query" }
+    }.info {
+      "executed: affected=${it.sum()}\n$query"
     }
   }
 
@@ -97,21 +86,39 @@ class Database(
     dialect.delete(E::class, where<E>(builder))
   )
 
-  fun beginTransaction() = currentTransaction ?: createConnection().also(connection::set)
-
-  fun closeTransaction() {
-    val transaction = currentTransaction
-    if (transaction?.isClosed == false) {
-      transaction.close()
+  fun create(vararg entities: KClass<*>) = invoke { cnn ->
+    for (entity in entities) {
+      execute(
+        sql = dialect.create(entity, config.createIfNotExists)
+      )
     }
-    connection.remove()
   }
 
-  inline operator fun <T> invoke(executeTransaction: (Connection) -> T): T = currentTransaction.let { transaction ->
+  fun drop(vararg entities: KClass<*>) = invoke { cnn ->
+    for (entity in entities) {
+      execute(
+        sql = dialect.drop(entity, config.createIfNotExists)
+      )
+    }
+  }
+
+  fun beginTransaction() = currentTransaction ?: createConnection()
+    .also(connection::set)
+
+  fun closeTransaction() {
+    currentTransaction?.let {
+      if (!it.isClosed()) {
+        it.close()
+      }
+      connection.remove()
+    }
+  }
+
+  operator fun <T> invoke(action: (Connection) -> T): T = currentTransaction.let { transaction ->
     if (transaction == null) {
       val newTransaction = beginTransaction()
       try {
-        executeTransaction(newTransaction)
+        action(newTransaction)
           .also { newTransaction.commit() }
       } catch (e: Throwable) {
         if (!newTransaction.isClosed) {
@@ -122,7 +129,7 @@ class Database(
         closeTransaction()
       }
     } else {
-      executeTransaction(transaction)
+      action(transaction)
     }
   }
 

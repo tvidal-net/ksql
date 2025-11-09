@@ -6,7 +6,7 @@ import uk.tvidal.data.TableName
 import uk.tvidal.data.fieldName
 import uk.tvidal.data.insertFields
 import uk.tvidal.data.keyFields
-import uk.tvidal.data.tableName
+import uk.tvidal.data.table
 import uk.tvidal.data.updateFields
 import javax.persistence.Column
 import javax.persistence.Id
@@ -32,7 +32,7 @@ class ModelTest {
 
   @Test
   fun tableNameNoAnnotation() {
-    assertThat(NoAnnotation::class.tableName)
+    assertThat(NoAnnotation::class.table)
       .isEqualTo(TableName("NoAnnotation"))
   }
 
@@ -49,7 +49,7 @@ class ModelTest {
 
   @Test
   fun tableNameAnnotated() {
-    assertThat(AnnotatedClass::class.tableName)
+    assertThat(AnnotatedClass::class.table)
       .isEqualTo(TableName("tableName"))
   }
 
@@ -64,7 +64,7 @@ class ModelTest {
 
   @Test
   fun tableWithSchema() {
-    assertThat(TableWithSchema::class.tableName)
+    assertThat(TableWithSchema::class.table)
       .isEqualTo(TableName("tableName", "tableSchema"))
   }
 
@@ -73,7 +73,7 @@ class ModelTest {
 
   @Test
   fun tableWithCatalog() {
-    assertThat(TableWithCatalog::class.tableName)
+    assertThat(TableWithCatalog::class.table)
       .isEqualTo(TableName("tableName", "tableCatalog"))
   }
 
@@ -85,7 +85,7 @@ class ModelTest {
 
   @Test
   fun tableWithEmptyName() {
-    assertThat(EmptyAnnotatedClass::class.tableName)
+    assertThat(EmptyAnnotatedClass::class.table)
       .isEqualTo(TableName("EmptyAnnotatedClass"))
   }
 

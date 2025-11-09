@@ -44,9 +44,7 @@ class Person(var name: String) {
   override fun toString() = "Person(name=$name, age=$age, details=$details, id=$id)"
 }
 
-private val people = db.repository<Person>(
-  decoder = db.byProperties("")
-)
+private val people = db.repository<Person>()
 
 val thiago = DataPerson(Name.Thiago, 43, PersonDetails(Today))
 val kamila = DataPerson(Name.Kamila, 43)

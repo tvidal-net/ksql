@@ -1,11 +1,12 @@
 package uk.tvidal.data
 
 import org.assertj.core.api.AbstractStringAssert
-import org.assertj.core.api.AbstractThrowableAssert
 import org.assertj.core.api.Assertions
 import uk.tvidal.data.codec.DataType
 import uk.tvidal.data.filter.SqlFilter
+import uk.tvidal.data.query.EntityQuery
 import uk.tvidal.data.query.QueryParam
+import uk.tvidal.data.query.SelectQuery
 import uk.tvidal.data.query.SimpleQuery
 import uk.tvidal.data.schema.ColumnReference
 import uk.tvidal.data.schema.Constraint
@@ -13,7 +14,17 @@ import uk.tvidal.data.schema.SchemaColumn
 import uk.tvidal.data.sql.SqlDialect
 import kotlin.reflect.KClass
 
-class TestDialect : SqlDialect(NamingStrategy.AsIs) {
+internal object TestDialect : SqlDialect(
+  Config(namingStrategy = NamingStrategy.AsIs)
+) {
+
+  private val newLines = Regex("[\\n\\r]+\\s?", RegexOption.MULTILINE)
+  private val spaces = Regex("\\s+")
+
+  private val String.actual: String
+    get() = trim()
+      .replace(newLines, "")
+      .replace(spaces, " ")
 
   fun constraint(it: Constraint) = sql {
     schemaConstraint(it)
@@ -59,36 +70,31 @@ class TestDialect : SqlDialect(NamingStrategy.AsIs) {
     append(']')
   }
 
-  companion object SqlAssertions {
-    val newLines = Regex("[\\n\\r]+\\s?", RegexOption.MULTILINE)
-    val spaces = Regex("\\s+")
+  private fun sql(builder: Appendable.() -> Unit) =
+    buildString(builder).actual
 
-    private val String.actual: String
-      get() = trim()
-        .replace(newLines, "")
-        .replace(spaces, " ")
+  internal fun assertSql(builder: TestDialect.() -> SimpleQuery) = Assertions.assertThat(
+    builder().sql.actual
+  )
 
-    private fun sql(builder: Appendable.() -> Unit) =
-      buildString(builder).actual
+  internal fun <E> assertSelect(builder: TestDialect.() -> SelectQuery<E>) = Assertions.assertThat(
+    builder().sql.actual
+  )
 
-    fun assertQuery(builder: TestDialect.() -> SimpleQuery): AbstractStringAssert<*> = Assertions.assertThat(
-      builder(TestDialect()).sql.actual
-    )
+  internal fun <E> assertQuery(builder: TestDialect.() -> EntityQuery<E>) = Assertions.assertThat(
+    builder().sql.actual
+  )
 
-    fun assertSql(builder: TestDialect.() -> String): AbstractStringAssert<*> = Assertions.assertThat(
-      builder(TestDialect()).actual
-    )
-
-    fun assertThrows(builder: TestDialect.() -> SimpleQuery): AbstractThrowableAssert<*, out Throwable> = Assertions.assertThatThrownBy {
-      builder(TestDialect()).sql.actual
+  internal fun <E> assertThrows(builder: TestDialect.() -> EntityQuery<E>) =
+    Assertions.assertThatThrownBy {
+      builder().sql.actual
     }
 
-    fun assertSqlThrows(builder: TestDialect.() -> String): AbstractThrowableAssert<*, out Throwable> = Assertions.assertThatThrownBy {
-      builder(TestDialect()).actual
-    }
-
-    fun assertThat(builder: TestDialect.() -> String): AbstractStringAssert<*> = Assertions.assertThat(
-      builder(TestDialect())
-    )
+  internal fun assertSqlThrows(builder: TestDialect.() -> String) = Assertions.assertThatThrownBy {
+    builder().actual
   }
+
+  internal fun assertThat(builder: TestDialect.() -> String): AbstractStringAssert<*> = Assertions.assertThat(
+    builder()
+  )
 }

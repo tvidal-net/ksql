@@ -17,9 +17,10 @@ import kotlin.reflect.full.primaryConstructor
 
 @Suppress("UNCHECKED_CAST")
 class CodecFactory(
-  val config: Config,
-  val databaseName: NamingStrategy,
+  val config: Config = Config.Default,
 ) {
+  val databaseName: NamingStrategy
+    get() = config.namingStrategy
 
   fun <T : Any> encoder(property: KProperty<T>): ParamValueEncoder<T> = dataType(property)
 

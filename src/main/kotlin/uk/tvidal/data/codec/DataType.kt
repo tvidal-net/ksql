@@ -9,30 +9,33 @@ import java.sql.PreparedStatement
 import java.sql.ResultSet
 import java.sql.Types
 import java.time.LocalDateTime
+import java.util.Objects
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty
 import kotlin.reflect.full.allSupertypes
 import kotlin.reflect.full.isSubclassOf
 
 open class DataType<J, T : Any>(
-  val sqlDataType: String,
-  val codec: JdbcValueCodec<J, T>,
+  val jdbcValueCodec: JdbcValueCodec<J, T>,
   val setParam: SetParamValue<J>,
   val getValue: GetResultSetValue<J>,
-) : ParamValueEncoder, ResultSetDecoder<T> {
+) : ParamValueEncoder<T>, ResultSetDecoder<T> {
 
   open val length: Int?
     get() = null
 
-  override fun setParamValue(st: PreparedStatement, index: Int, value: Any?) {
+  open val sqlDataType: String
+    get() = "VARCHAR(${LENGTH})"
+
+  override fun setParamValue(st: PreparedStatement, index: Int, value: T?) {
     if (value != null) {
-      val encodedValue = codec.encode(value).debug {
-        "setParamValue(index=$parameterIndex, value=${str(value)}) encoded=${str(it)}"
+      val encodedValue = jdbcValueCodec.encode(value).debug {
+        "setParamValue(index=$index, value=${str(value)}) encoded=${str(it)}"
       }
-      setParam(st, parameterIndex, encodedValue)
+      setParam(st, index, encodedValue)
     } else {
-      debug { "setParamValue(index=$parameterIndex, value=${str(value)}" }
-      st.setNull(parameterIndex, Types.NULL)
+      debug { "setParamValue(index=$index, value=${str(value)}" }
+      st.setNull(index, Types.NULL)
     }
   }
 
@@ -40,73 +43,87 @@ open class DataType<J, T : Any>(
     if (rs.wasNull()) {
       null
     } else {
-      codec.decode(it)
+      jdbcValueCodec.decode(it)
     }.debug { value ->
       "getResultSetValue(field=${str(field)} value=${str(it)} decoded=${str(value)}"
     }
   }
 
   open class Primitive<T : Any>(
-    sqlDataType: String,
     setParam: SetParamValue<T>,
     getValue: GetResultSetValue<T>,
   ) : DataType<T, T>(
-    sqlDataType = sqlDataType,
     setParam = setParam,
     getValue = getValue,
-    codec = JdbcValueCodec.Primitive(),
+    jdbcValueCodec = JdbcValueCodec.Primitive(),
   )
 
   object Boolean : Primitive<kotlin.Boolean>(
-    sqlDataType = "BOOLEAN",
     setParam = PreparedStatement::setBoolean,
     getValue = ResultSet::getBoolean,
-  )
+  ) {
+    override val sqlDataType: String
+      get() = "BOOLEAN"
+  }
 
   object TinyInt : Primitive<Byte>(
-    sqlDataType = "TINYINT",
     setParam = PreparedStatement::setByte,
     getValue = ResultSet::getByte,
-  )
+  ) {
+    override val sqlDataType: String
+      get() = "TINYINT"
+  }
 
   object SmallInt : Primitive<Short>(
-    sqlDataType = "SMALLINT",
     setParam = PreparedStatement::setShort,
     getValue = ResultSet::getShort,
-  )
+  ) {
+    override val sqlDataType: String
+      get() = "SMALLINT"
+  }
 
   object Integer : Primitive<Int>(
-    sqlDataType = "INTEGER",
     setParam = PreparedStatement::setInt,
     getValue = ResultSet::getInt
-  )
+  ) {
+    override val sqlDataType: String
+      get() = "INTEGER"
+  }
 
   object BigInt : Primitive<Long>(
-    sqlDataType = "BIGINT",
     setParam = PreparedStatement::setLong,
     getValue = ResultSet::getLong,
-  )
+  ) {
+    override val sqlDataType: String
+      get() = "BIGINT"
+  }
 
   object Double : Primitive<kotlin.Double>(
-    sqlDataType = "DOUBLE PRECISION",
     setParam = PreparedStatement::setDouble,
     getValue = ResultSet::getDouble,
-  )
+  ) {
+    override val sqlDataType: String
+      get() = "DOUBLE PRECISION"
+  }
 
   object Float : Primitive<kotlin.Float>(
-    sqlDataType = "FLOAT",
     setParam = PreparedStatement::setFloat,
     getValue = ResultSet::getFloat,
-  )
+  ) {
+    override val sqlDataType: String
+      get() = "FLOAT"
+  }
 
   open class SqlTimestamp<T : Any>(
     codec: JdbcValueCodec<java.sql.Timestamp, T>,
   ) : DataType<java.sql.Timestamp, T>(
-    codec = codec,
-    sqlDataType = "TIMESTAMP",
+    jdbcValueCodec = codec,
     setParam = PreparedStatement::setTimestamp,
     getValue = ResultSet::getTimestamp,
-  )
+  ) {
+    override val sqlDataType: String
+      get() = "TIMESTAMP"
+  }
 
   object Timestamp : SqlTimestamp<java.sql.Timestamp>(
     codec = JdbcValueCodec.Primitive()
@@ -123,11 +140,13 @@ open class DataType<J, T : Any>(
   open class SqlDate<T : Any>(
     codec: JdbcValueCodec<java.sql.Date, T>,
   ) : DataType<java.sql.Date, T>(
-    codec = codec,
-    sqlDataType = "DATE",
+    jdbcValueCodec = codec,
     setParam = PreparedStatement::setDate,
     getValue = ResultSet::getDate,
-  )
+  ) {
+    override val sqlDataType: String
+      get() = "DATE"
+  }
 
   object Date : SqlDate<java.sql.Date>(
     codec = JdbcValueCodec.Primitive()
@@ -140,11 +159,13 @@ open class DataType<J, T : Any>(
   open class SqlTime<T : Any>(
     codec: JdbcValueCodec<java.sql.Time, T>,
   ) : DataType<java.sql.Time, T>(
-    codec = codec,
-    sqlDataType = "TIME",
+    jdbcValueCodec = codec,
     setParam = PreparedStatement::setTime,
     getValue = ResultSet::getTime,
-  )
+  ) {
+    override val sqlDataType: String
+      get() = "TIME"
+  }
 
   object Time : SqlTime<java.sql.Time>(
     codec = JdbcValueCodec.Primitive()
@@ -157,59 +178,69 @@ open class DataType<J, T : Any>(
   open class ShortString<T : Any>(
     decoder: (String) -> T,
     override val length: Int = SHORT_STRING,
-    sqlDataType: String = "VARCHAR($length)",
   ) : DataType<String, T>(
-    codec = JdbcValueCodec.StringCodec(decoder),
-    sqlDataType = sqlDataType,
+    jdbcValueCodec = JdbcValueCodec.StringCodec(decoder),
     setParam = PreparedStatement::setString,
     getValue = ResultSet::getString,
-  )
+  ) {
+    override val sqlDataType: String
+      get() = "VARCHAR($length)"
+  }
 
   class EnumType<E : Enum<E>>(
     val enumClass: KClass<E>,
-    override val length: Int = SHORT_STRING,
+    val fieldLength: Int? = null,
     val ignoreCase: kotlin.Boolean = true
   ) : ShortString<E>(
-    length = length,
-    sqlDataType = "VARCHAR($length)",
     decoder = { value ->
       enumClass.java.enumConstants.single {
         value.equals(it.name, ignoreCase)
       }
     }
-  )
+  ) {
+    override val length: Int
+      get() = fieldLength ?: enumClass.java.enumConstants.maxOf { it.name.length }
+
+    override val sqlDataType: String
+      get() = "CHAR($length)"
+  }
 
   object Text : Primitive<String>(
-    sqlDataType = "TEXT",
     setParam = PreparedStatement::setNString,
     getValue = ResultSet::getNString
-  )
+  ) {
+    override val sqlDataType: String
+      get() = "TEXT"
+  }
 
   object UUID : ShortString<java.util.UUID>(
     decoder = java.util.UUID::fromString,
-    sqlDataType = "UUID",
-  )
+  ) {
+    override val sqlDataType: String
+      get() = "UUID"
+  }
 
   object Duration : ShortString<java.time.Duration>(
     decoder = java.time.Duration::parse
   )
 
   class VarChar(override val length: Int) : Primitive<String>(
-    sqlDataType = "VARCHAR($length)",
     setParam = PreparedStatement::setString,
     getValue = ResultSet::getString,
-  )
+  ) {
+    override val sqlDataType: String
+      get() = "VARCHAR($length)"
+  }
 
   class NVarChar(override val length: Int) : Primitive<String>(
-    sqlDataType = "NVARCHAR($length)",
     setParam = PreparedStatement::setNString,
     getValue = ResultSet::getNString
-  )
+  ) {
+    override val sqlDataType: String
+      get() = "NVARCHAR($length)"
+  }
 
-  abstract class BigDecimal(
-    sqlDataType: String,
-  ) : Primitive<java.math.BigDecimal>(
-    sqlDataType = sqlDataType,
+  abstract class BigDecimal : Primitive<java.math.BigDecimal>(
     setParam = PreparedStatement::setBigDecimal,
     getValue = ResultSet::getBigDecimal,
   )
@@ -217,16 +248,18 @@ open class DataType<J, T : Any>(
   class Numeric(
     val scale: Int,
     val precision: Int? = null
-  ) : BigDecimal(
-    sqlDataType = "NUMERIC$scale${nullable(precision)}"
-  )
+  ) : BigDecimal() {
+    override val sqlDataType: String
+      get() = "NUMERIC$scale${nullable(precision)}"
+  }
 
   class Decimal(
     val scale: Int,
     val precision: Int? = null
-  ) : BigDecimal(
-    sqlDataType = "DECIMAL($scale${nullable(precision)})"
-  )
+  ) : BigDecimal() {
+    override val sqlDataType: String
+      get() = "DECIMAL($scale${nullable(precision)})"
+  }
 
   internal fun valueType(): KClass<T> {
     val dataType = this::class.allSupertypes
@@ -236,12 +269,22 @@ open class DataType<J, T : Any>(
     return dataType.arguments.last().type!!.classifier!! as KClass<T>
   }
 
+  override fun hashCode(): Int {
+    return Objects.hash(sqlDataType, jdbcValueCodec, setParam, getValue)
+  }
+
+  override fun equals(other: Any?) = other is DataType<*, *>
+    && sqlDataType == other.sqlDataType
+    && jdbcValueCodec == other.jdbcValueCodec
+    && setParam == other.setParam
+    && getValue == other.getValue
+
   override fun toString() = "${this::class.simpleName} $sqlDataType"
 
   companion object : KLogging() {
 
     const val SHORT_STRING = 0x20
-    const val STRING_LENGTH = 0x400
+    const val LENGTH = 0x400
 
     const val DEFAULT_SCALE = 13
     const val DEFAULT_PRECISION = 2
@@ -253,11 +296,8 @@ open class DataType<J, T : Any>(
       .map { it.valueType() to it }
 
     fun from(type: KClass<*>) = All.firstNotNullOfOrNull { (valueType, dataType) ->
-      if (valueType.isSubclassOf(type)) {
-        dataType
-      } else {
-        null
-      }
+      if (!valueType.isSubclassOf(type)) null
+      else dataType
     }
 
     private fun nullable(precision: Int?) =

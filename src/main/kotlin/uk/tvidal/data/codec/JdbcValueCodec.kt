@@ -10,6 +10,7 @@ import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
+import java.util.Objects.hash
 import kotlin.reflect.KClass
 
 interface JdbcValueCodec<J, T> {
@@ -20,6 +21,9 @@ interface JdbcValueCodec<J, T> {
   class Primitive<T> : JdbcValueCodec<T, T> {
     override fun decode(value: T) = value
     override fun encode(value: T) = value
+
+    override fun equals(other: Any?) = other is Primitive<*>
+      && this::class == other::class
   }
 
   object InstantCodec : JdbcValueCodec<Timestamp, Instant> {
@@ -45,6 +49,11 @@ interface JdbcValueCodec<J, T> {
   class StringCodec<T>(val decoder: (String) -> T) : JdbcValueCodec<String, T> {
     override fun encode(value: T) = value.toString()
     override fun decode(value: String): T = decoder(value)
+
+    override fun hashCode() = hash(decoder)
+
+    override fun equals(other: Any?) = other is StringCodec<*>
+      && decoder == other.decoder
   }
 
   class Jackson<T : Any>(val reader: ObjectReader, val writer: ObjectWriter) : JdbcValueCodec<String, T> {
@@ -55,5 +64,11 @@ interface JdbcValueCodec<J, T> {
 
     override fun decode(value: String): T = reader.readValue(value)
     override fun encode(value: T): String = writer.writeValueAsString(value)
+
+    override fun hashCode() = hash(reader, writer)
+
+    override fun equals(other: Any?) = other is Jackson<*>
+      && reader == other.reader
+      && writer == other.writer
   }
 }

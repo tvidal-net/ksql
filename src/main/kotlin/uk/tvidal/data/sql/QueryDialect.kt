@@ -5,6 +5,7 @@ import uk.tvidal.data.insertFields
 import uk.tvidal.data.keyFields
 import uk.tvidal.data.query.EntityQuery
 import uk.tvidal.data.query.From
+import uk.tvidal.data.query.SelectQuery
 import uk.tvidal.data.query.SimpleQuery
 import uk.tvidal.data.updateFields
 import kotlin.reflect.KClass
@@ -12,15 +13,20 @@ import kotlin.reflect.KProperty1
 
 interface QueryDialect {
 
-  fun select(
+  fun <E : Any> select(
+    entity: KClass<E>,
     from: Collection<From>,
     whereClause: SqlFilter? = null
-  ): SimpleQuery
+  ): SelectQuery<E>
 
-  fun select(
-    entity: KClass<*>,
-    whereClause: SqlFilter? = null
-  ): SimpleQuery
+  fun <E : Any> select(
+    entity: KClass<E>,
+    whereClause: SqlFilter? = null,
+  ) = select(
+    entity = entity,
+    from = listOf(From.Entity(entity)),
+    whereClause = whereClause
+  )
 
   fun <E : Any> save(
     entity: KClass<E>,

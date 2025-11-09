@@ -43,7 +43,7 @@ class DataTypeTest {
     val localTime: LocalTime,
     val sqlTime: java.sql.Time,
     val decimal: BigDecimal,
-    @Column(scale = 3) val scaledDecimal: BigDecimal,
+    @Column(scale = 3) val scaleDecimal: BigDecimal,
     @Column(scale = 5, precision = 2) val precisionDecimal: BigDecimal,
     val string: String,
     val nullableString: String?,
@@ -87,8 +87,8 @@ class DataTypeTest {
   @Test
   fun fromDecimal() {
     assertThat(DataType.from(T::decimal)).isEqualTo(config.decimal(null))
-    assertThat(DataType.from(T::scaledDecimal)).isEqualTo(DataType.Decimal(3))
-    assertThat(DataType.from(T::precisionDecimal)).isEqualTo(DataType.Decimal(5, 2))
+    assertThat(DataType.from(T::scaleDecimal)).usingRecursiveAssertion().isEqualTo(DataType.Decimal(3))
+    assertThat(DataType.from(T::precisionDecimal)).usingRecursiveAssertion().isEqualTo(DataType.Decimal(5, 2))
   }
 
   @Test

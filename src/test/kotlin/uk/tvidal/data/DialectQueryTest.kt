@@ -1,8 +1,10 @@
 package uk.tvidal.data
 
 import org.junit.jupiter.api.Test
-import uk.tvidal.data.TestDialect.SqlAssertions.assertQuery
-import uk.tvidal.data.TestDialect.SqlAssertions.assertThrows
+import uk.tvidal.data.TestDialect.assertQuery
+import uk.tvidal.data.TestDialect.assertSelect
+import uk.tvidal.data.TestDialect.assertSql
+import uk.tvidal.data.TestDialect.assertThrows
 import java.util.UUID
 import javax.persistence.Id
 
@@ -16,13 +18,13 @@ class DialectQueryTest {
 
   @Test
   fun selectAllQuery() {
-    assertQuery { select(person) }
+    assertSelect { select(person) }
       .isEqualTo("SELECT [age],[id],[name] FROM [Person]")
   }
 
   @Test
   fun selectByKeyQuery() {
-    assertQuery { select(person, person.keyFilter) }
+    assertSelect { select(person, person.keyFilter) }
       .isEqualTo("SELECT [age],[id],[name] FROM [Person] WHERE [id] = ?")
   }
 
@@ -31,7 +33,7 @@ class DialectQueryTest {
     val filter = where {
       Person::age.gt(10)
     }
-    assertQuery { delete(person, filter) }
+    assertSql { delete(person, filter) }
       .isEqualTo("DELETE FROM [Person] WHERE [age] > ?")
   }
 
@@ -57,7 +59,7 @@ class DialectQueryTest {
   fun saveFailsOnDefaultDialect() {
     assertThrows { save(person) }
       .isExactlyInstanceOf(NotImplementedError::class.java)
-      .hasMessageContaining("saveQuery is not implemented")
+      .hasMessageContaining("save is not implemented for the default Dialect")
   }
 
   companion object {

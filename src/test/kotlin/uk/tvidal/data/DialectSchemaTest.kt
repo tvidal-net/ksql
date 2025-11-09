@@ -1,8 +1,8 @@
 package uk.tvidal.data
 
 import org.junit.jupiter.api.Test
-import uk.tvidal.data.TestDialect.SqlAssertions.assertSql
-import uk.tvidal.data.TestDialect.SqlAssertions.assertThat
+import uk.tvidal.data.TestDialect.assertSql
+import uk.tvidal.data.TestDialect.assertThat
 import uk.tvidal.data.codec.DataType
 import uk.tvidal.data.schema.ColumnReference.Factory.asc
 import uk.tvidal.data.schema.ColumnReference.Factory.desc

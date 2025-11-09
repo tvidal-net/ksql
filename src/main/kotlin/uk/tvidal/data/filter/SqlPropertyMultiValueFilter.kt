@@ -6,7 +6,6 @@ import kotlin.reflect.KProperty
 sealed class SqlPropertyMultiValueFilter<out V> : SqlPropertyFilter<V>() {
 
   abstract val operator: String
-  abstract val values: Collection<V>
 
   data class Between<T>(
     override val property: KProperty<T>,

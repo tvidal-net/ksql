@@ -8,6 +8,9 @@ sealed class SqlPropertyParamFilter<out V> : SqlPropertyFilter<V>() {
 
   abstract val operator: String
 
+  override val values: Collection<V>
+    get() = emptyList()
+
   data class Equals<T>(override val property: KProperty<T>, override val alias: String? = null) : SqlPropertyParamFilter<T>() {
     override val operator: String
       get() = SqlFilter.EQ

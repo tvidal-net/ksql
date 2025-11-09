@@ -1,15 +1,15 @@
 package uk.tvidal.data.database
 
 import org.mariadb.jdbc.MariaDbPoolDataSource
+import uk.tvidal.data.Config
 import uk.tvidal.data.Database
-import uk.tvidal.data.NamingStrategy
 import uk.tvidal.data.fieldName
 import uk.tvidal.data.sql.SqlDialect
 import uk.tvidal.data.table
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty1
 
-class MariaDB(namingStrategy: NamingStrategy = NamingStrategy.SnakeCase) : SqlDialect(namingStrategy) {
+class MariaDB(config: Config = Config.Default) : SqlDialect(config) {
 
   override fun Appendable.openQuote() {
     append(QUOTE_CHAR)

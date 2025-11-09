@@ -1,7 +1,7 @@
 package uk.tvidal.data.sql
 
 import org.junit.jupiter.api.Test
-import uk.tvidal.data.TestDialect.SqlAssertions.assertQuery
+import uk.tvidal.data.TestDialect.assertSelect
 import uk.tvidal.data.query.eq
 import uk.tvidal.data.query.from
 import uk.tvidal.data.query.innerJoin
@@ -24,8 +24,8 @@ class SqlDialectSelectFromTest {
 
   @Test
   fun testSimpleSelectFrom() {
-    assertQuery {
-      select(listOf(from(Account::class)))
+    assertSelect {
+      select(Account::class)
     }.isEqualTo(
       "SELECT [id],[name] FROM [Account]"
     )
@@ -43,7 +43,7 @@ class SqlDialectSelectFromTest {
         on = Account::id eq Transaction::credit
       ),
     )
-    assertQuery { select(from) }.isEqualTo(
+    assertSelect { select(Transaction::class, from) }.isEqualTo(
       "SELECT [Transaction].[Transaction_credit],[Transaction].[Transaction_debit]," +
         "[Transaction].[Transaction_description],[Transaction].[Transaction_id],[Account].[Account_name] " +
         "FROM [Transaction] INNER JOIN [Account] ON [Account].[id] = [Transaction].[credit]"
@@ -68,7 +68,7 @@ class SqlDialectSelectFromTest {
         alias = "ad"
       ),
     )
-    assertQuery { select(from) }.isEqualTo(
+    assertSelect { select(Transaction::class, from) }.isEqualTo(
       "SELECT [t].[t_credit],[t].[t_debit],[t].[t_description],[t].[t_id],[ac].[ac_id],[ac].[ac_name],[ad].[ad_id],[ad].[ad_name] " +
         "FROM [Transaction] AS [t] INNER JOIN [Account] AS [ac] ON [ac].[id] = [t].[credit] " +
         "INNER JOIN [Account] AS [ad] ON [ad].[id] = [t].[debit]"

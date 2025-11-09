@@ -11,13 +11,15 @@ import kotlin.reflect.KClass
 
 class Database(
   val dialect: SqlDialect,
-  val config: Config = Config.Default,
   private val createConnection: () -> Connection,
 ) {
   private val connection = ThreadLocal<Connection>()
 
   val codecs: CodecFactory
     get() = dialect.codecs
+
+  val config: Config
+    get() = codecs.config
 
   val currentTransaction: Connection?
     get() = connection.get()
@@ -74,7 +76,7 @@ class Database(
   fun create(vararg entities: KClass<*>) = invoke { cnn ->
     for (entity in entities) {
       execute(
-        sql = dialect.create(entity, config.createIfNotExists)
+        query = dialect.create(entity, config.createIfNotExists)
       )
     }
   }
@@ -82,7 +84,7 @@ class Database(
   fun drop(vararg entities: KClass<*>) = invoke { cnn ->
     for (entity in entities) {
       execute(
-        sql = dialect.drop(entity, config.createIfNotExists)
+        query = dialect.drop(entity, config.createIfNotExists)
       )
     }
   }

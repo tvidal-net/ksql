@@ -1,6 +1,7 @@
 package uk.tvidal.data.sql
 
 import uk.tvidal.data.TableName
+import uk.tvidal.data.query.SimpleQuery
 import uk.tvidal.data.schema.Index
 import uk.tvidal.data.schema.SchemaTable
 import uk.tvidal.data.table
@@ -14,7 +15,7 @@ interface SchemaDialect {
   fun create(
     table: SchemaTable,
     ifNotExists: Boolean = true,
-  ): String
+  ): SimpleQuery
 
   /**
    *
@@ -34,7 +35,7 @@ interface SchemaDialect {
     index: Index,
     table: TableName,
     ifNotExists: Boolean = true,
-  ): String
+  ): SimpleQuery
 
   /**
    *
@@ -42,7 +43,7 @@ interface SchemaDialect {
   fun drop(
     table: TableName,
     ifExists: Boolean = true
-  ): String
+  ): SimpleQuery
 
   /**
    *
@@ -59,5 +60,5 @@ interface SchemaDialect {
     index: Index,
     table: TableName,
     ifExists: Boolean = true,
-  ): String
+  ): SimpleQuery
 }

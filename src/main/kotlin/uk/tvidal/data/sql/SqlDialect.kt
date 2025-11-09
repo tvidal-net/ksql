@@ -1,5 +1,6 @@
 package uk.tvidal.data.sql
 
+import uk.tvidal.data.Config
 import uk.tvidal.data.TableName
 import uk.tvidal.data.codec.CodecFactory
 import uk.tvidal.data.codec.DataType
@@ -8,8 +9,8 @@ import uk.tvidal.data.filter.SqlFilter
 import uk.tvidal.data.query.EntityQuery
 import uk.tvidal.data.query.From
 import uk.tvidal.data.query.QueryParam
+import uk.tvidal.data.query.SelectQuery
 import uk.tvidal.data.query.SimpleQuery
-import uk.tvidal.data.query.from
 import uk.tvidal.data.schema.ColumnReference
 import uk.tvidal.data.schema.Constraint
 import uk.tvidal.data.schema.Index
@@ -20,8 +21,10 @@ import kotlin.reflect.KClass
 import kotlin.reflect.KProperty1
 
 open class SqlDialect(
-  codecFactory: CodecFactory
-) : SqlQueryBuilder(codecFactory), QueryDialect, SchemaDialect {
+  config: Config = Config.Default
+) : SqlQueryBuilder(
+  codecs = CodecFactory(config)
+), QueryDialect, SchemaDialect {
 
   override fun create(table: SchemaTable, ifNotExists: Boolean) = sqlQuery {
     append("CREATE TABLE ")
@@ -79,16 +82,11 @@ open class SqlDialect(
     quotedName(index.name)
   }
 
-  protected inline fun sqlQuery(
-    builder: Appendable.() -> Unit
-  ) = buildString {
-    builder()
-  }
-
-  override fun select(
+  override fun <E : Any> select(
+    entity: KClass<E>,
     from: Collection<From>,
     whereClause: SqlFilter?
-  ) = simpleQuery { params ->
+  ) = selectQuery(entity) { params ->
     select(from)
     from.filterIsInstance<From.Entity<*>>().let { e ->
       e.single().let {
@@ -100,14 +98,6 @@ open class SqlDialect(
     }
     where(params, whereClause)
   }
-
-  override fun select(
-    entity: KClass<*>,
-    whereClause: SqlFilter?
-  ) = select(
-    listOf(from(entity)),
-    whereClause
-  )
 
   protected open fun Appendable.from(entity: KClass<*>, alias: String? = null) {
     appendLine()
@@ -139,19 +129,8 @@ open class SqlDialect(
   override fun delete(
     entity: KClass<*>,
     whereClause: SqlFilter
-  ) = simpleQuery { params ->
+  ) = paramQuery { params ->
     deleteQuery(params, entity.table, whereClause)
-  }
-
-  protected inline fun simpleQuery(
-    builder: Appendable.(MutableCollection<QueryParam.Value>) -> Unit
-  ) = arrayListOf<QueryParam.Value>().let { params ->
-    SimpleQuery(
-      sql = buildString {
-        builder(params)
-      },
-      params = params
-    )
   }
 
   override fun <E : Any> save(
@@ -210,6 +189,38 @@ open class SqlDialect(
     indent()
     append("VALUES ")
     fieldParams(params, insertFields)
+  }
+
+  protected inline fun sqlQuery(
+    builder: Appendable.() -> Unit
+  ) = buildString {
+    builder()
+  }.let {
+    SimpleQuery(it)
+  }
+
+  protected inline fun paramQuery(
+    builder: Appendable.(MutableCollection<QueryParam>) -> Unit
+  ) = arrayListOf<QueryParam>().let { params ->
+    SimpleQuery(
+      params = params,
+      sql = buildString {
+        builder(params)
+      }
+    )
+  }
+
+  protected inline fun <E : Any> selectQuery(
+    entity: KClass<E>,
+    builder: Appendable.(MutableCollection<QueryParam>) -> Unit
+  ) = arrayListOf<QueryParam>().let { params ->
+    SelectQuery(
+      params = params,
+      decode = codecs.decoder(entity),
+      sql = buildString {
+        builder(params)
+      }
+    )
   }
 
   protected inline fun <E> entityQuery(

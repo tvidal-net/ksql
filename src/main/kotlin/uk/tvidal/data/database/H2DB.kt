@@ -1,14 +1,14 @@
 package uk.tvidal.data.database
 
 import org.h2.jdbcx.JdbcDataSource
+import uk.tvidal.data.Config
 import uk.tvidal.data.Database
-import uk.tvidal.data.NamingStrategy
 import uk.tvidal.data.sql.SqlDialect
 import uk.tvidal.data.table
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty1
 
-class H2DB(namingStrategy: NamingStrategy = NamingStrategy.SnakeCase) : SqlDialect(namingStrategy) {
+class H2DB(config: Config = Config.Default) : SqlDialect(config) {
 
   override fun <E : Any> save(
     entity: KClass<E>,

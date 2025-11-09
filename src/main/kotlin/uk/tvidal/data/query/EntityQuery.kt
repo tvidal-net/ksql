@@ -39,7 +39,7 @@ class EntityQuery<in E>(
 
   class Param<in E>(
     index: Int,
-    encoder: ParamValueEncoder,
+    encoder: ParamValueEncoder<Any>,
     val property: KProperty1<in E, *>,
   ) : QueryParam(index, property.name, encoder) {
 

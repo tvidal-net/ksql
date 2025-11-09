@@ -2,7 +2,7 @@ package uk.tvidal.data.database
 
 import org.junit.jupiter.api.Test
 import uk.tvidal.data.RandomUUID
-import uk.tvidal.data.TestDialect
+import uk.tvidal.data.TestDialect.assertQuery
 import java.util.UUID
 import javax.persistence.Id
 
@@ -17,11 +17,7 @@ class MariaDBTest {
 
   @Test
   fun saveOnDuplicateUpdate() {
-    TestDialect.SqlAssertions.assertQuery { dialect.save(Person::class) }
+    assertQuery { dialect.save(Person::class) }
       .isEqualTo("INSERT INTO `person` (`name`,`id`) VALUES (?,?) ON DUPLICATE KEY UPDATE `name`=VALUES(`name`)")
-  }
-
-  companion object {
-
   }
 }

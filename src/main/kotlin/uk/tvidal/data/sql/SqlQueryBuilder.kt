@@ -1,9 +1,11 @@
 package uk.tvidal.data.sql
 
+import uk.tvidal.data.Config
 import uk.tvidal.data.NamingStrategy
 import uk.tvidal.data.NamingStrategy.Constants.NAME_SEP
 import uk.tvidal.data.TableName
 import uk.tvidal.data.codec.CodecFactory
+import uk.tvidal.data.codec.ParamValueEncoder
 import uk.tvidal.data.fieldName
 import uk.tvidal.data.filter.SqlFilter
 import uk.tvidal.data.filter.SqlMultiFilter
@@ -15,10 +17,15 @@ import uk.tvidal.data.filter.SqlPropertyValueFilter
 import uk.tvidal.data.query.EntityQuery
 import uk.tvidal.data.query.From
 import uk.tvidal.data.query.QueryParam
-import uk.tvidal.data.query.Statement.Companion.FIRST_PARAM
+import uk.tvidal.data.query.QueryParam.Constants.FIRST_PARAM
+import kotlin.reflect.KProperty
 import kotlin.reflect.KProperty1
 
+@Suppress("UNCHECKED_CAST")
 abstract class SqlQueryBuilder(val codecs: CodecFactory) {
+
+  protected val config: Config
+    get() = codecs.config
 
   protected val namingStrategy: NamingStrategy
     get() = codecs.databaseName
@@ -35,7 +42,6 @@ abstract class SqlQueryBuilder(val codecs: CodecFactory) {
     }
   }
 
-  @Suppress("UNCHECKED_CAST")
   protected fun <E, P : QueryParam> Appendable.setFields(
     params: MutableCollection<in P>,
     fields: Collection<KProperty1<E, *>>
@@ -52,7 +58,6 @@ abstract class SqlQueryBuilder(val codecs: CodecFactory) {
     }
   }
 
-  @Suppress("UNCHECKED_CAST")
   protected fun <E, P : QueryParam> Appendable.fieldParams(
     params: MutableCollection<in P>,
     fields: Collection<KProperty1<in E, *>>
@@ -64,13 +69,12 @@ abstract class SqlQueryBuilder(val codecs: CodecFactory) {
       }
       fieldParam(
         params = params as MutableCollection<QueryParam>,
-        field = field
+        property = field
       )
     }
     closeBlock()
   }
 
-  @Suppress("UNCHECKED_CAST")
   protected fun <P : QueryParam> Appendable.filter(
     params: MutableCollection<in P>,
     filter: SqlFilter,
@@ -135,7 +139,11 @@ abstract class SqlQueryBuilder(val codecs: CodecFactory) {
     valueFilter: SqlPropertyValueFilter<*>
   ) {
     append(valueFilter.operator)
-    valueParam(params, valueFilter.property.fieldName, valueFilter.value)
+    valueParam(
+      params,
+      valueFilter.property.fieldName,
+      codecs.encoder(valueFilter.property as KProperty<Any>)
+    )
   }
 
   private fun Appendable.betweenFilter(
@@ -143,9 +151,10 @@ abstract class SqlQueryBuilder(val codecs: CodecFactory) {
     betweenFilter: SqlPropertyMultiValueFilter.Between<*>
   ) {
     append(betweenFilter.operator)
-    for ((i, value) in betweenFilter.values.withIndex()) {
-      if (i > 0) append(SqlFilter.AND)
-      valueParam(params, "${betweenFilter.property.fieldName}_$i", value)
+    val encoder = codecs.encoder(betweenFilter.property as KProperty<Any>)
+    repeat(betweenFilter.values.size) {
+      if (it > 0) append(SqlFilter.AND)
+      valueParam(params, "${betweenFilter.property.fieldName}_$it", encoder)
     }
   }
 
@@ -155,18 +164,23 @@ abstract class SqlQueryBuilder(val codecs: CodecFactory) {
   ) {
     append(inFilter.operator)
     openBlock()
-    for ((i, value) in inFilter.values.withIndex()) {
-      if (i > 0) listSeparator()
-      valueParam(params, "${inFilter.property.fieldName}_$i", value)
+    val encoder = codecs.encoder(inFilter.property as KProperty<Any>)
+    repeat(inFilter.values.size) {
+      if (it > 0) listSeparator()
+      valueParam(params, "${inFilter.property.fieldName}_$it", encoder)
     }
     closeBlock()
   }
 
   protected fun <E> Appendable.fieldParam(
     params: MutableCollection<in QueryParam>,
-    field: KProperty1<in E, Any?>
+    property: KProperty1<E, *>
   ) {
-    EntityQuery.Param(params.nextIndex, field).also { newParam ->
+    EntityQuery.Param(
+      index = params.nextIndex,
+      encoder = codecs.encoder(property as KProperty<Any>),
+      property = property
+    ).also { newParam ->
       params.add(newParam)
       param(newParam)
     }
@@ -174,9 +188,10 @@ abstract class SqlQueryBuilder(val codecs: CodecFactory) {
 
   protected fun Appendable.valueParam(
     params: MutableCollection<in QueryParam>,
-    name: String, value: Any?
+    name: String,
+    encoder: ParamValueEncoder<Any>,
   ) {
-    QueryParam.Value(params.nextIndex, name, value).also { newParam ->
+    QueryParam(params.nextIndex, name, encoder).also { newParam ->
       params.add(newParam)
       param(newParam)
     }

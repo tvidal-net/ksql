@@ -2,7 +2,7 @@ package uk.tvidal.data.sql
 
 import org.junit.jupiter.api.Test
 import uk.tvidal.data.TestDialect.assertSelect
-import uk.tvidal.data.query.From
+import uk.tvidal.data.query.SelectFrom
 import uk.tvidal.data.query.eq
 import uk.tvidal.data.query.from
 import java.util.UUID
@@ -34,12 +34,12 @@ class SqlDialectSelectFromTest {
   @Test
   fun testLookupJoin() {
     val from = listOf(
-      From.Table(
+      SelectFrom.Table(
         Transaction::class
       ),
-      From.Join(
-        from = From.Table(Account::class),
-        type = From.Join.Type.Inner,
+      SelectFrom.Join(
+        from = SelectFrom.Table(Account::class),
+        type = SelectFrom.Join.Type.Inner,
         on = Account::id eq Transaction::credit
       ),
     )

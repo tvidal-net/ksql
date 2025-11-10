@@ -5,8 +5,8 @@ import uk.tvidal.data.fields
 import uk.tvidal.data.filter.SqlPropertyJoinFilter
 import uk.tvidal.data.isNullable
 import uk.tvidal.data.keyField
-import uk.tvidal.data.query.From.Join
-import uk.tvidal.data.query.From.Table
+import uk.tvidal.data.query.SelectFrom.Join
+import uk.tvidal.data.query.SelectFrom.Table
 import uk.tvidal.data.receiverType
 import uk.tvidal.data.returnValueType
 import uk.tvidal.data.table
@@ -32,7 +32,7 @@ fun setParamValues(st: PreparedStatement, params: Iterable<QueryParam>, values: 
   }
 }
 
-fun from(table: KClass<*>, alias: String? = null): List<From> = buildList {
+fun from(table: KClass<*>, alias: String? = null): List<SelectFrom> = buildList {
   add(Table(table, alias))
   table.fields.mapNotNull { field ->
     field.returnValueType.keyField?.let { target ->

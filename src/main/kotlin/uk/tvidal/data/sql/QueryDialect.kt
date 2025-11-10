@@ -4,7 +4,7 @@ import uk.tvidal.data.filter.SqlFilter
 import uk.tvidal.data.insertFields
 import uk.tvidal.data.keyFields
 import uk.tvidal.data.query.EntityQuery
-import uk.tvidal.data.query.From
+import uk.tvidal.data.query.SelectFrom
 import uk.tvidal.data.query.SelectQuery
 import uk.tvidal.data.query.SimpleQuery
 import uk.tvidal.data.updateFields
@@ -15,7 +15,7 @@ interface QueryDialect {
 
   fun <E : Any> select(
     entity: KClass<E>,
-    from: Collection<From>,
+    from: Collection<SelectFrom>,
     whereClause: SqlFilter? = null
   ): SelectQuery<E>
 
@@ -24,7 +24,7 @@ interface QueryDialect {
     whereClause: SqlFilter? = null,
   ) = select(
     entity = entity,
-    from = listOf(From.Table(entity)),
+    from = listOf(SelectFrom.Table(entity)),
     whereClause = whereClause
   )
 

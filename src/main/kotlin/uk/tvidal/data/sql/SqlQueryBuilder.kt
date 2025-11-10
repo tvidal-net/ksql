@@ -15,7 +15,7 @@ import uk.tvidal.data.filter.SqlPropertyMultiValueFilter
 import uk.tvidal.data.filter.SqlPropertyParamFilter
 import uk.tvidal.data.filter.SqlPropertyValueFilter
 import uk.tvidal.data.query.EntityQuery
-import uk.tvidal.data.query.From
+import uk.tvidal.data.query.SelectFrom
 import uk.tvidal.data.query.QueryParam
 import uk.tvidal.data.query.QueryParam.Constants.FIRST_PARAM
 import kotlin.reflect.KProperty
@@ -210,7 +210,7 @@ abstract class SqlQueryBuilder(val codecs: CodecFactory) {
     }
   }
 
-  protected fun Appendable.select(selectFrom: Collection<From>) {
+  protected fun Appendable.select(selectFrom: Collection<SelectFrom>) {
     append("SELECT ")
     for ((i, from) in selectFrom.withIndex()) {
       if (i > 0) listSeparator()
@@ -241,7 +241,7 @@ abstract class SqlQueryBuilder(val codecs: CodecFactory) {
     if (block) closeBlock()
   }
 
-  protected open fun Appendable.append(join: From.Join.Type) {
+  protected open fun Appendable.append(join: SelectFrom.Join.Type) {
     append(join.sql)
   }
 
@@ -361,7 +361,7 @@ abstract class SqlQueryBuilder(val codecs: CodecFactory) {
     private val Collection<*>.nextIndex: Int
       get() = size + FIRST_PARAM
 
-    internal fun alias(from: From, count: Int): String? =
+    internal fun alias(from: SelectFrom, count: Int): String? =
       from.alias ?: if (count == 1) null else from.name
   }
 }

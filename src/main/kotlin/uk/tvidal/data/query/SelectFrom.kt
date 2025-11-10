@@ -8,7 +8,7 @@ import uk.tvidal.data.tableName
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty
 
-sealed interface From {
+sealed interface SelectFrom {
 
   val fields: Collection<KProperty<*>>
   val alias: String?
@@ -17,7 +17,7 @@ sealed interface From {
   class Table<T : Any>(
     val type: KClass<T>,
     override val alias: String? = null,
-  ) : From {
+  ) : SelectFrom {
     override val name: String
       get() = type.tableName
 
@@ -28,10 +28,10 @@ sealed interface From {
   }
 
   class Join(
-    val from: From,
+    val from: SelectFrom,
     val type: Type,
     val on: SqlFilter?,
-  ) : From {
+  ) : SelectFrom {
 
     init {
       require(from !is Join) {

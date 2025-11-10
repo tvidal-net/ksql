@@ -7,8 +7,8 @@ import uk.tvidal.data.codec.ValueType
 import uk.tvidal.data.equalsFilter
 import uk.tvidal.data.filter.SqlFilter
 import uk.tvidal.data.query.EntityQuery
-import uk.tvidal.data.query.From
 import uk.tvidal.data.query.QueryParam
+import uk.tvidal.data.query.SelectFrom
 import uk.tvidal.data.query.SelectQuery
 import uk.tvidal.data.query.SimpleQuery
 import uk.tvidal.data.schema.Constraint
@@ -84,42 +84,42 @@ open class SqlDialect(
 
   override fun <E : Any> select(
     entity: KClass<E>,
-    from: Collection<From>,
+    from: Collection<SelectFrom>,
     whereClause: SqlFilter?
   ) = selectQuery(entity) { params ->
     select(from)
-    from(
-      from.filterIsInstance<From.Table<*>>()
-    )
-    for (join in from.filterIsInstance<From.Join>()) {
+    from(from)
+    for (join in from.filterIsInstance<SelectFrom.Join>()) {
       join(params, join)
     }
     where(params, whereClause)
   }
 
-  protected open fun Appendable.from(tables: Collection<From.Table<*>>) {
+  protected fun Appendable.from(from: Collection<SelectFrom>) {
     appendLine()
     append("FROM ")
-    for ((i, table) in tables.withIndex()) {
+    val fromTables = from.filterIsInstance<SelectFrom.Table<*>>()
+    for ((i, table) in fromTables.withIndex()) {
       if (i > 0) listSeparator()
       tableName(
         table = table.type.table,
-        alias = if (tables.size == 1) null else (table.alias ?: table.name)
+        alias = alias(table, from.size)
       )
     }
   }
 
-  protected open fun <P : QueryParam> Appendable.join(
+  protected fun <P : QueryParam> Appendable.join(
     params: MutableCollection<in P>,
-    join: From.Join,
+    join: SelectFrom.Join,
   ) {
     appendLine()
     append(join.type)
     space()
-    when (val from = join.from) {
-      is From.Table<*> -> tableName(from.type.table, from.alias)
-      else -> throw IllegalArgumentException("Invalid join type: $from")
+    val from = join.from
+    require(from is SelectFrom.Table<*>) {
+      "Invalid Join Type: $from"
     }
+    tableName(from.type.table, from.alias)
     join.on?.let {
       appendLine()
       indent()
@@ -214,12 +214,12 @@ open class SqlDialect(
   }
 
   protected inline fun <E : Any> selectQuery(
-    entity: KClass<E>,
+    projection: KClass<E>,
     builder: Appendable.(MutableCollection<QueryParam>) -> Unit
   ) = arrayListOf<QueryParam>().let { params ->
     SelectQuery(
       params = params,
-      decode = codecs.decoder(entity),
+      decode = codecs.decoder(projection),
       sql = buildString {
         builder(params)
       }

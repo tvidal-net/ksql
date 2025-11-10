@@ -4,8 +4,8 @@ import uk.tvidal.data.TableName
 import uk.tvidal.data.fieldName
 import uk.tvidal.data.fields
 import uk.tvidal.data.keyField
-import uk.tvidal.data.table
 import uk.tvidal.data.returnValueType
+import uk.tvidal.data.table
 import kotlin.reflect.KClass
 
 sealed interface Constraint {
@@ -75,11 +75,11 @@ sealed interface Constraint {
     fun on(fieldName: String, referenceField: String = fieldName) =
       ForeignKeyReference(fieldName, referenceField)
 
-    fun <E : Any> foreignKeys(entity: KClass<E>) = entity.fields.mapNotNull { field ->
-      val table = field.returnValueType
-      table.keyField?.let { idField ->
+    fun <E : Any> foreignKeys(table: KClass<E>) = table.fields.mapNotNull { field ->
+      val type = field.returnValueType
+      type.keyField?.let { idField ->
         ForeignKey(
-          table = table.table,
+          table = type.table,
           references = listOf(
             on(
               fieldName = field.fieldName,

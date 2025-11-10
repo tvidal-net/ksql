@@ -28,10 +28,10 @@ class CodecFactory(
     config.fieldType(property) as ValueType<*, T>
 
   fun <E : Any> decoder(
-    entity: KClass<E>,
+    type: KClass<E>,
     alias: String? = null,
   ): EntityDecoder<E> = cache.computeIfAbsent(
-    CacheKey(entity, alias),
+    CacheKey(type, alias),
     { entityDecoder(it.table, it.alias) }
   ) as EntityDecoder<E>
 

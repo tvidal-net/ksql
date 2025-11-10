@@ -42,12 +42,12 @@ internal object TestDialect : SqlDialect(
     dataType(it)
   }
 
-  fun setFields(params: MutableCollection<QueryParam>, entity: KClass<*>) = sql {
-    setFields(params, entity.fields)
+  fun setFields(params: MutableCollection<QueryParam>, table: KClass<*>) = sql {
+    setFields(params, table.fields)
   }
 
-  fun fieldParams(params: MutableCollection<QueryParam>, entity: KClass<*>) = sql {
-    fieldParams(params, entity.fields)
+  fun fieldParams(params: MutableCollection<QueryParam>, table: KClass<*>) = sql {
+    fieldParams(params, table.fields)
   }
 
   fun filter(params: MutableCollection<QueryParam>, whereClause: SqlFilter) = sql {
@@ -58,8 +58,8 @@ internal object TestDialect : SqlDialect(
     tableName(table)
   }
 
-  fun fieldNames(entity: KClass<*>) = sql {
-    fieldNames(entity.fields)
+  fun fieldNames(table: KClass<*>) = sql {
+    fieldNames(table.fields)
   }
 
   override fun Appendable.openQuote() {

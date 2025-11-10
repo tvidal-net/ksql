@@ -126,7 +126,7 @@ class DialectSchemaTest {
     val uq = unique(null, desc("name"), asc("id"))
 
     val TestTable = SchemaTable(
-      name = tableName,
+      table = tableName,
       fields = listOf(name, id),
       constraints = listOf(pk, uq)
     )

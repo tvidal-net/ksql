@@ -2,7 +2,7 @@ package uk.tvidal.data.query
 
 import uk.tvidal.data.fields
 import uk.tvidal.data.filter.SqlFilter
-import uk.tvidal.data.table
+import uk.tvidal.data.tableName
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty
 import kotlin.reflect.KProperty1
@@ -13,13 +13,13 @@ sealed interface From {
   val alias: String?
   val name: String
 
-  class Entity<T : Any>(
-    val entity: KClass<T>,
-    override val fields: Collection<KProperty1<T, *>> = entity.fields,
+  class Table<T : Any>(
+    val type: KClass<T>,
+    override val fields: Collection<KProperty1<T, *>> = type.fields,
     override val alias: String? = null,
   ) : From {
     override val name: String
-      get() = entity.table.name
+      get() = type.tableName
   }
 
   class Join(
@@ -45,12 +45,12 @@ sealed interface From {
       Full("FULL OUTER JOIN");
 
       operator fun <T : Any> invoke(
-        entity: KClass<T>,
+        type: KClass<T>,
         on: SqlFilter?,
-        alias: String = entity.table.name,
-        fields: Collection<KProperty1<T, *>> = entity.fields,
+        alias: String = type.tableName,
+        fields: Collection<KProperty1<T, *>> = type.fields,
       ) = Join(
-        Entity(entity, fields, alias),
+        Table(type, fields, alias),
         this,
         on,
       )

@@ -26,9 +26,9 @@ class EntityQuery<in E>(
     cnn: Connection,
     values: Iterable<E>
   ): IntArray = cnn.prepareStatement(sql).use { st ->
-    for (entity in values) {
+    for (value in values) {
       params.forEach {
-        it.setParamValue(st, entity)
+        it.setParamValue(st, value)
       }
       trace { "addBatch" }
       st.addBatch()
@@ -38,8 +38,8 @@ class EntityQuery<in E>(
     }
   }
 
-  fun setParamValues(st: PreparedStatement, entity: E) = params.forEach {
-    it.setParamValue(st, entity)
+  fun setParamValues(st: PreparedStatement, value: E) = params.forEach {
+    it.setParamValue(st, value)
   }
 
   override fun toString() = "$simpleName[params=$params, sql=$sql]"
@@ -50,9 +50,8 @@ class EntityQuery<in E>(
     val property: KProperty1<in E, *>,
   ) : QueryParam(index, property.name, encoder) {
 
-    fun setParamValue(st: PreparedStatement, entity: E) {
-      val value = property(entity)
-      encoder.setParamValue(st, index, value)
+    fun setParamValue(st: PreparedStatement, value: E) {
+      encoder.setParamValue(st, index, property(value))
     }
 
     override fun toString() = "$index:$name"

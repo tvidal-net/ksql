@@ -101,6 +101,9 @@ internal val KClass<*>.table: TableName
     findAnnotation<Entity>().table(simpleName!!)
   )
 
+internal val KClass<*>.tableName: String
+  get() = table.name
+
 internal val <E : Any> KClass<E>.fields: Collection<KProperty1<E, *>>
   get() = memberProperties.filterNot(KProperty<*>::isTransient)
 

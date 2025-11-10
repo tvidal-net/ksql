@@ -35,10 +35,10 @@ class SqlDialectSelectFromTest {
   fun testLookupJoin() {
     val from = listOf(
       from(
-        entity = Transaction::class
+        table = Transaction::class
       ),
       innerJoin(
-        entity = Account::class,
+        type = Account::class,
         fields = listOf(Account::name),
         on = Account::id eq Transaction::credit
       ),
@@ -54,16 +54,16 @@ class SqlDialectSelectFromTest {
   fun testDoubleJoin() {
     val from = listOf(
       from(
-        entity = Transaction::class,
+        table = Transaction::class,
         alias = "t",
       ),
       innerJoin(
-        entity = Account::class,
+        type = Account::class,
         on = Account::id.eq(Transaction::credit, "t"),
         alias = "ac",
       ),
       innerJoin(
-        entity = Account::class,
+        type = Account::class,
         on = Account::id.eq(Transaction::debit, "t"),
         alias = "ad"
       ),

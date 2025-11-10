@@ -55,10 +55,10 @@ class Config(
     }
   } as? ValueType<*, T>
 
-  fun <E : Any> schema(entity: KClass<E>) = SchemaTable(
-    name = entity.table,
-    fields = entity.fields.map { schema(it) }, // TODO: use primary constructor to preserve field order
-    constraints = listOfNotNull(entity.primaryKey) + foreignKeys(entity),
+  fun <E : Any> schema(type: KClass<E>) = SchemaTable(
+    table = type.table,
+    fields = type.fields.map { schema(it) }, // TODO: use primary constructor to preserve field order
+    constraints = listOfNotNull(type.primaryKey) + foreignKeys(type),
   )
 
   fun <E : Any, T> schema(field: KProperty1<E, T>) = SchemaField(

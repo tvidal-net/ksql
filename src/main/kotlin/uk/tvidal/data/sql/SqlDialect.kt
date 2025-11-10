@@ -26,19 +26,19 @@ open class SqlDialect(
   codecs = CodecFactory(config)
 ), QueryDialect, SchemaDialect {
 
-  override fun create(table: SchemaTable, ifNotExists: Boolean) = sqlQuery {
+  override fun create(schemaTable: SchemaTable, ifNotExists: Boolean) = sqlQuery {
     append("CREATE TABLE ")
     ifNotExists(ifNotExists)
-    tableName(table.name)
+    tableName(schemaTable.table)
     space()
     openBlock()
-    for ((i, col) in table.fields.withIndex()) {
+    for ((i, col) in schemaTable.fields.withIndex()) {
       if (i > 0) listSeparator()
       appendLine()
       indent()
       field(col)
     }
-    table.constraints.forEach {
+    schemaTable.constraints.forEach {
       listSeparator()
       appendLine()
       indent()
@@ -47,9 +47,9 @@ open class SqlDialect(
     appendLine()
     closeBlock()
     terminate()
-    table.indices.forEach { index ->
+    schemaTable.indices.forEach { index ->
       appendLine()
-      create(index, table.name)
+      create(index, schemaTable.table)
       terminate()
     }
   }
@@ -88,9 +88,9 @@ open class SqlDialect(
     whereClause: SqlFilter?
   ) = selectQuery(entity) { params ->
     select(from)
-    from.filterIsInstance<From.Entity<*>>().let { e ->
+    from.filterIsInstance<From.Table<*>>().let { e ->
       e.single().let {
-        from(it.entity, alias(it, from.size))
+        from(it.type, alias(it, from.size))
       }
     }
     for (join in from.filterIsInstance<From.Join>()) {
@@ -115,7 +115,7 @@ open class SqlDialect(
     append(join.type)
     space()
     when (val from = join.from) {
-      is From.Entity<*> -> tableName(from.entity.table, from.alias)
+      is From.Table<*> -> tableName(from.type.table, from.alias)
       else -> throw IllegalArgumentException("Invalid join type: $from")
     }
     appendLine()

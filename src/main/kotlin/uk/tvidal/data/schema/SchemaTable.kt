@@ -3,7 +3,7 @@ package uk.tvidal.data.schema
 import uk.tvidal.data.TableName
 
 data class SchemaTable(
-  val name: TableName,
+  val table: TableName,
   val fields: Collection<SchemaField<*>>,
   val constraints: Collection<Constraint> = listOf(),
   val indices: Collection<Index> = listOf(),

@@ -24,7 +24,7 @@ interface QueryDialect {
     whereClause: SqlFilter? = null,
   ) = select(
     entity = entity,
-    from = listOf(From.Entity(entity)),
+    from = listOf(From.Table(entity)),
     whereClause = whereClause
   )
 

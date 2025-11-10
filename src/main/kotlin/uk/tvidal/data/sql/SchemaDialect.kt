@@ -13,7 +13,7 @@ interface SchemaDialect {
    *
    */
   fun create(
-    table: SchemaTable,
+    schemaTable: SchemaTable,
     ifNotExists: Boolean = true,
   ): SimpleQuery
 

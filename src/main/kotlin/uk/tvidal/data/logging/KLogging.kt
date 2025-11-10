@@ -22,19 +22,11 @@ abstract class KLogging {
     log.info { message(it) }
   }
 
-  inline fun info(message: () -> Any?) {
-    if (log.isInfoEnabled) log.info { message() }
-  }
-
   inline fun <T> T.debug(message: (T) -> Any?) = also {
     log.debug { message(it) }
   }
 
-  inline fun debug(message: () -> Any?) {
-    if (log.isDebugEnabled) log.debug { message() }
-  }
-
-  inline fun trace(message: () -> Any?) {
-    if (log.isTraceEnabled) log.trace { message() }
+  inline fun <T> T.trace(message: (T) -> Any?) = also {
+    log.trace { message(it) }
   }
 }

@@ -1,7 +1,7 @@
 package uk.tvidal.data
 
 import uk.tvidal.data.codec.ValueType
-import uk.tvidal.data.codec.valueType
+import uk.tvidal.data.codec.returnValueType
 import uk.tvidal.data.schema.Constraint.Factory.foreignKeys
 import uk.tvidal.data.schema.SchemaField
 import uk.tvidal.data.schema.SchemaTable
@@ -39,7 +39,7 @@ class Config(
     ?: decimal
 
   fun paramType(parameter: KParameter) = parameter.run {
-    valueType(valueType, findAnnotation())
+    valueType(returnValueType, findAnnotation())
   }
 
   fun <T> fieldType(field: KProperty<T>) = field.run {
@@ -57,19 +57,19 @@ class Config(
 
   fun <E : Any> schema(entity: KClass<E>) = SchemaTable(
     name = entity.table,
-    fields = entity.fields.map { schema(it) },
+    fields = entity.fields.map { schema(it) }, // TODO: use primary constructor to preserve field order
     constraints = listOfNotNull(entity.primaryKey) + foreignKeys(entity),
   )
 
   fun <E : Any, T> schema(field: KProperty1<E, T>) = SchemaField(
     name = field.fieldName,
-    type = requireNotNull(fieldType(field) ?: keyCodec(field.receiverType)) {
+    type = requireNotNull(fieldType(field) ?: keyType(field.receiverType)) {
       "Unable to find a suitable ValueType for $field"
     },
     nullable = field.isNullable
   )
 
-  private fun <T : Any> keyCodec(table: KClass<*>): ValueType<*, T>? {
+  private fun <T : Any> keyType(table: KClass<*>): ValueType<*, T>? {
     val key = table.keyFields
     if (key.size != 1) return null
     return fieldType(key.single() as KProperty<T>)

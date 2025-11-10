@@ -1,8 +1,6 @@
 package uk.tvidal.data
 
 import uk.tvidal.data.codec.CodecFactory
-import uk.tvidal.data.codec.EntityDecoder
-import uk.tvidal.data.logging.KLogging
 import uk.tvidal.data.query.EntityQuery
 import uk.tvidal.data.query.SimpleQuery
 import uk.tvidal.data.sql.SqlDialect
@@ -24,49 +22,27 @@ class Database(
   val currentTransaction: Connection?
     get() = connection.get()
 
-  fun <E : Any> repository(
-    entity: KClass<E>,
-    decoder: EntityDecoder<E> = codecs.decoder(entity)
-  ): EntityRepository<E> = RepositoryImpl(
+  fun <E : Any> repository(entity: KClass<E>): EntityRepository<E> = RepositoryImpl(
     db = this,
     entity = entity,
-    decoder = decoder,
   )
 
-  inline fun <reified E : Any> repository(
-    decoder: EntityDecoder<E> = codecs.decoder(E::class)
-  ) = repository(
-    entity = E::class,
-    decoder = decoder
-  )
+  inline fun <reified E : Any> repository() =
+    repository(E::class)
 
-  fun execute(
-    sql: String,
-    vararg paramValues: Any?
-  ): Boolean = execute(
-    SimpleQuery(sql),
-    *paramValues
-  )
+  fun execute(sql: String, vararg paramValues: Any?) =
+    execute(SimpleQuery(sql), *paramValues)
 
-  fun execute(
-    query: SimpleQuery,
-    vararg paramValues: Any?
-  ): Boolean = invoke { cnn ->
-    query.execute(cnn, *paramValues).info {
-      "executed: affected$it\n$query"
-    }
+  fun execute(query: SimpleQuery, vararg paramValues: Any?) = invoke { cnn ->
+    query.execute(cnn, *paramValues)
   }
 
-  fun <E> execute(query: EntityQuery<E>, value: E): Int = invoke { cnn ->
-    query.execute(cnn, value).info {
-      "executed: affected=$it\n$query"
-    }
+  fun <E> execute(query: EntityQuery<E>, value: E) = invoke { cnn ->
+    query.execute(cnn, value)
   }
 
-  fun <E> execute(query: EntityQuery<E>, values: Iterable<E>): IntArray = invoke { cnn ->
-    query.execute(cnn, values).info {
-      "executed: affected=${it.sum()}\n$query"
-    }
+  fun <E> execute(query: EntityQuery<E>, values: Iterable<E>) = invoke { cnn ->
+    query.execute(cnn, values)
   }
 
   inline fun <reified E : Any> delete(builder: WhereClauseBuilder<E>) = execute(
@@ -74,18 +50,16 @@ class Database(
   )
 
   fun create(vararg tables: KClass<*>) = invoke { cnn ->
-    for (table in tables) {
-      execute(
-        query = dialect.create(config.schema(table), config.createIfNotExists)
-      )
+    tables.forEach { table ->
+      dialect.create(config.schema(table), config.createIfNotExists)
+        .execute(cnn)
     }
   }
 
   fun drop(vararg entities: KClass<*>) = invoke { cnn ->
-    for (entity in entities) {
-      execute(
-        query = dialect.drop(entity, config.createIfNotExists)
-      )
+    entities.forEach { table ->
+      dialect.drop(table, config.createIfNotExists)
+        .execute(cnn)
     }
   }
 
@@ -93,10 +67,8 @@ class Database(
     .also(connection::set)
 
   fun closeTransaction() {
-    currentTransaction?.let {
-      if (!it.isClosed()) {
-        it.close()
-      }
+    currentTransaction?.run {
+      if (!isClosed()) close()
       connection.remove()
     }
   }
@@ -119,6 +91,4 @@ class Database(
       action(transaction)
     }
   }
-
-  companion object : KLogging()
 }

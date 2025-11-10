@@ -12,9 +12,7 @@ interface Repository<E : Any> : Iterable<E> {
 
   operator fun get(vararg keyValues: Any) = one(*keyValues)
 
-  fun all(): Sequence<E>
+  fun select(where: SqlFilter?): List<E>
 
-  override fun iterator() = all().iterator()
-
-  fun select(where: SqlFilter): Sequence<E>
+  override fun iterator() = select(null).iterator()
 }

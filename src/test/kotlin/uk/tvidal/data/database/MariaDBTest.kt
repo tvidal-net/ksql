@@ -18,6 +18,6 @@ class MariaDBTest {
   @Test
   fun saveOnDuplicateUpdate() {
     assertQuery { dialect.save(Person::class) }
-      .isEqualTo("INSERT INTO `person` (`name`,`id`) VALUES (?,?) ON DUPLICATE KEY UPDATE `name`=VALUES(`name`)")
+      .isEqualTo("INSERT INTO `person` (`name`, `id`) VALUES (?, ?) ON DUPLICATE KEY UPDATE `name`=VALUES(`name`)")
   }
 }

@@ -1,6 +1,8 @@
 package uk.tvidal.data.query
 
 import uk.tvidal.data.codec.EntityDecoder
+import uk.tvidal.data.logging.KLogging
+import uk.tvidal.data.simpleName
 import java.sql.Connection
 
 class SelectQuery<E>(
@@ -12,14 +14,16 @@ class SelectQuery<E>(
   fun all(
     cnn: Connection,
     paramValues: Collection<Any?> = emptyList(),
-  ): Sequence<E> = cnn.prepareStatement(sql).use { st ->
+  ) = cnn.prepareStatement(sql).use { st ->
     setParamValues(st, params, paramValues)
-    val rs = st.executeQuery()
-    return object : Sequence<E> {
-      override fun iterator(): Iterator<E> = object : Iterator<E> {
-        override fun next(): E = decode(rs)
-        override fun hasNext() = rs.next()
-          .also { if (!it && !rs.isClosed) rs.close() }
+    st.executeQuery().use { rs ->
+      debug { "Select ALL params=$params\n$sql" }
+      buildList {
+        while (rs.next()) add(
+          decode(rs)!!.trace {
+            "decode $it"
+          }
+        )
       }
     }
   }
@@ -30,10 +34,15 @@ class SelectQuery<E>(
   ): E? = cnn.prepareStatement(sql).use { st ->
     setParamValues(st, params, paramValues)
     st.executeQuery().use { rs ->
+      debug { "Select ONE params=$params\n$sql" }
       if (!rs.next()) null
       else decode(rs)
+    }.trace {
+      "decode $it"
     }
   }
 
-  override fun toString() = "${this::class.simpleName}[$sql\n] params=$params"
+  override fun toString() = "$simpleName[params=$params, sql=$sql]"
+
+  companion object : KLogging()
 }

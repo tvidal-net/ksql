@@ -2,9 +2,11 @@ package uk.tvidal.data.codec
 
 import uk.tvidal.data.Config
 import uk.tvidal.data.NamingStrategy
-import uk.tvidal.data.fieldName
+import uk.tvidal.data.keyField
 import uk.tvidal.data.logging.KLogging
+import uk.tvidal.data.returnValueType
 import java.sql.ResultSet
+import java.util.concurrent.ConcurrentHashMap
 import kotlin.reflect.KCallable
 import kotlin.reflect.KClass
 import kotlin.reflect.KMutableProperty1
@@ -17,23 +19,30 @@ import kotlin.reflect.full.primaryConstructor
 class CodecFactory(
   val config: Config = Config.Default,
 ) {
+  private val cache = ConcurrentHashMap<CacheKey, EntityDecoder<*>>()
+
   val databaseName: NamingStrategy
     get() = config.namingStrategy
 
   fun <T : Any> encoder(property: KProperty<T>): ParamValueEncoder<T> =
     config.fieldType(property) as ValueType<*, T>
 
-  fun <T : Any> decoder(
-    entity: KClass<T>,
+  fun <E : Any> decoder(
+    entity: KClass<E>,
     alias: String? = null,
-  ): EntityDecoder<T> = byProperties(
-    alias = alias,
-    properties = entity.memberProperties
-      .filterIsInstance<KMutableProperty1<T, Any?>>(),
+  ): EntityDecoder<E> = cache.computeIfAbsent(
+    CacheKey(entity, alias),
+    { createDecoder(it) }
+  ) as EntityDecoder<E>
+
+  private fun createDecoder(key: CacheKey) = byProperties(
+    alias = key.alias,
+    properties = key.table.memberProperties
+      .filterIsInstance<KMutableProperty1<Any, Any?>>(),
     constructor = byConstructor(
-      alias = alias,
-      constructor = requireNotNull(entity.primaryConstructor) {
-        "Entity class $entity has no primary constructor"
+      alias = key.alias,
+      constructor = requireNotNull(key.table.primaryConstructor) {
+        "Entity class ${key.table} has no primary constructor"
       }
     )::invoke
   )
@@ -43,62 +52,61 @@ class CodecFactory(
     alias: String? = null,
   ) = EntityDecoder.ByConstructor(
     constructor.debug {
-      "byConstructor ${it.name}(\n\t${it.parameters.joinToString("\n\t")}\n): ${it.returnType}"
+      val logAlias = alias?.let { " AS $it" } ?: ""
+      "byConstructor ${constructor.logMessage}$logAlias"
     },
     parameterDecoders = constructor.parameters.map {
-      forParameter(
+      EntityDecoder.ParameterDecoder(
         parameter = it,
-        alias = alias,
-        type = (config.paramType(it) as ValueType<*, Any>).debug { type ->
-          "paramType ${it.name}=$type"
-        },
+        decode = paramDecoder(it, alias)
       )
     }
   )
 
-  fun <T : Any> forParameter(
-    parameter: KParameter,
-    type: ValueType<*, T>,
-    alias: String? = null,
-  ) = EntityDecoder.ParameterDecoder(
-    parameter,
-    decode = decodeWith(
-      decoder = type,
-      name = databaseName[parameter.fieldName, alias]
-    )
+  fun paramDecoder(parameter: KParameter, alias: String? = null) = parameter.returnValueType.keyField?.let {
+    decoder(parameter.returnValueType, parameter.name)
+  } ?: fieldDecoder(
+    name = databaseName[parameter.fieldName, alias],
+    decoder = requireNotNull(config.paramType(parameter)) {
+      "Unable to find a suitable ValueType for $parameter"
+    }
   )
 
   fun <E> byProperties(
-    constructor: (ResultSet) -> E,
+    constructor: (ResultSet) -> E?,
     properties: Collection<KMutableProperty1<in E, Any?>>,
     alias: String? = null,
   ) = EntityDecoder.ByProperties(
-    constructor,
+    constructor.debug {
+      val logAlias = alias?.let { " AS $it" } ?: ""
+      val logMessage = properties.joinToString { it.name }
+      "byProperties ($logMessage)$logAlias"
+    },
     propertyDecoders = properties.map {
-      forProperty(
+      EntityDecoder.PropertyDecoder(
         property = it,
-        alias = alias,
-        resultSetDecoder = config.fieldType(it).debug { dataType ->
-          "fieldType $it=$dataType"
-        } as ValueType<*, Any>,
+        decode = propertyDecoder(it, alias)
       )
     }
   )
 
-  fun <E, T : Any> forProperty(
-    property: KMutableProperty1<in E, T?>,
-    resultSetDecoder: ResultSetDecoder<T>,
-    alias: String? = null,
-  ) = EntityDecoder.PropertyDecoder(
-    property,
-    decode = decodeWith(
-      decoder = resultSetDecoder,
-      name = databaseName[property.fieldName, alias]
-    )
+  fun propertyDecoder(property: KProperty<*>, alias: String? = null) = property.returnValueType.keyField?.let {
+    decoder(property.returnValueType, property.name)
+  } ?: fieldDecoder(
+    name = databaseName[property.name, alias],
+    decoder = requireNotNull(config.fieldType(property)) {
+      "Unable to find a suitable ValueType for $property"
+    }
   )
 
-  fun <T : Any> decodeWith(decoder: ResultSetDecoder<T>, name: String): FieldDecoder<T> =
-    { decoder.getResultSetValue(it, name) }
+  fun <T : Any> fieldDecoder(decoder: ResultSetDecoder<T>, name: String): EntityDecoder<T> = object : EntityDecoder<T> {
+    override fun invoke(rs: ResultSet) = decoder.getResultSetValue(rs, name)
+  }
+
+  private data class CacheKey(
+    val table: KClass<*>,
+    val alias: String? = null
+  )
 
   companion object : KLogging()
 }

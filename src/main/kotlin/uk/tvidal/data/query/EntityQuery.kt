@@ -1,6 +1,8 @@
 package uk.tvidal.data.query
 
 import uk.tvidal.data.codec.ParamValueEncoder
+import uk.tvidal.data.logging.KLogging
+import uk.tvidal.data.simpleName
 import java.sql.Connection
 import java.sql.PreparedStatement
 import kotlin.reflect.KProperty1
@@ -15,7 +17,9 @@ class EntityQuery<in E>(
     value: E
   ): Int = cnn.prepareStatement(sql).use { st ->
     setParamValues(st, value)
-    st.executeUpdate()
+    st.executeUpdate().debug {
+      "affected: $it, $logMessage"
+    }
   }
 
   fun execute(
@@ -26,16 +30,19 @@ class EntityQuery<in E>(
       params.forEach {
         it.setParamValue(st, entity)
       }
+      trace { "addBatch" }
       st.addBatch()
     }
-    st.executeBatch()
+    st.executeBatch().debug {
+      "affected: ${it.sum()}, $logMessage"
+    }
   }
 
   fun setParamValues(st: PreparedStatement, entity: E) = params.forEach {
     it.setParamValue(st, entity)
   }
 
-  override fun toString() = "${this::class.simpleName}[$sql\n] params=$params"
+  override fun toString() = "$simpleName[params=$params, sql=$sql]"
 
   class Param<in E>(
     index: Int,
@@ -50,4 +57,6 @@ class EntityQuery<in E>(
 
     override fun toString() = "$index:$name"
   }
+
+  companion object : KLogging()
 }

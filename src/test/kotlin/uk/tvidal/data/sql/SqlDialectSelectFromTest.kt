@@ -27,7 +27,7 @@ class SqlDialectSelectFromTest {
     assertSelect {
       select(Account::class)
     }.isEqualTo(
-      "SELECT [id],[name] FROM [Account]"
+      "SELECT [id], [name] FROM [Account]"
     )
   }
 
@@ -44,8 +44,8 @@ class SqlDialectSelectFromTest {
       ),
     )
     assertSelect { select(Transaction::class, from) }.isEqualTo(
-      "SELECT [Transaction].[Transaction_credit],[Transaction].[Transaction_debit]," +
-        "[Transaction].[Transaction_description],[Transaction].[Transaction_id],[Account].[Account_name] " +
+      "SELECT [Transaction].[Transaction_credit], [Transaction].[Transaction_debit], " +
+        "[Transaction].[Transaction_description], [Transaction].[Transaction_id], [Account].[Account_name] " +
         "FROM [Transaction] INNER JOIN [Account] ON [Account].[id] = [Transaction].[credit]"
     )
   }
@@ -69,7 +69,7 @@ class SqlDialectSelectFromTest {
       ),
     )
     assertSelect { select(Transaction::class, from) }.isEqualTo(
-      "SELECT [t].[t_credit],[t].[t_debit],[t].[t_description],[t].[t_id],[ac].[ac_id],[ac].[ac_name],[ad].[ad_id],[ad].[ad_name] " +
+      "SELECT [t].[t_credit], [t].[t_debit], [t].[t_description], [t].[t_id], [ac].[ac_id], [ac].[ac_name], [ad].[ad_id], [ad].[ad_name] " +
         "FROM [Transaction] AS [t] INNER JOIN [Account] AS [ac] ON [ac].[id] = [t].[credit] " +
         "INNER JOIN [Account] AS [ad] ON [ad].[id] = [t].[debit]"
     )

@@ -127,6 +127,12 @@ inline fun <reified E : Any> where(builder: WhereClauseBuilder<E>): SqlFilter =
 inline fun <reified E : Any> Repository<E>.where(builder: WhereClauseBuilder<E>) =
   select(uk.tvidal.data.where(builder))
 
+inline fun <reified E : Any> EntityRepository<E>.delete(builder: WhereClauseBuilder<E>) =
+  delete(uk.tvidal.data.where(builder))
+
+internal val Any.simpleName: String?
+  get() = this::class.simpleName
+
 internal fun str(value: Any?): String = when (value) {
   null -> "NULL"
   is Number -> "$value"

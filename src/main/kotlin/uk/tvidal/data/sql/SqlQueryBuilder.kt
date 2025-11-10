@@ -249,10 +249,10 @@ abstract class SqlQueryBuilder(val codecs: CodecFactory) {
     alias(alias)
     openQuote()
     alias?.let {
-      namingStrategy.databaseName(this, it)
+      namingStrategy.appendName(this, it)
       nameSeparator()
     }
-    namingStrategy.databaseName(this, name)
+    namingStrategy.appendName(this, name)
     closeQuote()
   }
 
@@ -265,7 +265,7 @@ abstract class SqlQueryBuilder(val codecs: CodecFactory) {
 
   protected open fun Appendable.quotedName(name: String) {
     openQuote()
-    namingStrategy.databaseName(this, name)
+    namingStrategy.appendName(this, name)
     closeQuote()
   }
 
@@ -315,6 +315,7 @@ abstract class SqlQueryBuilder(val codecs: CodecFactory) {
 
   protected fun Appendable.listSeparator() {
     append(',')
+    space()
   }
 
   protected fun Appendable.nameSeparator() {

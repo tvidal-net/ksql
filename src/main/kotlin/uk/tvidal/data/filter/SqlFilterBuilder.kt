@@ -9,10 +9,10 @@ class SqlFilterBuilder<E> {
   internal fun <T : SqlFilter> add(filter: T): T =
     filter.also(filters::add)
 
-  val KProperty1<E, Any>.isNull
+  val KProperty1<E, *>.isNull
     get() = add(SqlPropertyFilter.IsNull(this))
 
-  val KProperty1<E, Any>.isNotNull
+  val KProperty1<E, *>.isNotNull
     get() = add(SqlPropertyFilter.IsNotNull(this))
 
   internal fun <V> KProperty1<E, V>.eq() = add(

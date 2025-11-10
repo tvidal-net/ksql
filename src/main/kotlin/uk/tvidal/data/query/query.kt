@@ -17,29 +17,12 @@ fun <T : Any> from(
   entity, fields, alias
 )
 
-fun <T : Any> join(
-  entity: KClass<T>,
-  type: From.Join.Type,
-  on: SqlFilter,
-  fields: Collection<KProperty1<T, *>> = entity.fields,
-  alias: String? = null,
-) = From.Join(
-  from(entity, fields, alias),
-  type, on,
-)
-
 fun <T : Any> innerJoin(
   entity: KClass<T>,
   on: SqlFilter,
   fields: Collection<KProperty1<T, *>> = entity.fields,
   alias: String = entity.table.name,
-) = join(
-  entity,
-  From.Join.Type.Inner,
-  on,
-  fields,
-  alias
-)
+) = From.Join.Type.Inner(entity, on, alias, fields)
 
 infix fun <V> KProperty1<*, V>.eq(target: KProperty1<out Any, V>) = eq(target, null)
 
@@ -54,3 +37,6 @@ fun setParamValues(st: PreparedStatement, params: Iterable<QueryParam>, values: 
     param.encoder.setParamValue(st, param.index, value)
   }
 }
+
+internal val Query.logMessage: String
+  get() = "params=$params\n$sql"

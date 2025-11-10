@@ -25,12 +25,13 @@ open class ValueType<J, T : Any>(
 
   override fun setParamValue(st: PreparedStatement, index: Int, value: T?) {
     if (value != null) {
-      val encodedValue = jdbcCodec.encode(value).debug {
-        "setParamValue(index=$index, value=${str(value)}) encoded=${str(it)}"
+      val encodedValue = jdbcCodec.encode(value).trace {
+        val message = if ("$it" == "$value") "" else " value=${str(it)}"
+        "setParamValue($index=${str(value)})$message"
       }
       setParam(st, index, encodedValue)
     } else {
-      debug { "setParamValue(index=$index, value=${str(value)}" }
+      trace { "setParamValue($index=NULL)" }
       st.setNull(index, Types.NULL)
     }
   }
@@ -40,8 +41,9 @@ open class ValueType<J, T : Any>(
       null
     } else {
       jdbcCodec.decode(it)
-    }.debug { value ->
-      "getResultSetValue(field=${str(field)} value=${str(it)} decoded=${str(value)}"
+    }.trace { value ->
+      val message = if ("$it" == "$value") "" else " value=${str(value)}"
+      "getResultSetValue(${str(field)}=${str(it)})$message"
     }
   }
 

@@ -10,11 +10,11 @@ sealed class SqlPropertyFilter<out V> : SqlFilter {
   override val values: Collection<Any?>
     get() = emptyList()
 
-  data class IsNull(override val property: KProperty<Any>, override val alias: String? = null) : SqlPropertyFilter<Any>() {
+  data class IsNull(override val property: KProperty<*>, override val alias: String? = null) : SqlPropertyFilter<Any?>() {
     override fun toString() = "${property.name}${SqlFilter.IS_NULL}"
   }
 
-  data class IsNotNull(override val property: KProperty<Any>, override val alias: String? = null) : SqlPropertyFilter<Any>() {
+  data class IsNotNull(override val property: KProperty<*>, override val alias: String? = null) : SqlPropertyFilter<Any?>() {
     override fun toString() = "${property.name}${SqlFilter.IS_NOT_NULL}"
   }
 }

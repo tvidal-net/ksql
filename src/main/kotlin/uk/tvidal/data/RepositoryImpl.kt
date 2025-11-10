@@ -1,6 +1,5 @@
 package uk.tvidal.data
 
-import uk.tvidal.data.codec.EntityDecoder
 import uk.tvidal.data.filter.SqlFilter
 import uk.tvidal.data.query.EntityQuery
 import uk.tvidal.data.query.SelectQuery
@@ -8,7 +7,6 @@ import kotlin.reflect.KClass
 
 internal class RepositoryImpl<E : Any>(
   override val db: Database,
-  val decoder: EntityDecoder<E>,
   override val entity: KClass<E>,
 ) : EntityRepository<E> {
 
@@ -36,19 +34,16 @@ internal class RepositoryImpl<E : Any>(
     db.dialect.insert(entity)
   }
 
-  private fun selectQuery(where: SqlFilter?): SelectQuery<E> =
+  fun selectQuery(where: SqlFilter?): SelectQuery<E> =
     db.dialect.select(entity, where)
 
   override fun one(vararg keyValues: Any) = db { cnn ->
     selectByKey.one(cnn, keyValues.toList())
   }
 
-  override fun all() = db { cnn ->
-    selectAll.all(cnn)
-  }
-
-  override fun select(where: SqlFilter) = db { cnn ->
-    db.dialect.select(entity, where).all(cnn, where.values)
+  override fun select(where: SqlFilter?) = db { cnn ->
+    db.dialect.select(entity, where)
+      .all(cnn, where?.values ?: emptyList())
   }
 
   override fun save(value: E) =
@@ -56,6 +51,11 @@ internal class RepositoryImpl<E : Any>(
 
   override fun save(values: Collection<E>) =
     db.execute(save, values)
+
+  override fun delete(where: SqlFilter) = db { cnn ->
+    db.dialect.delete(entity, where)
+      .execute(cnn, where.values)
+  }
 
   override fun delete(value: E) =
     db.execute(delete, value)

@@ -1,5 +1,7 @@
 package uk.tvidal.data.query
 
+import uk.tvidal.data.logging.KLogging
+import uk.tvidal.data.simpleName
 import java.sql.Connection
 
 class SimpleQuery(
@@ -9,8 +11,12 @@ class SimpleQuery(
 
   fun execute(cnn: Connection, vararg paramValues: Any?) = cnn.prepareStatement(sql).use { st ->
     setParamValues(st, params, paramValues.toList())
-    st.execute()
+    st.executeUpdate().debug {
+      "affected: $it, $logMessage"
+    }
   }
 
-  override fun toString() = "${this::class.simpleName}[$sql\n] params=$params"
+  override fun toString() = "$simpleName[params=$params, sql=$sql]"
+
+  companion object : KLogging()
 }

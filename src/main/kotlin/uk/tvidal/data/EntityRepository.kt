@@ -1,5 +1,7 @@
 package uk.tvidal.data
 
+import uk.tvidal.data.filter.SqlFilter
+
 interface EntityRepository<E : Any> : Repository<E> {
 
   fun save(value: E): Int
@@ -15,6 +17,8 @@ interface EntityRepository<E : Any> : Repository<E> {
   operator fun plusAssign(values: Collection<E>) {
     save(values)
   }
+
+  fun delete(where: SqlFilter): Int
 
   fun delete(value: E): Int
 

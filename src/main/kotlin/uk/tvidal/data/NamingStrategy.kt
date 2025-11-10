@@ -3,13 +3,13 @@ package uk.tvidal.data
 enum class NamingStrategy {
 
   AsIs {
-    override fun databaseName(s: Appendable, name: CharSequence) {
+    override fun appendName(s: Appendable, name: CharSequence) {
       s.append(name)
     }
   },
 
   LowerCase {
-    override fun databaseName(s: Appendable, name: CharSequence) {
+    override fun appendName(s: Appendable, name: CharSequence) {
       name.forEach {
         s.append(it.lowercaseChar())
       }
@@ -17,7 +17,7 @@ enum class NamingStrategy {
   },
 
   CamelCase {
-    override fun databaseName(s: Appendable, name: CharSequence) {
+    override fun appendName(s: Appendable, name: CharSequence) {
       for ((i, ch) in name.withIndex()) {
         s.append(if (i == 0) ch.lowercaseChar() else ch)
       }
@@ -25,7 +25,7 @@ enum class NamingStrategy {
   },
 
   PascalCase {
-    override fun databaseName(s: Appendable, name: CharSequence) {
+    override fun appendName(s: Appendable, name: CharSequence) {
       for ((i, ch) in name.withIndex()) {
         s.append(if (i == 0) ch.uppercaseChar() else ch)
       }
@@ -33,7 +33,7 @@ enum class NamingStrategy {
   },
 
   ScreamingCase {
-    override fun databaseName(s: Appendable, name: CharSequence) {
+    override fun appendName(s: Appendable, name: CharSequence) {
       name.forEach {
         s.append(it.uppercaseChar())
       }
@@ -41,7 +41,7 @@ enum class NamingStrategy {
   },
 
   ScreamingSnakeCase {
-    override fun databaseName(s: Appendable, name: CharSequence) {
+    override fun appendName(s: Appendable, name: CharSequence) {
       for ((i, ch) in name.withIndex()) {
         if (ch.isUpperCase() && i > 0) s.append(NAME_SEP)
         s.append(ch.uppercaseChar())
@@ -50,7 +50,7 @@ enum class NamingStrategy {
   },
 
   SnakeCase {
-    override fun databaseName(s: Appendable, name: CharSequence) {
+    override fun appendName(s: Appendable, name: CharSequence) {
       for ((i, ch) in name.withIndex()) {
         if (ch.isUpperCase() && i > 0) s.append(NAME_SEP)
         s.append(ch.lowercaseChar())
@@ -58,14 +58,14 @@ enum class NamingStrategy {
     }
   };
 
-  abstract fun databaseName(s: Appendable, name: CharSequence)
+  abstract fun appendName(s: Appendable, name: CharSequence)
 
   operator fun get(name: CharSequence, alias: String? = null) = buildString {
     alias?.let {
-      append(databaseName(this, it))
+      appendName(this, it)
       append(NAME_SEP)
     }
-    databaseName(this, name)
+    appendName(this, name)
   }
 
   companion object Constants {

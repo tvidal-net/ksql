@@ -2,9 +2,10 @@ package uk.tvidal.data
 
 import uk.tvidal.data.codec.ValueType
 import uk.tvidal.data.codec.returnValueType
-import uk.tvidal.data.schema.Constraint.Factory.foreignKeys
+import uk.tvidal.data.logging.KLogging
 import uk.tvidal.data.schema.SchemaField
 import uk.tvidal.data.schema.SchemaTable
+import uk.tvidal.data.schema.foreignKeys
 import uk.tvidal.data.schema.primaryKey
 import java.math.BigDecimal
 import javax.persistence.Column
@@ -14,6 +15,7 @@ import kotlin.reflect.KProperty
 import kotlin.reflect.KProperty1
 import kotlin.reflect.full.findAnnotation
 import kotlin.reflect.full.isSubclassOf
+import kotlin.reflect.full.primaryConstructor
 
 @Suppress("UNCHECKED_CAST")
 class Config(
@@ -46,19 +48,48 @@ class Config(
     valueType(returnValueType, column)
   }
 
+  fun <T : Any> keyType(table: KClass<*>): ValueType<*, T>? = table.keyField?.let {
+    fieldType(it as KProperty<T>)
+  }
+
   fun <T : Any> valueType(type: KClass<T>, column: Column? = null): ValueType<*, T>? = when {
     type.java.isEnum -> enumType(type as KClass<out Enum<*>>, column)
     type.isSubclassOf(CharSequence::class) -> string(column)
-    else -> ValueType.from(type) ?: when {
+    else -> ValueType.of(type) ?: when {
       type.isSubclassOf(Number::class) -> decimal(column)
-      else -> null
+      else -> null.also { _ ->
+        warn { "Unable to find a suitable ValueType for $type" }
+      }
     }
   } as? ValueType<*, T>
 
+  fun <T : Any> fields(type: KClass<T>): Collection<SchemaField<*>> {
+    val fields = type.fields
+      .associateBy { it.name }
+
+    val parameters = type.primaryConstructor?.parameters ?: emptyList()
+    val parameterNames = parameters
+      .map { it.name }
+      .toSet()
+
+    val allFields = parameters.mapNotNull {
+      fields[it.name]
+    } + fields.values.filterNot {
+      it.name in parameterNames
+    }
+    return allFields.map {
+      schema(it)
+    }
+  }
+
   fun <E : Any> schema(type: KClass<E>) = SchemaTable(
     table = type.table,
-    fields = type.fields.map { schema(it) }, // TODO: use primary constructor to preserve field order
-    constraints = listOfNotNull(type.primaryKey) + foreignKeys(type),
+    fields = fields(type),
+    constraints = listOfNotNull(
+      type.primaryKey
+    ) + foreignKeys(
+      type
+    ),
   )
 
   fun <E : Any, T> schema(field: KProperty1<E, T>) = SchemaField(
@@ -69,13 +100,7 @@ class Config(
     nullable = field.isNullable
   )
 
-  private fun <T : Any> keyType(table: KClass<*>): ValueType<*, T>? {
-    val key = table.keyFields
-    if (key.size != 1) return null
-    return fieldType(key.single() as KProperty<T>)
-  }
-
-  companion object Constants {
+  companion object Constants : KLogging() {
 
     val Default = Config()
 

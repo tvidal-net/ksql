@@ -12,7 +12,7 @@ class SimpleQuery(
   fun execute(cnn: Connection, vararg paramValues: Any?) = cnn.prepareStatement(sql).use { st ->
     setParamValues(st, params, paramValues.toList())
     st.executeUpdate().debug {
-      "affected: $it, $logMessage"
+      "affected: $it, $description"
     }
   }
 

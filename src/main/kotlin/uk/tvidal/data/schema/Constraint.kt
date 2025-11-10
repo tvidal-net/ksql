@@ -57,37 +57,4 @@ sealed interface Constraint {
   ) : Constraint {
     override fun toString() = "REFERENCES $table ON $references"
   }
-
-  companion object Factory {
-
-    fun primaryKey(primaryKeyName: String? = null, vararg fields: String): Constraint =
-      PrimaryKey(fields.map(FieldReference::asc), primaryKeyName)
-
-    fun primaryKey(primaryKeyName: String? = null, vararg fields: FieldReference): Constraint =
-      PrimaryKey(fields.toList(), primaryKeyName)
-
-    fun unique(uniqueName: String? = null, vararg fields: String): Constraint =
-      UniqueKey(fields.map(FieldReference::asc), uniqueName)
-
-    fun unique(uniqueName: String? = null, vararg fields: FieldReference): Constraint =
-      UniqueKey(fields.toList(), uniqueName)
-
-    fun on(fieldName: String, referenceField: String = fieldName) =
-      ForeignKeyReference(fieldName, referenceField)
-
-    fun <E : Any> foreignKeys(table: KClass<E>) = table.fields.mapNotNull { field ->
-      val type = field.returnValueType
-      type.keyField?.let { idField ->
-        ForeignKey(
-          table = type.table,
-          references = listOf(
-            on(
-              fieldName = field.fieldName,
-              referenceField = idField.fieldName
-            )
-          )
-        )
-      }
-    }
-  }
 }

@@ -5,14 +5,14 @@ import uk.tvidal.data.TestDialect.assertSql
 import uk.tvidal.data.TestDialect.assertThat
 import uk.tvidal.data.codec.ValueType
 import uk.tvidal.data.schema.Constraint
-import uk.tvidal.data.schema.Constraint.Factory.on
-import uk.tvidal.data.schema.Constraint.Factory.primaryKey
-import uk.tvidal.data.schema.Constraint.Factory.unique
 import uk.tvidal.data.schema.FieldReference.Factory.asc
 import uk.tvidal.data.schema.FieldReference.Factory.desc
 import uk.tvidal.data.schema.Index
 import uk.tvidal.data.schema.SchemaField
 import uk.tvidal.data.schema.SchemaTable
+import uk.tvidal.data.schema.on
+import uk.tvidal.data.schema.primaryKey
+import uk.tvidal.data.schema.unique
 import javax.persistence.Id
 
 class DialectSchemaTest {

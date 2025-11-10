@@ -4,6 +4,7 @@ import uk.tvidal.data.Database
 import uk.tvidal.data.Now
 import uk.tvidal.data.RandomUUID
 import uk.tvidal.data.delete
+import uk.tvidal.data.query.from
 import uk.tvidal.data.where
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -24,7 +25,7 @@ data class Account(
 )
 
 data class Transaction(
-  var name: String,
+  val name: String,
   val date: LocalDate,
   val creditAmount: Double,
   val creditAccount: Account,
@@ -38,6 +39,12 @@ fun runTestSuite(db: Database) {
   db.create(
     Account::class,
     Transaction::class,
+  )
+
+  val from = from(Transaction::class)
+  println(from)
+  println(
+    db.dialect.select(Transaction::class, from, null)
   )
 
   val accounts = db.repository<Account>()

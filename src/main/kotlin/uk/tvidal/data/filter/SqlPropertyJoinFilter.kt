@@ -18,6 +18,8 @@ sealed class SqlPropertyJoinFilter<out V> : SqlPropertyFilter<V>() {
   ) : SqlPropertyJoinFilter<T>() {
     override val operator: String
       get() = SqlFilter.EQ
+
+    override fun toString() = super.toString()
   }
 
   override fun toString() = "${property.name}$operator${alias.dot}${target.name}"

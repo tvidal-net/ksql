@@ -24,8 +24,11 @@ class CodecFactory(
   val databaseName: NamingStrategy
     get() = config.namingStrategy
 
-  fun <T : Any> encoder(property: KProperty<T>): ParamValueEncoder<T> =
-    config.fieldType(property) as ValueType<*, T>
+  fun <T : Any> encoder(property: KProperty<T>): ParamValueEncoder<T> = requireNotNull(
+    config.fieldType(property)
+  ) {
+    "Unable to find a suitable encoder for $property"
+  }
 
   fun <E : Any> decoder(
     type: KClass<E>,

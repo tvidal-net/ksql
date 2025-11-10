@@ -293,7 +293,7 @@ open class ValueType<J, T : Any>(
       .map { it.valueType() to it }
 
     @Suppress("UNCHECKED_CAST")
-    fun <T : Any> from(type: KClass<T>): ValueType<*, T>? = All.firstNotNullOfOrNull { (value, valueType) ->
+    fun <T : Any> of(type: KClass<T>): ValueType<*, T>? = All.firstNotNullOfOrNull { (value, valueType) ->
       if (value.isSubclassOf(type)) valueType else null
     } as? ValueType<*, T>
 

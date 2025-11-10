@@ -101,7 +101,6 @@ open class SqlDialect(
 
   protected open fun Appendable.from(entity: KClass<*>, alias: String? = null) {
     appendLine()
-    indent()
     append("FROM ")
     tableName(entity.table, alias)
   }
@@ -111,17 +110,16 @@ open class SqlDialect(
     join: From.Join,
   ) {
     appendLine()
-    indent()
     append(join.type)
     space()
     when (val from = join.from) {
       is From.Table<*> -> tableName(from.type.table, from.alias)
       else -> throw IllegalArgumentException("Invalid join type: $from")
     }
-    appendLine()
-    indent()
-    append("ON ")
     join.on?.let {
+      appendLine()
+      indent()
+      append("ON ")
       filter(params, it, join.alias)
     }
   }
@@ -278,8 +276,9 @@ open class SqlDialect(
     tableName(foreignKey.table)
     space()
     quotedNames(
-      foreignKey.references
-        .map(Constraint.ForeignKeyReference::referenceField)
+      foreignKey.references.map {
+        it.referenceField
+      }
     )
     if (foreignKey.deleteAction != Constraint.ForeignKeyAction.Default) {
       append(" ON DELETE ")

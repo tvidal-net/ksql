@@ -217,7 +217,7 @@ abstract class SqlQueryBuilder(val codecs: CodecFactory) {
       val alias = alias(from, selectFrom.size)
       for ((j, field) in from.fields.withIndex()) {
         if (j > 0) listSeparator()
-        aliasName(field.fieldName, alias)
+        selectField(field.fieldName, alias)
       }
     }
   }
@@ -232,11 +232,11 @@ abstract class SqlQueryBuilder(val codecs: CodecFactory) {
     )
   }
 
-  protected fun Appendable.quotedNames(names: Collection<String>, block: Boolean = true, alias: String? = null) {
+  protected fun Appendable.quotedNames(names: Collection<String>, block: Boolean = true) {
     if (block) openBlock()
     for ((i, name) in names.withIndex()) {
       if (i > 0) listSeparator()
-      aliasName(name, alias)
+      quotedName(name)
     }
     if (block) closeBlock()
   }
@@ -245,13 +245,24 @@ abstract class SqlQueryBuilder(val codecs: CodecFactory) {
     append(join.sql)
   }
 
+  protected open fun Appendable.selectField(name: String, alias: String?) {
+    appendLine()
+    indent()
+    alias(alias)
+    quotedName(name)
+    alias?.let {
+      append(" AS ")
+      openQuote()
+      namingStrategy.appendName(this, it)
+      nameSeparator()
+      namingStrategy.appendName(this, name)
+      closeQuote()
+    }
+  }
+
   protected open fun Appendable.aliasName(name: String, alias: String? = null) {
     alias(alias)
     openQuote()
-    alias?.let {
-      namingStrategy.appendName(this, it)
-      nameSeparator()
-    }
     namingStrategy.appendName(this, name)
     closeQuote()
   }

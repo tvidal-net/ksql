@@ -18,7 +18,7 @@ class EntityQuery<in E>(
   ): Int = cnn.prepareStatement(sql).use { st ->
     setParamValues(st, value)
     st.executeUpdate().debug {
-      "affected: $it, $logMessage"
+      "affected: $it, $description"
     }
   }
 
@@ -34,7 +34,7 @@ class EntityQuery<in E>(
       st.addBatch()
     }
     st.executeBatch().debug {
-      "affected: ${it.sum()}, $logMessage"
+      "affected: ${it.sum()}, $description"
     }
   }
 

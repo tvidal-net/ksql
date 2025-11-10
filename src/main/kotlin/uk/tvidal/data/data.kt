@@ -1,5 +1,6 @@
 package uk.tvidal.data
 
+import uk.tvidal.data.codec.returnValueType
 import uk.tvidal.data.filter.SqlFilter
 import uk.tvidal.data.filter.SqlFilterBuilder
 import uk.tvidal.data.filter.SqlMultiFilter
@@ -15,6 +16,7 @@ import javax.persistence.Id
 import javax.persistence.Table
 import kotlin.reflect.KCallable
 import kotlin.reflect.KClass
+import kotlin.reflect.KParameter
 import kotlin.reflect.KProperty
 import kotlin.reflect.KProperty1
 import kotlin.reflect.full.findAnnotation
@@ -41,6 +43,18 @@ internal fun String?.whenNotNull(suffix: Any): String =
 
 internal val String?.dot: String
   get() = whenNotNull(SCHEMA_SEP)
+
+internal val KProperty<*>.description: String
+  get() = "$name: ${returnValueType.simpleName}${if (isNullable) "?" else ""}"
+
+internal val KParameter.description: String
+  get() = "$name: ${returnValueType.simpleName}${if (isOptional) "?" else ""}"
+
+internal val KCallable<*>.description: String
+  get() = "${returnValueType.simpleName}(${parameters.joinToString { it.description }})"
+
+internal fun asAlias(alias: String?) =
+  alias?.let { " AS $it" } ?: ""
 
 @Suppress("UNCHECKED_CAST")
 internal val <T : Any> KCallable<T?>.returnValueType: KClass<T>

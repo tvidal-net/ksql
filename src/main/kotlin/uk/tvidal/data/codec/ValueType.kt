@@ -26,8 +26,8 @@ open class ValueType<J, T : Any>(
   override fun setParamValue(st: PreparedStatement, index: Int, value: T?) {
     if (value != null) {
       val encodedValue = jdbcCodec.encode(value).trace {
-        val message = if ("$it" == "$value") "" else " value=${str(it)}"
-        "setParamValue($index=${str(value)})$message"
+        val logMessage = if ("$it" == "$value") "" else " value=${str(it)}"
+        "setParamValue($index=${str(value)})$logMessage"
       }
       setParam(st, index, encodedValue)
     } else {
@@ -42,8 +42,8 @@ open class ValueType<J, T : Any>(
     } else {
       jdbcCodec.decode(it)
     }.trace { value ->
-      val message = if ("$it" == "$value") "" else " value=${str(value)}"
-      "getResultSetValue(${str(field)}=${str(it)})$message"
+      val logMessage = if ("$it" == "$value") "" else " value=${str(value)}"
+      "getResultSetValue(${str(field)}=${str(it)})$logMessage"
     }
   }
 
@@ -294,8 +294,7 @@ open class ValueType<J, T : Any>(
 
     @Suppress("UNCHECKED_CAST")
     fun <T : Any> from(type: KClass<T>): ValueType<*, T>? = All.firstNotNullOfOrNull { (value, valueType) ->
-      if (value.isSubclassOf(type)) valueType
-      else null
+      if (value.isSubclassOf(type)) valueType else null
     } as? ValueType<*, T>
 
     private fun nullable(precision: Int?) =

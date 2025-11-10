@@ -16,6 +16,8 @@ class H2DB(config: Config = Config.Default) : SqlDialect(config) {
     keyFields: Collection<KProperty1<E, *>>
   ) = entityQuery<E> { params ->
     append("MERGE INTO ")
+    appendLine()
+    indent()
     tableName(entity.table)
     space()
     fieldNames(updateFields + keyFields)

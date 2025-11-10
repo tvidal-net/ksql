@@ -22,8 +22,8 @@ interface JdbcValueCodec<J, T> {
     override fun decode(value: T) = value
     override fun encode(value: T) = value
 
-    override fun equals(other: Any?) = other is Primitive<*>
-      && this::class == other::class
+    override fun hashCode() = hash(this::class.java)
+    override fun equals(other: Any?) = this::class == other?.let { it::class }
   }
 
   object InstantCodec : JdbcValueCodec<Timestamp, Instant> {

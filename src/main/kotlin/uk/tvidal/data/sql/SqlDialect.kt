@@ -155,7 +155,8 @@ open class SqlDialect(
   ) = entityQuery<E> { params ->
     append("UPDATE ")
     tableName(entity.table)
-    space()
+    appendLine()
+    indent()
     setFields(params, updateFields)
     where(params, equalsFilter(keyFields))
   }

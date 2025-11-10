@@ -88,21 +88,25 @@ open class SqlDialect(
     whereClause: SqlFilter?
   ) = selectQuery(entity) { params ->
     select(from)
-    from.filterIsInstance<From.Table<*>>().let { e ->
-      e.single().let {
-        from(it.type, alias(it, from.size))
-      }
-    }
+    from(
+      from.filterIsInstance<From.Table<*>>()
+    )
     for (join in from.filterIsInstance<From.Join>()) {
       join(params, join)
     }
     where(params, whereClause)
   }
 
-  protected open fun Appendable.from(entity: KClass<*>, alias: String? = null) {
+  protected open fun Appendable.from(tables: Collection<From.Table<*>>) {
     appendLine()
     append("FROM ")
-    tableName(entity.table, alias)
+    for ((i, table) in tables.withIndex()) {
+      if (i > 0) listSeparator()
+      tableName(
+        table = table.type.table,
+        alias = if (tables.size == 1) null else (table.alias ?: table.name)
+      )
+    }
   }
 
   protected open fun <P : QueryParam> Appendable.join(

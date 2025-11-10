@@ -73,10 +73,10 @@ class Database(
     dialect.delete(E::class, where<E>(builder))
   )
 
-  fun create(vararg entities: KClass<*>) = invoke { cnn ->
-    for (entity in entities) {
+  fun create(vararg tables: KClass<*>) = invoke { cnn ->
+    for (table in tables) {
       execute(
-        query = dialect.create(entity, config.createIfNotExists)
+        query = dialect.create(config.schema(table), config.createIfNotExists)
       )
     }
   }

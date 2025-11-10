@@ -2,15 +2,15 @@ package uk.tvidal.data
 
 import org.assertj.core.api.AbstractStringAssert
 import org.assertj.core.api.Assertions
-import uk.tvidal.data.codec.DataType
+import uk.tvidal.data.codec.ValueType
 import uk.tvidal.data.filter.SqlFilter
 import uk.tvidal.data.query.EntityQuery
 import uk.tvidal.data.query.QueryParam
 import uk.tvidal.data.query.SelectQuery
 import uk.tvidal.data.query.SimpleQuery
-import uk.tvidal.data.schema.ColumnReference
+import uk.tvidal.data.schema.FieldReference
 import uk.tvidal.data.schema.Constraint
-import uk.tvidal.data.schema.SchemaColumn
+import uk.tvidal.data.schema.SchemaField
 import uk.tvidal.data.sql.SqlDialect
 import kotlin.reflect.KClass
 
@@ -30,15 +30,15 @@ internal object TestDialect : SqlDialect(
     schemaConstraint(it)
   }
 
-  fun column(it: ColumnReference) = sql {
-    column(it)
+  fun field(it: FieldReference) = sql {
+    field(it)
   }
 
-  fun column(it: SchemaColumn<*>) = sql {
-    schemaColumn(it)
+  fun field(it: SchemaField<*>) = sql {
+    field(it)
   }
 
-  fun dataType(it: DataType<*, *>) = sql {
+  fun dataType(it: ValueType<*, *>) = sql {
     dataType(it)
   }
 

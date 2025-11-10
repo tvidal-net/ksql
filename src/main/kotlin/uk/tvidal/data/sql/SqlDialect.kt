@@ -3,7 +3,7 @@ package uk.tvidal.data.sql
 import uk.tvidal.data.Config
 import uk.tvidal.data.TableName
 import uk.tvidal.data.codec.CodecFactory
-import uk.tvidal.data.codec.DataType
+import uk.tvidal.data.codec.ValueType
 import uk.tvidal.data.equalsFilter
 import uk.tvidal.data.filter.SqlFilter
 import uk.tvidal.data.query.EntityQuery
@@ -11,10 +11,10 @@ import uk.tvidal.data.query.From
 import uk.tvidal.data.query.QueryParam
 import uk.tvidal.data.query.SelectQuery
 import uk.tvidal.data.query.SimpleQuery
-import uk.tvidal.data.schema.ColumnReference
 import uk.tvidal.data.schema.Constraint
+import uk.tvidal.data.schema.FieldReference
 import uk.tvidal.data.schema.Index
-import uk.tvidal.data.schema.SchemaColumn
+import uk.tvidal.data.schema.SchemaField
 import uk.tvidal.data.schema.SchemaTable
 import uk.tvidal.data.table
 import kotlin.reflect.KClass
@@ -32,11 +32,11 @@ open class SqlDialect(
     tableName(table.name)
     space()
     openBlock()
-    for ((i, col) in table.columns.withIndex()) {
+    for ((i, col) in table.fields.withIndex()) {
       if (i > 0) listSeparator()
       appendLine()
       indent()
-      schemaColumn(col)
+      field(col)
     }
     table.constraints.forEach {
       listSeparator()
@@ -70,7 +70,7 @@ open class SqlDialect(
     append("ON ")
     tableName(table)
     space()
-    columns(index.columns)
+    fields(index.fields)
   }
 
   override fun drop(index: Index, table: TableName, ifExists: Boolean) = sqlQuery {
@@ -260,7 +260,7 @@ open class SqlDialect(
     }
     append(keyType.sql)
     space()
-    columns(index.columns)
+    fields(index.fields)
   }
 
   protected open fun Appendable.schemaForeignKey(foreignKey: Constraint.ForeignKey) {
@@ -271,14 +271,14 @@ open class SqlDialect(
     }
     quotedNames(
       foreignKey.references
-        .map(Constraint.ForeignKeyReference::columnName)
+        .map(Constraint.ForeignKeyReference::fieldName)
     )
     append(" REFERENCES ")
     tableName(foreignKey.table)
     space()
     quotedNames(
       foreignKey.references
-        .map(Constraint.ForeignKeyReference::referenceColumn)
+        .map(Constraint.ForeignKeyReference::referenceField)
     )
     if (foreignKey.deleteAction != Constraint.ForeignKeyAction.Default) {
       append(" ON DELETE ")
@@ -290,28 +290,28 @@ open class SqlDialect(
     }
   }
 
-  protected fun Appendable.columns(columns: Collection<ColumnReference>) {
+  protected fun Appendable.fields(fields: Collection<FieldReference>) {
     openBlock()
-    for ((i, col) in columns.withIndex()) {
+    for ((i, field) in fields.withIndex()) {
       if (i > 0) listSeparator()
-      column(col)
+      field(field)
     }
     closeBlock()
   }
 
-  protected open fun Appendable.column(column: ColumnReference) {
-    quotedName(column.name)
-    if (column is ColumnReference.Descending) append(" DESC")
+  protected open fun Appendable.field(field: FieldReference) {
+    quotedName(field.name)
+    if (field is FieldReference.Descending) append(" DESC")
   }
 
-  protected open fun Appendable.schemaColumn(column: SchemaColumn<*>) {
-    quotedName(column.name)
+  protected open fun Appendable.field(field: SchemaField<*>) {
+    quotedName(field.name)
     space()
-    dataType(column.dataType)
-    notNull(!column.nullable)
+    dataType(field.type)
+    notNull(!field.nullable)
   }
 
-  protected open fun Appendable.dataType(dataType: DataType<*, *>) {
-    append(dataType.sqlDataType)
+  protected open fun Appendable.dataType(codec: ValueType<*, *>) {
+    append(codec.dataType)
   }
 }

@@ -3,7 +3,7 @@ package uk.tvidal.data.query
 import uk.tvidal.data.codec.EntityDecoder
 import java.sql.Connection
 
-class SelectQuery<out E>(
+class SelectQuery<E>(
   override val sql: String,
   val decode: EntityDecoder<E>,
   override val params: Collection<QueryParam> = emptyList(),

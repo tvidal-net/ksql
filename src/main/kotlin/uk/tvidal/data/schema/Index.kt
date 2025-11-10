@@ -1,6 +1,6 @@
 package uk.tvidal.data.schema
 
 data class Index(
-  val columns: Collection<ColumnReference>,
+  val fields: Collection<FieldReference>,
   val name: String? = null,
 )

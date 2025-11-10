@@ -1,8 +1,9 @@
 package uk.tvidal.data.codec
 
+import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.module.kotlin.registerKotlinModule
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
-import uk.tvidal.data.mapper
 import java.sql.Date
 import java.sql.Time
 import java.sql.Timestamp
@@ -125,12 +126,15 @@ class JdbcValueCodecTest {
 
   private enum class TestEnum { None, Some }
 
-  private data class TestClass(
+  data class TestClass(
     val name: String,
     val age: Int
   )
 
   companion object {
+    private val mapper = ObjectMapper()
+      .registerKotlinModule()
+
     private val localDateTime = LocalDateTime.of(1982, 1, 18, 5, 45, 13)
     private val timestamp = Timestamp.valueOf(localDateTime)
     private val localDate = localDateTime.toLocalDate()

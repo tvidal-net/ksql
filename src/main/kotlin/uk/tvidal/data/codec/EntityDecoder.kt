@@ -6,7 +6,7 @@ import kotlin.reflect.KMutableProperty1
 import kotlin.reflect.KParameter
 
 @Suppress("UNCHECKED_CAST")
-interface EntityDecoder<out E> {
+interface EntityDecoder<E> {
 
   operator fun invoke(rs: ResultSet): E
 

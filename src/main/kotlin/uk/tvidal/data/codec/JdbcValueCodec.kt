@@ -57,7 +57,7 @@ interface JdbcValueCodec<J, T> {
   }
 
   class Jackson<T : Any>(val reader: ObjectReader, val writer: ObjectWriter) : JdbcValueCodec<String, T> {
-    constructor(codec: ObjectMapper, valueType: KClass<out T>) : this(
+    constructor(codec: ObjectMapper, valueType: KClass<T>) : this(
       reader = codec.readerFor(valueType.java),
       writer = codec.writerFor(valueType.java)
     )

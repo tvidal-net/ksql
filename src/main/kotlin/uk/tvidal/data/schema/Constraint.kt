@@ -1,24 +1,30 @@
 package uk.tvidal.data.schema
 
 import uk.tvidal.data.TableName
+import uk.tvidal.data.fieldName
+import uk.tvidal.data.fields
+import uk.tvidal.data.keyField
+import uk.tvidal.data.table
+import uk.tvidal.data.returnValueType
+import kotlin.reflect.KClass
 
 sealed interface Constraint {
 
   data class PrimaryKey(val index: Index) : Constraint {
     constructor(
-      columns: Collection<ColumnReference>,
+      fields: Collection<FieldReference>,
       primaryKeyName: String? = null,
     ) : this(
-      Index(columns, primaryKeyName)
+      Index(fields, primaryKeyName)
     )
   }
 
   data class UniqueKey(val index: Index) : Constraint {
     constructor(
-      columns: Collection<ColumnReference>,
+      fields: Collection<FieldReference>,
       uniqueName: String? = null,
     ) : this(
-      Index(columns, uniqueName)
+      Index(fields, uniqueName)
     )
   }
 
@@ -36,10 +42,10 @@ sealed interface Constraint {
   }
 
   data class ForeignKeyReference(
-    val columnName: String,
-    val referenceColumn: String,
+    val fieldName: String,
+    val referenceField: String,
   ) {
-    override fun toString() = "$columnName = $referenceColumn"
+    override fun toString() = "$fieldName = $referenceField"
   }
 
   data class ForeignKey(
@@ -54,19 +60,34 @@ sealed interface Constraint {
 
   companion object Factory {
 
-    fun primaryKey(primaryKeyName: String? = null, vararg columns: String): Constraint =
-      PrimaryKey(columns.map(ColumnReference::asc), primaryKeyName)
+    fun primaryKey(primaryKeyName: String? = null, vararg fields: String): Constraint =
+      PrimaryKey(fields.map(FieldReference::asc), primaryKeyName)
 
-    fun primaryKey(primaryKeyName: String? = null, vararg columns: ColumnReference): Constraint =
-      PrimaryKey(columns.toList(), primaryKeyName)
+    fun primaryKey(primaryKeyName: String? = null, vararg fields: FieldReference): Constraint =
+      PrimaryKey(fields.toList(), primaryKeyName)
 
-    fun unique(uniqueName: String? = null, vararg columns: String): Constraint =
-      UniqueKey(columns.map(ColumnReference::asc), uniqueName)
+    fun unique(uniqueName: String? = null, vararg fields: String): Constraint =
+      UniqueKey(fields.map(FieldReference::asc), uniqueName)
 
-    fun unique(uniqueName: String? = null, vararg columns: ColumnReference): Constraint =
-      UniqueKey(columns.toList(), uniqueName)
+    fun unique(uniqueName: String? = null, vararg fields: FieldReference): Constraint =
+      UniqueKey(fields.toList(), uniqueName)
 
-    fun on(columnName: String, referenceColumn: String = columnName) =
-      ForeignKeyReference(columnName, referenceColumn)
+    fun on(fieldName: String, referenceField: String = fieldName) =
+      ForeignKeyReference(fieldName, referenceField)
+
+    fun <E : Any> foreignKeys(entity: KClass<E>) = entity.fields.mapNotNull { field ->
+      val table = field.returnValueType
+      table.keyField?.let { idField ->
+        ForeignKey(
+          table = table.table,
+          references = listOf(
+            on(
+              fieldName = field.fieldName,
+              referenceField = idField.fieldName
+            )
+          )
+        )
+      }
+    }
   }
 }

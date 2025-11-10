@@ -1,15 +1,11 @@
 package uk.tvidal.data
 
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
 import uk.tvidal.data.filter.SqlFilter
 import uk.tvidal.data.filter.SqlFilterBuilder
 import uk.tvidal.data.filter.SqlMultiFilter
 import uk.tvidal.data.filter.SqlPropertyParamFilter
-import uk.tvidal.data.logging.KLogger.Companion.loggerName
 import uk.tvidal.data.sql.SqlQueryBuilder.Constants.SCHEMA_SEP
 import java.lang.reflect.Field
-import java.sql.Connection
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.util.UUID
@@ -27,7 +23,7 @@ import kotlin.reflect.full.instanceParameter
 import kotlin.reflect.full.memberProperties
 import kotlin.reflect.jvm.javaField
 
-typealias WhereClauseBuilder<E> = SqlFilterBuilder<E>.(KClass<out E>) -> Unit
+typealias WhereClauseBuilder<E> = SqlFilterBuilder<E>.(KClass<E>) -> Unit
 
 val RandomUUID: UUID
   get() = UUID.randomUUID()
@@ -40,15 +36,15 @@ val Today: LocalDate
 val Now: LocalDateTime
   get() = LocalDateTime.now()
 
-internal fun String?.whenNotNull(suffix: Any?): String =
+internal fun String?.whenNotNull(suffix: Any): String =
   this?.let { "$it$suffix" } ?: ""
 
 internal val String?.dot: String
   get() = whenNotNull(SCHEMA_SEP)
 
 @Suppress("UNCHECKED_CAST")
-internal val <T : Any> KCallable<T?>.valueType: KClass<out T>
-  get() = returnType.classifier as? KClass<out T> ?: returnType as KClass<out T>
+internal val <T : Any> KCallable<T?>.returnValueType: KClass<T>
+  get() = returnType.classifier as KClass<T>
 
 private inline fun <reified T : Annotation> Field?.findAnnotation(): T? =
   this?.getAnnotation<T>(T::class.java)
@@ -60,7 +56,7 @@ internal fun Column?.fieldName(fallback: String) =
   this?.name?.ifBlank { null } ?: fallback
 
 @Suppress("UNCHECKED_CAST")
-internal val <E : Any> KProperty1<E, *>.receiverType: KClass<E>
+internal val <E : Any> KProperty1<in E, *>.receiverType: KClass<E>
   get() = instanceParameter!!.type.classifier as KClass<E>
 
 internal val KProperty<*>.column: Column?
@@ -101,17 +97,20 @@ internal val <E : Any> KClass<E>.updateFields: Collection<KProperty1<E, *>>
   get() = fields.filterNot { it.isKeyField || it.column?.updatable == false }
 
 internal val <E : Any> KClass<E>.keyFields: Collection<KProperty1<E, *>>
-  get() = fields.filter(KProperty<*>::isKeyField)
+  get() = fields.filter { it.isKeyField }
+
+internal val <E : Any> KClass<E>.keyField: KProperty1<E, *>?
+  get() = keyFields.run { if (size == 1) single() else null }
 
 internal val <E : Any> KClass<E>.keyFilter: SqlFilter
   get() = equalsFilter(keyFields)
 
-internal fun equalsFilter(filterColumns: Collection<KProperty1<*, *>>): SqlFilter {
-  require(filterColumns.isNotEmpty()) {
-    "filterColumns cannot be empty!"
+internal fun equalsFilter(properties: Collection<KProperty1<*, *>>): SqlFilter {
+  require(properties.isNotEmpty()) {
+    "Unable to create an equalsFilter for empty properties!"
   }
-  val keyFilters = filterColumns.map { col ->
-    SqlPropertyParamFilter.Equals(col)
+  val keyFilters = properties.map { property ->
+    SqlPropertyParamFilter.Equals(property)
   }
   return if (keyFilters.size > 1) {
     SqlMultiFilter.And(keyFilters)

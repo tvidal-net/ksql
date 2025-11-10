@@ -20,17 +20,6 @@ interface SchemaDialect {
   /**
    *
    */
-  fun <E : Any> create(
-    entity: KClass<out E>,
-    ifNotExists: Boolean = true,
-  ) = create(
-    SchemaTable.from(entity),
-    ifNotExists
-  )
-
-  /**
-   *
-   */
   fun create(
     index: Index,
     table: TableName,
@@ -49,7 +38,7 @@ interface SchemaDialect {
    *
    */
   fun <E : Any> drop(
-    entity: KClass<out E>,
+    entity: KClass<E>,
     ifExists: Boolean = true
   ) = drop(
     entity.table,

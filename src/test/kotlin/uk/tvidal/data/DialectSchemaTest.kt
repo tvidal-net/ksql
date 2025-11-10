@@ -3,24 +3,26 @@ package uk.tvidal.data
 import org.junit.jupiter.api.Test
 import uk.tvidal.data.TestDialect.assertSql
 import uk.tvidal.data.TestDialect.assertThat
-import uk.tvidal.data.codec.DataType
-import uk.tvidal.data.schema.ColumnReference.Factory.asc
-import uk.tvidal.data.schema.ColumnReference.Factory.desc
+import uk.tvidal.data.codec.ValueType
 import uk.tvidal.data.schema.Constraint
 import uk.tvidal.data.schema.Constraint.Factory.on
 import uk.tvidal.data.schema.Constraint.Factory.primaryKey
 import uk.tvidal.data.schema.Constraint.Factory.unique
+import uk.tvidal.data.schema.FieldReference.Factory.asc
+import uk.tvidal.data.schema.FieldReference.Factory.desc
 import uk.tvidal.data.schema.Index
-import uk.tvidal.data.schema.SchemaColumn
+import uk.tvidal.data.schema.SchemaField
 import uk.tvidal.data.schema.SchemaTable
 import javax.persistence.Id
 
 class DialectSchemaTest {
 
+  val config = Config.Default
+
   @Test
   fun createTableIfNotExists() {
     data class Person(val name: String, @Id val id: Int)
-    assertSql { create(Person::class) }
+    assertSql { create(config.schema(Person::class)) }
       .isEqualTo("CREATE TABLE IF NOT EXISTS [Person] ( [id] INTEGER NOT NULL, [name] NVARCHAR(1024) NOT NULL, PRIMARY KEY ([id]));")
   }
 
@@ -117,15 +119,15 @@ class DialectSchemaTest {
   }
 
   companion object {
-    val name = SchemaColumn("name", DataType.VarChar(20))
-    val id = SchemaColumn("id", DataType.UUID, false)
+    val name = SchemaField("name", ValueType.VarChar(20))
+    val id = SchemaField("id", ValueType.UUID, false)
     val tableName = TableName("table", "test")
     val pk = primaryKey(null, "id")
     val uq = unique(null, desc("name"), asc("id"))
 
     val TestTable = SchemaTable(
       name = tableName,
-      columns = listOf(name, id),
+      fields = listOf(name, id),
       constraints = listOf(pk, uq)
     )
 

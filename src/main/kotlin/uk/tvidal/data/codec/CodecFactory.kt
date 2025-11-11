@@ -6,6 +6,7 @@ import uk.tvidal.data.asAlias
 import uk.tvidal.data.description
 import uk.tvidal.data.fieldName
 import uk.tvidal.data.fields
+import uk.tvidal.data.keyField
 import uk.tvidal.data.logging.KLogging
 import uk.tvidal.data.returnValueType
 import java.util.concurrent.ConcurrentHashMap
@@ -25,20 +26,29 @@ class CodecFactory(
     get() = config.namingStrategy
 
   fun <T : Any> encoder(property: KProperty<T>): ParamValueEncoder<T> = requireNotNull(
-    config.fieldType(property)
+    config.fieldType(property) ?: entityEncoder(property.returnValueType)
   ) {
     "Unable to find a suitable encoder for $property"
+  }
+
+  private fun <E : Any> entityEncoder(table: KClass<E>) = table.keyField?.let { keyField ->
+    config.fieldType(keyField)?.let { encoder ->
+      ParamValueEncoder<E> { st, index, value ->
+        encoder.setParamValue(st, index, value?.let { keyField(it) })
+      }
+    }
   }
 
   fun <E : Any> decoder(
     type: KClass<E>,
     alias: String? = null,
   ): EntityDecoder<E> = cache.computeIfAbsent(
-    CacheKey(type, alias),
-    { entityDecoder(it.table, it.alias) }
-  ) as EntityDecoder<E>
+    CacheKey(type, alias)
+  ) {
+    entityDecoder(it.table, it.alias)
+  } as EntityDecoder<E>
 
-  fun <E : Any> entityDecoder(table: KClass<E>, alias: String?): EntityDecoder<E> {
+  private fun <E : Any> entityDecoder(table: KClass<E>, alias: String?): EntityDecoder<E> {
     val constructor = requireNotNull(
       table.primaryConstructor ?: table.noArgsConstructor
     ) {
@@ -87,17 +97,17 @@ class CodecFactory(
     }
   }
 
-  fun <T : Any> paramDecoder(parameter: KParameter, alias: String?): EntityDecoder<T> =
+  private fun <T : Any> paramDecoder(parameter: KParameter, alias: String?): EntityDecoder<T> =
     (config.paramType(parameter) as? ResultSetDecoder<T>)
       ?.let { fieldDecoder(it, parameter.fieldName, alias) }
       ?: decoder(parameter.returnValueType as KClass<T>, parameter.fieldName)
 
-  fun <T : Any> propertyDecoder(property: KProperty<T?>, alias: String?): EntityDecoder<T> =
+  private fun <T : Any> propertyDecoder(property: KProperty<T?>, alias: String?): EntityDecoder<T> =
     config.fieldType(property)
       ?.let { fieldDecoder(it, property.fieldName, alias) }
       ?: decoder(property.returnValueType, property.fieldName)
 
-  fun <T : Any> fieldDecoder(decoder: ResultSetDecoder<T>, fieldName: String, alias: String?): EntityDecoder<T> =
+  private fun <T : Any> fieldDecoder(decoder: ResultSetDecoder<T>, fieldName: String, alias: String?): EntityDecoder<T> =
     EntityDecoder.FieldDecoder(decoder, databaseName[fieldName, alias])
 
   private data class CacheKey(

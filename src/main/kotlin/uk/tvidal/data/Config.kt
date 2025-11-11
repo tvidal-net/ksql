@@ -27,8 +27,8 @@ class Config(
 ) {
 
   internal fun <E : Enum<E>> enumType(type: KClass<E>, column: Column? = null) = ValueType.EnumType(
-    enumClass = type,
-    fieldLength = column?.length,
+    enum = type,
+    length = column?.length,
     ignoreCase = enumIgnoreCase
   )
 
@@ -40,30 +40,28 @@ class Config(
     ?.let { ValueType.Decimal(it.scale, precision(column)) }
     ?: decimal
 
-  fun paramType(parameter: KParameter) = parameter.run {
+  internal fun paramType(parameter: KParameter) = parameter.run {
     valueType(returnValueType, findAnnotation())
   }
 
-  fun <T> fieldType(field: KProperty<T>) = field.run {
-    valueType(returnValueType, column)
-  }
-
-  fun <T : Any> keyType(table: KClass<*>): ValueType<*, T>? = table.keyField?.let {
+  internal fun <T : Any> keyType(table: KClass<*>): ValueType<*, T>? = table.keyField?.let {
     fieldType(it as KProperty<T>)
   }
 
-  fun <T : Any> valueType(type: KClass<T>, column: Column? = null): ValueType<*, T>? = when {
+  internal fun <T> fieldType(field: KProperty<T>) = field.run {
+    valueType(returnValueType, column)
+  }
+
+  internal fun <T : Any> valueType(type: KClass<T>, column: Column? = null): ValueType<*, T>? = when {
     type.java.isEnum -> enumType(type as KClass<out Enum<*>>, column)
     type.isSubclassOf(CharSequence::class) -> string(column)
     else -> ValueType.of(type) ?: when {
       type.isSubclassOf(Number::class) -> decimal(column)
-      else -> null.also { _ ->
-        warn { "Unable to find a suitable ValueType for $type" }
-      }
+      else -> null
     }
   } as? ValueType<*, T>
 
-  fun <T : Any> fields(type: KClass<T>): Collection<SchemaField<*>> {
+  internal fun <T : Any> fields(type: KClass<T>): Collection<SchemaField<*>> {
     val fields = type.fields
       .associateBy { it.name }
 
@@ -82,7 +80,7 @@ class Config(
     }
   }
 
-  fun <E : Any> schema(type: KClass<E>) = SchemaTable(
+  internal fun <E : Any> schema(type: KClass<E>) = SchemaTable(
     table = type.table,
     fields = fields(type),
     constraints = listOfNotNull(
@@ -92,7 +90,7 @@ class Config(
     ),
   )
 
-  fun <E : Any, T> schema(field: KProperty1<E, T>) = SchemaField(
+  internal fun <E : Any, T> schema(field: KProperty1<E, T>) = SchemaField(
     name = field.fieldName,
     type = requireNotNull(fieldType(field) ?: keyType(field.receiverType)) {
       "Unable to find a suitable ValueType for $field"

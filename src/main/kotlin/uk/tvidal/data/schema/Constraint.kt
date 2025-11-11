@@ -1,12 +1,6 @@
 package uk.tvidal.data.schema
 
 import uk.tvidal.data.TableName
-import uk.tvidal.data.fieldName
-import uk.tvidal.data.fields
-import uk.tvidal.data.keyField
-import uk.tvidal.data.returnValueType
-import uk.tvidal.data.table
-import kotlin.reflect.KClass
 
 sealed interface Constraint {
 

@@ -1,7 +1,7 @@
 package uk.tvidal.data.filter
 
 import uk.tvidal.data.dot
-import kotlin.reflect.KProperty
+import kotlin.reflect.KProperty1
 
 sealed class SqlPropertyValueFilter<out V> : SqlPropertyFilter<V>() {
 
@@ -12,7 +12,7 @@ sealed class SqlPropertyValueFilter<out V> : SqlPropertyFilter<V>() {
     get() = listOf(value)
 
   data class Equals<T>(
-    override val property: KProperty<T>,
+    override val property: KProperty1<*, T>,
     override val value: T,
     override val alias: String? = null,
   ) : SqlPropertyValueFilter<T>() {
@@ -21,7 +21,7 @@ sealed class SqlPropertyValueFilter<out V> : SqlPropertyFilter<V>() {
   }
 
   data class NotEquals<T>(
-    override val property: KProperty<T>,
+    override val property: KProperty1<*, T>,
     override val value: T,
     override val alias: String? = null,
   ) : SqlPropertyValueFilter<T>() {
@@ -30,7 +30,7 @@ sealed class SqlPropertyValueFilter<out V> : SqlPropertyFilter<V>() {
   }
 
   data class GreaterThan<T>(
-    override val property: KProperty<T>,
+    override val property: KProperty1<*, T>,
     override val value: T,
     override val alias: String? = null,
   ) : SqlPropertyValueFilter<T>() {
@@ -39,7 +39,7 @@ sealed class SqlPropertyValueFilter<out V> : SqlPropertyFilter<V>() {
   }
 
   data class LessThan<T>(
-    override val property: KProperty<T>,
+    override val property: KProperty1<*, T>,
     override val value: T,
     override val alias: String? = null,
   ) : SqlPropertyValueFilter<T>() {
@@ -48,7 +48,7 @@ sealed class SqlPropertyValueFilter<out V> : SqlPropertyFilter<V>() {
   }
 
   data class GreaterEquals<T>(
-    override val property: KProperty<T>,
+    override val property: KProperty1<*, T>,
     override val value: T,
     override val alias: String? = null,
   ) : SqlPropertyValueFilter<T>() {
@@ -57,7 +57,7 @@ sealed class SqlPropertyValueFilter<out V> : SqlPropertyFilter<V>() {
   }
 
   data class LessEquals<T>(
-    override val property: KProperty<T>,
+    override val property: KProperty1<*, T>,
     override val value: T,
     override val alias: String? = null,
   ) : SqlPropertyValueFilter<T>() {
@@ -66,7 +66,7 @@ sealed class SqlPropertyValueFilter<out V> : SqlPropertyFilter<V>() {
   }
 
   data class Like(
-    override val property: KProperty<String>,
+    override val property: KProperty1<*, String>,
     override val value: String,
     override val alias: String? = null,
   ) : SqlPropertyValueFilter<String>() {

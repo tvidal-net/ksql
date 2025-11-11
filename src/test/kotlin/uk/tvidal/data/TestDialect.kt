@@ -23,7 +23,7 @@ internal object TestDialect : SqlDialect(
 
   private val String.actual: String
     get() = trim()
-      .replace(newLines, "")
+      .replace(newLines, " ")
       .replace(spaces, " ")
 
   fun constraint(it: Constraint) = sql {

@@ -3,8 +3,8 @@ package uk.tvidal.data.database
 import uk.tvidal.data.Database
 import uk.tvidal.data.Now
 import uk.tvidal.data.RandomUUID
+import uk.tvidal.data.Today
 import uk.tvidal.data.delete
-import uk.tvidal.data.query.from
 import uk.tvidal.data.where
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -41,16 +41,10 @@ fun runTestSuite(db: Database) {
     Transaction::class,
   )
 
-  val from = from(Transaction::class)
-  println(from)
-  println(
-    db.dialect.select(Transaction::class, from, null)
-  )
-
   val accounts = db.repository<Account>()
 
   // insert root accounts
-  val assets = Account("Assets", id = UUID.fromString("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaa"))
+  val assets = Account("Assets", id = UUID.fromString("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"))
   val liability = Account("Liability", id = UUID.fromString("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"))
   val income = Account("Income", id = UUID.fromString("11111111-1111-1111-1111-111111111111"))
   val expenses = Account("Expenses", id = UUID.fromString("eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee"))
@@ -80,10 +74,31 @@ fun runTestSuite(db: Database) {
     println(it)
   }
 
-  accounts.update(liability.copy(updatedAt = Now))
+  accounts.update(
+    liability.copy(updatedAt = Now)
+  )
+
+  accounts.delete(income)
 
   accounts.delete {
     Account::parent.isNull
+  }
+
+  val transactions = db.repository<Transaction>()
+
+  val tx = Transaction(
+    name = "New Transaction",
+    date = Today,
+    creditAmount = 3.14,
+    creditAccount = petrol,
+    debitAmount = 3.14,
+    debitAccount = wallet,
+  )
+
+  transactions += tx
+
+  transactions.forEach {
+    println(it)
   }
 
   db.drop(

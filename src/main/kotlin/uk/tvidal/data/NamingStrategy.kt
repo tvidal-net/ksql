@@ -3,69 +3,75 @@ package uk.tvidal.data
 enum class NamingStrategy {
 
   AsIs {
-    override fun appendName(s: Appendable, name: CharSequence) {
-      s.append(name)
+    override fun Appendable.databaseName(name: CharSequence) {
+      append(name)
     }
   },
 
   LowerCase {
-    override fun appendName(s: Appendable, name: CharSequence) {
+    override fun Appendable.databaseName(name: CharSequence) {
       name.forEach {
-        s.append(it.lowercaseChar())
+        append(it.lowercaseChar())
       }
     }
   },
 
   CamelCase {
-    override fun appendName(s: Appendable, name: CharSequence) {
+    override fun Appendable.databaseName(name: CharSequence) {
       for ((i, ch) in name.withIndex()) {
-        s.append(if (i == 0) ch.lowercaseChar() else ch)
+        append(if (i == 0) ch.lowercaseChar() else ch)
       }
     }
   },
 
   PascalCase {
-    override fun appendName(s: Appendable, name: CharSequence) {
+    override fun Appendable.databaseName(name: CharSequence) {
       for ((i, ch) in name.withIndex()) {
-        s.append(if (i == 0) ch.uppercaseChar() else ch)
+        append(if (i == 0) ch.uppercaseChar() else ch)
       }
     }
   },
 
   ScreamingCase {
-    override fun appendName(s: Appendable, name: CharSequence) {
+    override fun Appendable.databaseName(name: CharSequence) {
       name.forEach {
-        s.append(it.uppercaseChar())
+        append(it.uppercaseChar())
       }
     }
   },
 
   ScreamingSnakeCase {
-    override fun appendName(s: Appendable, name: CharSequence) {
+    override fun Appendable.databaseName(name: CharSequence) {
       for ((i, ch) in name.withIndex()) {
-        if (ch.isUpperCase() && i > 0) s.append(NAME_SEP)
-        s.append(ch.uppercaseChar())
+        if (ch.isUpperCase() && i > 0) append(NAME_SEP)
+        append(ch.uppercaseChar())
       }
     }
   },
 
   SnakeCase {
-    override fun appendName(s: Appendable, name: CharSequence) {
+    override fun Appendable.databaseName(name: CharSequence) {
       for ((i, ch) in name.withIndex()) {
-        if (ch.isUpperCase() && i > 0) s.append(NAME_SEP)
-        s.append(ch.lowercaseChar())
+        if (ch.isUpperCase() && i > 0) append(NAME_SEP)
+        append(ch.lowercaseChar())
       }
     }
   };
 
-  abstract fun appendName(s: Appendable, name: CharSequence)
+  protected abstract fun Appendable.databaseName(name: CharSequence)
 
-  operator fun get(name: CharSequence, alias: String? = null) = buildString {
+  fun appendName(s: Appendable, name: CharSequence, alias: CharSequence? = null) = s.apply {
     alias?.let {
-      appendName(this, it)
+      databaseName(it)
       append(NAME_SEP)
     }
-    appendName(this, name)
+    databaseName(name)
+  }
+
+  operator fun get(name: CharSequence, alias: String? = null) = buildString(
+    name.length + (alias?.length?.let { it + 1 } ?: 0)
+  ) {
+    appendName(this, name, alias)
   }
 
   companion object Constants {

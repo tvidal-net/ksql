@@ -69,19 +69,19 @@ class ValueTypeTest {
 
   @Test
   fun fromFloatingPoint() {
-    assertThat(config.fieldType(T::double)).isEqualTo(ValueType.Double)
-    assertThat(config.fieldType(T::float)).isEqualTo(ValueType.Float)
+    assertThat(config.fieldType(T::double)).isEqualTo(ValueType.DoublePrecision)
+    assertThat(config.fieldType(T::float)).isEqualTo(ValueType.SinglePrecision)
   }
 
   @Test
   fun fromDateType() {
-    assertThat(config.fieldType(T::localDateTime)).isEqualTo(ValueType.DateTime)
-    assertThat(config.fieldType(T::date)).isEqualTo(ValueType.Timestamp)
-    assertThat(config.fieldType(T::timestamp)).isEqualTo(ValueType.Timestamp)
+    assertThat(config.fieldType(T::localDateTime)).isEqualTo(ValueType.LocalDateTime)
+    assertThat(config.fieldType(T::date)).isEqualTo(ValueType.SqlTimestamp)
+    assertThat(config.fieldType(T::timestamp)).isEqualTo(ValueType.SqlTimestamp)
     assertThat(config.fieldType(T::localDate)).isEqualTo(ValueType.LocalDate)
-    assertThat(config.fieldType(T::sqlDate)).isEqualTo(ValueType.Date)
+    assertThat(config.fieldType(T::sqlDate)).isEqualTo(ValueType.SqlDate)
     assertThat(config.fieldType(T::localTime)).isEqualTo(ValueType.LocalTime)
-    assertThat(config.fieldType(T::sqlTime)).isEqualTo(ValueType.Time)
+    assertThat(config.fieldType(T::sqlTime)).isEqualTo(ValueType.SqlTime)
   }
 
   @Test

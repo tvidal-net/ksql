@@ -2,7 +2,6 @@ package uk.tvidal.data.sql
 
 import uk.tvidal.data.Config
 import uk.tvidal.data.NamingStrategy
-import uk.tvidal.data.NamingStrategy.Constants.NAME_SEP
 import uk.tvidal.data.TableName
 import uk.tvidal.data.codec.CodecFactory
 import uk.tvidal.data.codec.ParamValueEncoder
@@ -15,9 +14,9 @@ import uk.tvidal.data.filter.SqlPropertyMultiValueFilter
 import uk.tvidal.data.filter.SqlPropertyParamFilter
 import uk.tvidal.data.filter.SqlPropertyValueFilter
 import uk.tvidal.data.query.EntityQuery
-import uk.tvidal.data.query.SelectFrom
 import uk.tvidal.data.query.QueryParam
 import uk.tvidal.data.query.QueryParam.Constants.FIRST_PARAM
+import uk.tvidal.data.query.SelectFrom
 import kotlin.reflect.KProperty
 import kotlin.reflect.KProperty1
 
@@ -107,7 +106,7 @@ abstract class SqlQueryBuilder(val codecs: CodecFactory) {
     filter: SqlPropertyFilter<*>,
     alias: String? = null,
   ) {
-    alias(alias)
+    aliasPrefix(alias)
     quotedName(filter.property.fieldName)
     when (filter) {
       is SqlPropertyFilter.IsNull -> isNull()
@@ -122,7 +121,7 @@ abstract class SqlQueryBuilder(val codecs: CodecFactory) {
 
   private fun Appendable.joinFilter(joinFilter: SqlPropertyJoinFilter<*>) {
     append(joinFilter.operator)
-    alias(joinFilter.alias)
+    aliasPrefix(joinFilter.alias)
     quotedName(joinFilter.target.fieldName)
   }
 
@@ -131,7 +130,7 @@ abstract class SqlQueryBuilder(val codecs: CodecFactory) {
     paramFilter: SqlPropertyParamFilter<*>,
   ) {
     append(paramFilter.operator)
-    fieldParam(params, paramFilter.property as KProperty1<*, *>)
+    fieldParam(params, paramFilter.property)
   }
 
   private fun Appendable.valueFilter(
@@ -179,7 +178,7 @@ abstract class SqlQueryBuilder(val codecs: CodecFactory) {
     EntityQuery.Param(
       index = params.nextIndex,
       encoder = codecs.encoder(property as KProperty<Any>),
-      property = property
+      property = property,
     ).also { newParam ->
       params.add(newParam)
       param(newParam)
@@ -198,13 +197,12 @@ abstract class SqlQueryBuilder(val codecs: CodecFactory) {
   }
 
   protected fun Appendable.tableName(table: TableName, alias: String? = null) {
-    val (name, schema) = table
-    if (!schema.isNullOrBlank()) {
-      quotedName(schema)
+    table.schema?.let {
+      quotedName(it)
       schemaSeparator()
     }
-    quotedName(name)
-    if (alias != null && alias != name) {
+    quotedName(table.name)
+    if (alias != table.name && alias != null) {
       append(" AS ")
       quotedName(alias)
     }
@@ -232,6 +230,36 @@ abstract class SqlQueryBuilder(val codecs: CodecFactory) {
     )
   }
 
+  protected open fun Appendable.append(joinType: SelectFrom.Join.Type) {
+    append(joinType.sql)
+  }
+
+  protected open fun Appendable.selectField(name: CharSequence, alias: CharSequence?) {
+    appendLine()
+    indent()
+    aliasPrefix(alias)
+    quotedName(name)
+    alias?.let {
+      append(" AS ")
+      openQuote()
+      namingStrategy.appendName(this, name, it)
+      closeQuote()
+    }
+  }
+
+  protected fun Appendable.aliasPrefix(alias: CharSequence?, separator: Char = SCHEMA_SEP) {
+    alias?.let {
+      quotedName(it)
+      append(separator)
+    }
+  }
+
+  protected open fun Appendable.quotedName(name: CharSequence, alias: CharSequence? = null) {
+    openQuote()
+    databaseName(name, alias)
+    closeQuote()
+  }
+
   protected fun Appendable.quotedNames(names: Collection<String>, block: Boolean = true) {
     if (block) openBlock()
     for ((i, name) in names.withIndex()) {
@@ -241,61 +269,20 @@ abstract class SqlQueryBuilder(val codecs: CodecFactory) {
     if (block) closeBlock()
   }
 
-  protected open fun Appendable.append(join: SelectFrom.Join.Type) {
-    append(join.sql)
-  }
-
-  protected open fun Appendable.selectField(name: String, alias: String?) {
-    appendLine()
-    indent()
-    alias(alias)
-    quotedName(name)
-    alias?.let {
-      append(" AS ")
-      openQuote()
-      namingStrategy.appendName(this, it)
-      nameSeparator()
-      namingStrategy.appendName(this, name)
-      closeQuote()
-    }
-  }
-
-  protected open fun Appendable.aliasName(name: String, alias: String? = null) {
-    alias(alias)
-    openQuote()
-    namingStrategy.appendName(this, name)
-    closeQuote()
-  }
-
-  protected fun Appendable.alias(alias: String?, separator: Char = SCHEMA_SEP) {
-    alias?.let {
-      quotedName(it)
-      append(separator)
-    }
-  }
-
-  protected open fun Appendable.quotedName(name: String) {
-    openQuote()
-    namingStrategy.appendName(this, name)
-    closeQuote()
+  protected fun Appendable.databaseName(name: CharSequence, alias: CharSequence? = null) {
+    namingStrategy.appendName(this, name, alias)
   }
 
   protected fun Appendable.ifExists(value: Boolean) {
-    if (value) {
-      append("IF EXISTS ")
-    }
+    if (value) append("IF EXISTS ")
   }
 
   protected fun Appendable.ifNotExists(value: Boolean) {
-    if (value) {
-      append("IF NOT EXISTS ")
-    }
+    if (value) append("IF NOT EXISTS ")
   }
 
   protected fun Appendable.notNull(notNull: Boolean) {
-    if (notNull) {
-      append(" NOT NULL")
-    }
+    if (notNull) append(" NOT NULL")
   }
 
   protected fun Appendable.isNotNull() {
@@ -310,7 +297,7 @@ abstract class SqlQueryBuilder(val codecs: CodecFactory) {
     param(param.index, param.name)
   }
 
-  protected open fun Appendable.param(index: Int, paramName: String) {
+  protected open fun Appendable.param(index: Int, paramName: CharSequence) {
     append(PARAM_CHAR)
   }
 
@@ -327,10 +314,6 @@ abstract class SqlQueryBuilder(val codecs: CodecFactory) {
   protected fun Appendable.listSeparator() {
     append(',')
     space()
-  }
-
-  protected fun Appendable.nameSeparator() {
-    append(NAME_SEP)
   }
 
   protected fun Appendable.schemaSeparator() {
@@ -361,7 +344,7 @@ abstract class SqlQueryBuilder(val codecs: CodecFactory) {
     private val Collection<*>.nextIndex: Int
       get() = size + FIRST_PARAM
 
-    internal fun alias(from: SelectFrom, count: Int): String? =
+    internal fun alias(from: SelectFrom, count: Int = Int.MAX_VALUE): String? =
       from.alias ?: if (count == 1) null else from.name
   }
 }

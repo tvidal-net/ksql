@@ -4,5 +4,5 @@ import java.sql.ResultSet
 
 @FunctionalInterface
 fun interface ResultSetDecoder<out T> {
-  fun getResultSetValue(rs: ResultSet, field: String): T?
+  fun getResultSetValue(resultSet: ResultSet, fieldName: String): T?
 }

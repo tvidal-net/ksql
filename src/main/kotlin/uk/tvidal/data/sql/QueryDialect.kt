@@ -7,6 +7,7 @@ import uk.tvidal.data.query.EntityQuery
 import uk.tvidal.data.query.SelectFrom
 import uk.tvidal.data.query.SelectQuery
 import uk.tvidal.data.query.SimpleQuery
+import uk.tvidal.data.query.from
 import uk.tvidal.data.updateFields
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty1
@@ -14,19 +15,10 @@ import kotlin.reflect.KProperty1
 interface QueryDialect {
 
   fun <E : Any> select(
-    entity: KClass<E>,
-    from: Collection<SelectFrom>,
-    whereClause: SqlFilter? = null
+      projection: KClass<E>,
+      whereClause: SqlFilter? = null,
+      from: Collection<SelectFrom> = from(projection)
   ): SelectQuery<E>
-
-  fun <E : Any> select(
-    entity: KClass<E>,
-    whereClause: SqlFilter? = null,
-  ) = select(
-    entity = entity,
-    from = listOf(SelectFrom.Table(entity)),
-    whereClause = whereClause
-  )
 
   fun <E : Any> save(
     entity: KClass<E>,

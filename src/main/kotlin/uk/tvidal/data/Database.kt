@@ -22,16 +22,11 @@ class Database(
   val currentTransaction: Connection?
     get() = connection.get()
 
-  fun <E : Any> repository(entity: KClass<E>): EntityRepository<E> = RepositoryImpl(
-    db = this,
-    entity = entity,
-  )
+  fun <E : Any> repository(entity: KClass<E>): EntityRepository<E> =
+    RepositoryImpl(this, entity)
 
   inline fun <reified E : Any> repository() =
     repository(E::class)
-
-  fun execute(sql: String, vararg paramValues: Any?) =
-    execute(SimpleQuery(sql), *paramValues)
 
   fun execute(query: SimpleQuery, vararg paramValues: Any?) = invoke { cnn ->
     query.execute(cnn, *paramValues)
@@ -63,19 +58,21 @@ class Database(
     }
   }
 
-  fun beginTransaction() = currentTransaction ?: createConnection()
+  fun begin() = currentTransaction ?: createConnection()
     .also(connection::set)
 
-  fun closeTransaction() {
+  fun close() {
     currentTransaction?.run {
-      if (!isClosed()) close()
+      if (!isClosed) close()
       connection.remove()
     }
   }
 
-  operator fun <T> invoke(action: (Connection) -> T): T = currentTransaction.let { transaction ->
+  operator fun <T> invoke(
+    action: (Connection) -> T
+  ): T = currentTransaction.let { transaction ->
     if (transaction == null) {
-      val newTransaction = beginTransaction()
+      val newTransaction = begin()
       try {
         action(newTransaction)
           .also { newTransaction.commit() }
@@ -85,7 +82,7 @@ class Database(
         }
         throw e
       } finally {
-        closeTransaction()
+        close()
       }
     } else {
       action(transaction)

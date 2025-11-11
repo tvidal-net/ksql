@@ -79,7 +79,7 @@ class SqlFilterBuilder<E> {
     inValues(values.toList())
 
   fun SqlFilter.or(vararg others: SqlFilter): SqlFilter {
-    val operands = listOf(this, *others)
+    val operands = setOf(this, *others)
     filters.removeAll(operands)
     return add(SqlMultiFilter.Or(operands))
   }

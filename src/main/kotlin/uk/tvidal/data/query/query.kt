@@ -26,9 +26,9 @@ fun <V> KProperty1<*, V>.eq(target: KProperty1<out Any, V>, alias: String?) = Sq
 internal val Query.description: String
   get() = "params=$params\n$sql"
 
-fun setParamValues(st: PreparedStatement, params: Iterable<QueryParam>, values: Iterable<Any?>) {
+fun setParamValues(statement: PreparedStatement, params: Iterable<QueryParam>, values: Iterable<Any?>) {
   params.zip(values) { param, value ->
-    param.encoder.setParamValue(st, param.index, value)
+    param.encoder.setParamValue(statement, param.index, value)
   }
 }
 

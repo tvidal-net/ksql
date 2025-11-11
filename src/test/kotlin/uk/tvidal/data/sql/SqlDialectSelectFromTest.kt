@@ -43,23 +43,21 @@ class SqlDialectSelectFromTest {
         on = Account::id eq Transaction::credit
       ),
     )
-    assertSelect { select(Transaction::class, from, null) }.isEqualTo(
-      "SELECT [Transaction].[Transaction_credit], [Transaction].[Transaction_debit], " +
-        "[Transaction].[Transaction_description], [Transaction].[Transaction_id], [Account].[Account_name] " +
-        "FROM [Transaction] INNER JOIN [Account] ON [Account].[id] = [Transaction].[credit]"
+    assertSelect { select(Transaction::class, null, from) }.isEqualTo(
+      "SELECT [Transaction].[credit] AS [Transaction_credit], [Transaction].[debit] AS [Transaction_debit], " +
+        "[Transaction].[description] AS [Transaction_description], [Transaction].[id] AS [Transaction_id], [Account].[id] AS [Account_id], " +
+        "[Account].[name] AS [Account_name] FROM [Transaction] INNER JOIN [Account] ON [Account].[id] = [Transaction].[credit]"
     )
   }
 
   @Test
   fun testDoubleJoin() {
-    val from = from(
-      table = Transaction::class,
-      alias = "t",
-    )
-    assertSelect { select(Transaction::class, from) }.isEqualTo(
-      "SELECT [t].[t_credit], [t].[t_debit], [t].[t_description], [t].[t_id], [ac].[ac_id], [ac].[ac_name], [ad].[ad_id], [ad].[ad_name] " +
-        "FROM [Transaction] AS [t] INNER JOIN [Account] AS [ac] ON [ac].[id] = [t].[credit] " +
-        "INNER JOIN [Account] AS [ad] ON [ad].[id] = [t].[debit]"
+    val from = from(table = Transaction::class)
+    assertSelect { select(Transaction::class, null, from) }.isEqualTo(
+      "SELECT [Transaction].[credit] AS [Transaction_credit], [Transaction].[debit] AS [Transaction_debit], [Transaction].[description] AS " +
+        "[Transaction_description], [Transaction].[id] AS [Transaction_id], [credit].[id] AS [credit_id], [credit].[name] AS [credit_name], " +
+        "[debit].[id] AS [debit_id], [debit].[name] AS [debit_name] FROM [Transaction] INNER JOIN [Account] AS [credit] " +
+        "ON [credit].[id] = [Transaction].[credit] INNER JOIN [Account] AS [debit] ON [debit].[id] = [Transaction].[debit]"
     )
   }
 }

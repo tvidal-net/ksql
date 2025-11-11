@@ -83,10 +83,10 @@ open class SqlDialect(
   }
 
   override fun <E : Any> select(
-    entity: KClass<E>,
-    from: Collection<SelectFrom>,
-    whereClause: SqlFilter?
-  ) = selectQuery(entity) { params ->
+    projection: KClass<E>,
+    whereClause: SqlFilter?,
+    from: Collection<SelectFrom>
+  ) = selectQuery(projection) { params ->
     select(from)
     from(from)
     for (join in from.filterIsInstance<SelectFrom.Join>()) {
@@ -124,7 +124,7 @@ open class SqlDialect(
       appendLine()
       indent()
       append("ON ")
-      filter(params, it, join.alias)
+      filter(params, it, alias(join))
     }
   }
 
@@ -206,10 +206,10 @@ open class SqlDialect(
     builder: Appendable.(MutableCollection<QueryParam>) -> Unit
   ) = arrayListOf<QueryParam>().let { params ->
     SimpleQuery(
-      params = params,
       sql = buildString {
         builder(params)
-      }
+      },
+      params = params,
     )
   }
 
@@ -218,11 +218,11 @@ open class SqlDialect(
     builder: Appendable.(MutableCollection<QueryParam>) -> Unit
   ) = arrayListOf<QueryParam>().let { params ->
     SelectQuery(
-      params = params,
       decode = codecs.decoder(projection),
       sql = buildString {
         builder(params)
-      }
+      },
+      params = params,
     )
   }
 
@@ -249,13 +249,13 @@ open class SqlDialect(
 
   protected fun Appendable.schemaConstraint(constraint: Constraint) {
     when (constraint) {
-      is Constraint.PrimaryKey -> schemaConstraintKey(Constraint.ConstraintKeyType.PrimaryKey, constraint.index)
-      is Constraint.UniqueKey -> schemaConstraintKey(Constraint.ConstraintKeyType.UniqueKey, constraint.index)
-      is Constraint.ForeignKey -> schemaForeignKey(constraint)
+      is Constraint.PrimaryKey -> constraintKey(Constraint.ConstraintKeyType.PrimaryKey, constraint.index)
+      is Constraint.UniqueKey -> constraintKey(Constraint.ConstraintKeyType.UniqueKey, constraint.index)
+      is Constraint.ForeignKey -> foreignKey(constraint)
     }
   }
 
-  protected open fun Appendable.schemaConstraintKey(keyType: Constraint.ConstraintKeyType, index: Index) {
+  protected open fun Appendable.constraintKey(keyType: Constraint.ConstraintKeyType, index: Index) {
     if (index.name != null) {
       append("CONSTRAINT ")
       quotedName(index.name)
@@ -266,16 +266,26 @@ open class SqlDialect(
     fields(index.fields)
   }
 
-  protected open fun Appendable.schemaForeignKey(foreignKey: Constraint.ForeignKey) {
+  protected open fun Appendable.foreignKey(foreignKey: Constraint.ForeignKey) {
     append("FOREIGN KEY ")
     if (foreignKey.name != null) {
       quotedName(foreignKey.name)
       space()
     }
+    foreignKeyFields(foreignKey)
+    foreignKeyReferences(foreignKey)
+    foreignKeyDeleteAction(foreignKey.deleteAction)
+    foreignKeyUpdateAction(foreignKey.updateAction)
+  }
+
+  protected open fun Appendable.foreignKeyFields(foreignKey: Constraint.ForeignKey) {
     quotedNames(
       foreignKey.references
         .map(Constraint.ForeignKeyReference::fieldName)
     )
+  }
+
+  protected open fun Appendable.foreignKeyReferences(foreignKey: Constraint.ForeignKey) {
     append(" REFERENCES ")
     tableName(foreignKey.table)
     space()
@@ -284,14 +294,24 @@ open class SqlDialect(
         it.referenceField
       }
     )
-    if (foreignKey.deleteAction != Constraint.ForeignKeyAction.Default) {
+  }
+
+  protected open fun Appendable.foreignKeyDeleteAction(action: Constraint.ForeignKeyAction) {
+    if (action != Constraint.ForeignKeyAction.Default) {
       append(" ON DELETE ")
-      append(foreignKey.deleteAction.sql)
+      foreignKeyAction(action)
     }
-    if (foreignKey.updateAction != Constraint.ForeignKeyAction.Default) {
+  }
+
+  protected open fun Appendable.foreignKeyUpdateAction(action: Constraint.ForeignKeyAction) {
+    if (action != Constraint.ForeignKeyAction.Default) {
       append(" ON UPDATE ")
-      append(foreignKey.updateAction.sql)
+      foreignKeyAction(action)
     }
+  }
+
+  protected open fun Appendable.foreignKeyAction(action: Constraint.ForeignKeyAction) {
+    append(action.sql)
   }
 
   protected fun Appendable.fields(fields: Collection<FieldReference>) {
@@ -316,6 +336,6 @@ open class SqlDialect(
   }
 
   protected open fun Appendable.dataType(codec: ValueType<*, *>) {
-    append(codec.dataType)
+    append(codec.sqlDataType)
   }
 }

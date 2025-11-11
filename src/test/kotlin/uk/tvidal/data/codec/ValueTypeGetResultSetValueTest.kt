@@ -82,7 +82,7 @@ class ValueTypeGetResultSetValueTest {
     whenever(rs.getDouble(eq("double")))
       .thenReturn(Double.MAX_VALUE)
 
-    assertThat(ValueType.Double.getResultSetValue(rs, "double"))
+    assertThat(ValueType.DoublePrecision.getResultSetValue(rs, "double"))
       .isEqualTo(Double.MAX_VALUE)
 
     verify(rs).getDouble(eq("double"))
@@ -93,7 +93,7 @@ class ValueTypeGetResultSetValueTest {
     whenever(rs.getFloat(eq("float")))
       .thenReturn(Float.MAX_VALUE)
 
-    assertThat(ValueType.Float.getResultSetValue(rs, "float"))
+    assertThat(ValueType.SinglePrecision.getResultSetValue(rs, "float"))
       .isEqualTo(Float.MAX_VALUE)
 
     verify(rs).getFloat(eq("float"))
@@ -105,7 +105,7 @@ class ValueTypeGetResultSetValueTest {
     whenever(rs.getTimestamp(eq("timestamp")))
       .thenReturn(expected)
 
-    assertThat(ValueType.Timestamp.getResultSetValue(rs, "timestamp"))
+    assertThat(ValueType.SqlTimestamp.getResultSetValue(rs, "timestamp"))
       .isEqualTo(expected)
 
     verify(rs).getTimestamp(eq("timestamp"))
@@ -117,7 +117,7 @@ class ValueTypeGetResultSetValueTest {
     whenever(rs.getTimestamp(eq("localDateTime")))
       .thenReturn(Timestamp.valueOf(expected))
 
-    assertThat(ValueType.DateTime.getResultSetValue(rs, "localDateTime"))
+    assertThat(ValueType.LocalDateTime.getResultSetValue(rs, "localDateTime"))
       .isEqualTo(expected)
 
     verify(rs).getTimestamp(eq("localDateTime"))
@@ -141,7 +141,7 @@ class ValueTypeGetResultSetValueTest {
     whenever(rs.getDate(eq("date")))
       .thenReturn(expected)
 
-    assertThat(ValueType.Date.getResultSetValue(rs, "date"))
+    assertThat(ValueType.SqlDate.getResultSetValue(rs, "date"))
       .isEqualTo(expected)
 
     verify(rs).getDate(eq("date"))
@@ -165,7 +165,7 @@ class ValueTypeGetResultSetValueTest {
     whenever(rs.getTime(eq("time")))
       .thenReturn(expected)
 
-    assertThat(ValueType.Time.getResultSetValue(rs, "time"))
+    assertThat(ValueType.SqlTime.getResultSetValue(rs, "time"))
       .isEqualTo(expected)
 
     verify(rs).getTime(eq("time"))

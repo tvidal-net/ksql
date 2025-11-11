@@ -344,6 +344,10 @@ abstract class SqlQueryBuilder(val codecs: CodecFactory) {
     private val Collection<*>.nextIndex: Int
       get() = size + FIRST_PARAM
 
+    internal fun alias(from: Collection<SelectFrom>) = from
+      .first { it is SelectFrom.Table<*> }
+      .let { alias(it, from.size) }
+
     internal fun alias(from: SelectFrom, count: Int = Int.MAX_VALUE): String? =
       from.alias ?: if (count == 1) null else from.name
   }

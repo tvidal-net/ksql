@@ -28,7 +28,7 @@ class EntityQuery<in E>(
   ): IntArray = cnn.prepareStatement(sql).use { st ->
     for (value in values) {
       setParamValues(st, value)
-      trace { "addBatch" }
+      trace { "addBatch: $value" }
       st.addBatch()
     }
     st.executeBatch().debug {

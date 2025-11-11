@@ -3,8 +3,10 @@ package uk.tvidal.data
 import uk.tvidal.data.codec.ValueType
 import uk.tvidal.data.codec.returnValueType
 import uk.tvidal.data.logging.KLogging
+import uk.tvidal.data.schema.Decimal
 import uk.tvidal.data.schema.SchemaField
 import uk.tvidal.data.schema.SchemaTable
+import uk.tvidal.data.schema.column
 import uk.tvidal.data.schema.foreignKeys
 import uk.tvidal.data.schema.primaryKey
 import java.math.BigDecimal
@@ -92,11 +94,17 @@ class Config(
 
   internal fun <E : Any, T> schema(field: KProperty1<E, T>) = SchemaField(
     name = field.fieldName,
-    type = requireNotNull(fieldType(field) ?: keyType(field.receiverType)) {
+    type = requireNotNull(schemaFieldType(field)) {
       "Unable to find a suitable ValueType for $field"
     },
     nullable = field.isNullable
   )
+
+  private fun <V : Any> schemaFieldType(field: KProperty<V?>) = field.run {
+    findAnnotation<Decimal>()?.let { valueType(BigDecimal::class, it.column) }
+      ?: fieldType(field)
+      ?: keyType(returnValueType)
+  }
 
   companion object Constants : KLogging() {
 

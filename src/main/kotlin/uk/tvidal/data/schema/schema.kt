@@ -12,6 +12,7 @@ import uk.tvidal.data.schema.Constraint.ForeignKeyReference
 import uk.tvidal.data.schema.Constraint.PrimaryKey
 import uk.tvidal.data.schema.Constraint.UniqueKey
 import uk.tvidal.data.table
+import javax.persistence.Column
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty
 
@@ -20,6 +21,9 @@ annotation class Decimal(
   val scale: Int = DEFAULT_SCALE,
   val precision: Int = DEFAULT_PRECISION
 )
+
+internal val Decimal.column: Column
+  get() = Column(scale = scale, precision = precision)
 
 val KProperty<*>.asc: FieldReference
   get() = FieldReference.Ascending(fieldName)

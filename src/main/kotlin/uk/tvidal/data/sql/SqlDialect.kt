@@ -17,6 +17,7 @@ import uk.tvidal.data.schema.Index
 import uk.tvidal.data.schema.SchemaField
 import uk.tvidal.data.schema.SchemaTable
 import uk.tvidal.data.table
+import javax.persistence.criteria.From
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty1
 
@@ -86,7 +87,7 @@ open class SqlDialect(
     projection: KClass<E>,
     whereClause: SqlFilter?,
     from: Collection<SelectFrom>
-  ) = selectQuery(projection) { params ->
+  ) = selectQuery(projection, alias(from)) { params ->
     select(from)
     from(from)
     for (join in from.filterIsInstance<SelectFrom.Join>()) {
@@ -215,10 +216,11 @@ open class SqlDialect(
 
   protected inline fun <E : Any> selectQuery(
     projection: KClass<E>,
+    alias: String?,
     builder: Appendable.(MutableCollection<QueryParam>) -> Unit
   ) = arrayListOf<QueryParam>().let { params ->
     SelectQuery(
-      decode = codecs.decoder(projection),
+      decode = codecs.decoder(projection, alias),
       sql = buildString {
         builder(params)
       },

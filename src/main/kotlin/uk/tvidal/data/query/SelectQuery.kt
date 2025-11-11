@@ -21,7 +21,7 @@ class SelectQuery<E>(
       buildList {
         while (rs.next()) add(
           decode(rs)!!.trace {
-            "decode $it"
+            "decode: $it"
           }
         )
       }
@@ -38,7 +38,7 @@ class SelectQuery<E>(
       if (!rs.next()) null
       else decode(rs)
     }.trace {
-      "decode $it"
+      "decode: $it"
     }
   }
 

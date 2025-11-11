@@ -1,6 +1,7 @@
 package uk.tvidal.data.codec
 
 import uk.tvidal.data.logging.KLogging
+import uk.tvidal.data.simpleName
 import uk.tvidal.data.str
 import java.sql.Date
 import java.sql.PreparedStatement
@@ -31,11 +32,11 @@ open class ValueType<J, T : Any>(
     if (value != null) {
       val encodedValue = jdbcCodec.encode(value).trace {
         val logMessage = if ("$it" == "$value") "" else " value=${str(it)}"
-        "setParamValue($index=${str(value)})$logMessage"
+        "$simpleName::setParamValue($index=${str(value)})$logMessage"
       }
       setParam(statement, index, encodedValue)
     } else {
-      trace { "setParamValue($index=NULL)" }
+      trace { "$simpleName::setParamValue($index=NULL)" }
       statement.setNull(index, Types.NULL)
     }
   }
@@ -50,7 +51,7 @@ open class ValueType<J, T : Any>(
       jdbcCodec.decode(it)
     }.trace { value ->
       val logMessage = if ("$it" == "$value") "" else " value=${str(value)}"
-      "getResultSetValue(${str(fieldName)}=${str(it)})$logMessage"
+      "$simpleName::getResultSetValue($fieldName=${str(it)})$logMessage"
     }
   }
 

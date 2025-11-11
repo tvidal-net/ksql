@@ -5,6 +5,7 @@ import uk.tvidal.data.Now
 import uk.tvidal.data.RandomUUID
 import uk.tvidal.data.Today
 import uk.tvidal.data.delete
+import uk.tvidal.data.schema.Decimal
 import uk.tvidal.data.where
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -27,9 +28,9 @@ data class Account(
 data class Transaction(
   val name: String,
   val date: LocalDate,
-  val creditAmount: Double,
+  @Decimal val creditAmount: Double,
   val creditAccount: Account,
-  val debitAmount: Double,
+  @Decimal val debitAmount: Double,
   val debitAccount: Account,
   val updatedAt: LocalDateTime = Now,
   @Id val id: UUID = RandomUUID,

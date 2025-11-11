@@ -50,7 +50,7 @@ class FilterTest {
   @Test
   fun testOrFilter() {
     val expected = SqlMultiFilter.Or(
-      listOf(
+      setOf(
         SqlPropertyParamFilter.GreaterThan(TestClass::key),
         SqlPropertyParamFilter.LessThan(TestClass::key)
       )

@@ -3,12 +3,12 @@ package uk.tvidal.data.query
 import uk.tvidal.data.fieldName
 import uk.tvidal.data.fields
 import uk.tvidal.data.filter.SqlPropertyJoinFilter
-import uk.tvidal.data.isNullable
 import uk.tvidal.data.keyField
 import uk.tvidal.data.query.SelectFrom.Join
 import uk.tvidal.data.query.SelectFrom.Table
 import uk.tvidal.data.receiverType
 import uk.tvidal.data.returnValueType
+import uk.tvidal.data.isNullable
 import uk.tvidal.data.table
 import uk.tvidal.data.tableName
 import java.sql.PreparedStatement

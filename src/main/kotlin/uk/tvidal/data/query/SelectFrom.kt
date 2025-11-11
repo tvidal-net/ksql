@@ -1,6 +1,6 @@
 package uk.tvidal.data.query
 
-import uk.tvidal.data.asAlias
+import uk.tvidal.data.codec.asAlias
 import uk.tvidal.data.fields
 import uk.tvidal.data.filter.SqlFilter
 import uk.tvidal.data.simpleName

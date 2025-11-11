@@ -52,7 +52,7 @@ class SqlDialectSelectFromTest {
 
   @Test
   fun testDoubleJoin() {
-    val from = from(table = Transaction::class)
+    val from = from(Transaction::class)
     assertSelect { select(Transaction::class, null, from) }.isEqualTo(
       "SELECT [Transaction].[credit] AS [Transaction_credit], [Transaction].[debit] AS [Transaction_debit], [Transaction].[description] AS " +
         "[Transaction_description], [Transaction].[id] AS [Transaction_id], [credit].[id] AS [credit_id], [credit].[name] AS [credit_name], " +

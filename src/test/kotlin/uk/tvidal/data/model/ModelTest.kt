@@ -4,10 +4,10 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import uk.tvidal.data.TableName
 import uk.tvidal.data.fieldName
-import uk.tvidal.data.insertFields
 import uk.tvidal.data.keyFields
+import uk.tvidal.data.sql.insertFields
+import uk.tvidal.data.sql.updateFields
 import uk.tvidal.data.table
-import uk.tvidal.data.updateFields
 import javax.persistence.Column
 import javax.persistence.Id
 import javax.persistence.Table

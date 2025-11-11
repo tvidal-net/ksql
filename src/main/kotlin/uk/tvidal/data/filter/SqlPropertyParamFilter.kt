@@ -1,6 +1,5 @@
 package uk.tvidal.data.filter
 
-import uk.tvidal.data.dot
 import uk.tvidal.data.sql.SqlQueryBuilder.Constants.PARAM_CHAR
 import kotlin.reflect.KProperty1
 

@@ -1,6 +1,5 @@
 package uk.tvidal.data.filter
 
-import uk.tvidal.data.dot
 import kotlin.reflect.KProperty1
 
 sealed class SqlPropertyMultiValueFilter<out V> : SqlPropertyFilter<V>() {

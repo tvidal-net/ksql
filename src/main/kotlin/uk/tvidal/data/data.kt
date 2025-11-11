@@ -1,11 +1,9 @@
 package uk.tvidal.data
 
-import uk.tvidal.data.codec.returnValueType
 import uk.tvidal.data.filter.SqlFilter
 import uk.tvidal.data.filter.SqlFilterBuilder
 import uk.tvidal.data.filter.SqlMultiFilter
 import uk.tvidal.data.filter.SqlPropertyParamFilter
-import uk.tvidal.data.sql.SqlQueryBuilder.Constants.SCHEMA_SEP
 import java.lang.reflect.Field
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -16,7 +14,6 @@ import javax.persistence.Id
 import javax.persistence.Table
 import kotlin.reflect.KCallable
 import kotlin.reflect.KClass
-import kotlin.reflect.KParameter
 import kotlin.reflect.KProperty
 import kotlin.reflect.KProperty1
 import kotlin.reflect.full.findAnnotation
@@ -37,24 +34,6 @@ val Today: LocalDate
 
 val Now: LocalDateTime
   get() = LocalDateTime.now()
-
-internal fun String?.whenNotNull(suffix: Any): String =
-  this?.let { "$it$suffix" } ?: ""
-
-internal val String?.dot: String
-  get() = whenNotNull(SCHEMA_SEP)
-
-internal val KProperty<*>.description: String
-  get() = "$name: ${returnValueType.simpleName}${if (isNullable) "?" else ""}"
-
-internal val KParameter.description: String
-  get() = "$name: ${returnValueType.simpleName}${if (isOptional) "?" else ""}"
-
-internal val KCallable<*>.description: String
-  get() = "${returnValueType.simpleName}(${parameters.joinToString { it.description }})"
-
-internal fun asAlias(alias: String?) =
-  alias?.let { " AS $it" } ?: ""
 
 @Suppress("UNCHECKED_CAST")
 internal val <T : Any> KCallable<T?>.returnValueType: KClass<T>
@@ -107,12 +86,6 @@ internal val KClass<*>.tableName: String
 internal val <E : Any> KClass<E>.fields: Collection<KProperty1<E, *>>
   get() = memberProperties.filterNot(KProperty<*>::isTransient)
 
-internal val <E : Any> KClass<E>.insertFields: Collection<KProperty1<E, *>>
-  get() = fields.filterNot { it.column?.insertable == false }
-
-internal val <E : Any> KClass<E>.updateFields: Collection<KProperty1<E, *>>
-  get() = fields.filterNot { it.isKeyField || it.column?.updatable == false }
-
 internal val <E : Any> KClass<E>.keyFields: Collection<KProperty1<E, *>>
   get() = fields.filter { it.isKeyField }
 
@@ -136,6 +109,15 @@ internal fun equalsFilter(properties: Collection<KProperty1<*, *>>): SqlFilter {
   }
 }
 
+internal val Any.simpleName: String?
+  get() = this::class.simpleName
+
+internal fun str(value: Any?): String = when (value) {
+  null -> "NULL"
+  is Number -> "$value"
+  else -> "'$value'"
+}
+
 inline fun <reified E : Any> where(builder: WhereClauseBuilder<E>): SqlFilter =
   SqlFilterBuilder<E>()
     .apply { builder(E::class) }
@@ -146,12 +128,3 @@ inline fun <reified E : Any> Repository<E>.where(builder: WhereClauseBuilder<E>)
 
 inline fun <reified E : Any> EntityRepository<E>.delete(builder: WhereClauseBuilder<E>) =
   delete(uk.tvidal.data.where(builder))
-
-internal val Any.simpleName: String?
-  get() = this::class.simpleName
-
-internal fun str(value: Any?): String = when (value) {
-  null -> "NULL"
-  is Number -> "$value"
-  else -> "'$value'"
-}

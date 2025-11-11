@@ -1,6 +1,5 @@
 package uk.tvidal.data.codec
 
-import uk.tvidal.data.description
 import uk.tvidal.data.logging.KLogging
 import uk.tvidal.data.simpleName
 import java.sql.ResultSet

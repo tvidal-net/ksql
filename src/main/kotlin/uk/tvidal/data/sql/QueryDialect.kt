@@ -1,14 +1,12 @@
 package uk.tvidal.data.sql
 
 import uk.tvidal.data.filter.SqlFilter
-import uk.tvidal.data.insertFields
 import uk.tvidal.data.keyFields
 import uk.tvidal.data.query.EntityQuery
 import uk.tvidal.data.query.SelectFrom
 import uk.tvidal.data.query.SelectQuery
 import uk.tvidal.data.query.SimpleQuery
 import uk.tvidal.data.query.from
-import uk.tvidal.data.updateFields
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty1
 

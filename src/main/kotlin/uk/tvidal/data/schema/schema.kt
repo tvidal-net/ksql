@@ -1,5 +1,7 @@
 package uk.tvidal.data.schema
 
+import uk.tvidal.data.codec.ValueType.Companion.DEFAULT_PRECISION
+import uk.tvidal.data.codec.ValueType.Companion.DEFAULT_SCALE
 import uk.tvidal.data.fieldName
 import uk.tvidal.data.fields
 import uk.tvidal.data.keyField
@@ -12,6 +14,12 @@ import uk.tvidal.data.schema.Constraint.UniqueKey
 import uk.tvidal.data.table
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty
+
+@Target(AnnotationTarget.PROPERTY)
+annotation class Decimal(
+  val scale: Int = DEFAULT_SCALE,
+  val precision: Int = DEFAULT_PRECISION
+)
 
 val KProperty<*>.asc: FieldReference
   get() = FieldReference.Ascending(fieldName)

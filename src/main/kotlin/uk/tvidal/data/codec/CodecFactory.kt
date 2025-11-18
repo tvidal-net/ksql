@@ -7,9 +7,6 @@ import uk.tvidal.data.fields
 import uk.tvidal.data.keyField
 import uk.tvidal.data.logging.KLogging
 import uk.tvidal.data.returnValueType
-import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.locks.ReentrantLock
-import kotlin.concurrent.withLock
 import kotlin.reflect.KClass
 import kotlin.reflect.KMutableProperty1
 import kotlin.reflect.KParameter
@@ -20,8 +17,6 @@ import kotlin.reflect.full.primaryConstructor
 class CodecFactory(
   val config: Config = Config.Default,
 ) {
-  private val lock = ReentrantLock(true)
-  private val cache = ConcurrentHashMap<CacheKey, EntityDecoder<*>>()
 
   val databaseName: NamingStrategy
     get() = config.namingStrategy
@@ -40,18 +35,7 @@ class CodecFactory(
     }
   }
 
-  fun <E : Any> decoder(
-    type: KClass<E>,
-    alias: String? = null,
-  ): EntityDecoder<E> = cache.computeIfAbsent(
-    CacheKey(type, alias)
-  ) {
-    lock.withLock {
-      entityDecoder(it.table, it.alias)
-    }
-  } as EntityDecoder<E>
-
-  private fun <E : Any> entityDecoder(table: KClass<E>, alias: String?): EntityDecoder<E> {
+  fun <E : Any> decoder(table: KClass<E>, alias: String?): EntityDecoder<E> {
     val constructor = requireNotNull(
       table.primaryConstructor ?: table.noArgsConstructor
     ) {

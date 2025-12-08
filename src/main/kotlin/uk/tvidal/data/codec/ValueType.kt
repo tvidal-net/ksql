@@ -221,8 +221,8 @@ open class ValueType<J, T : Any>(
       get() = "UUID"
   }
 
-  object Duration : ShortString<java.time.Duration>(
-    decoder = java.time.Duration::parse
+  object Duration : ShortString<kotlin.time.Duration>(
+    decoder = kotlin.time.Duration::parse
   )
 
   class VarChar(override val length: Int) : Primitive<String>(

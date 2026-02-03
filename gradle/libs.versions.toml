@@ -2,15 +2,15 @@
 
 [versions]
 
-assertj = "3.27.6"
+assertj = "3.27.7"
 h2 = "2.4.240"
-jackson = "2.20.0"
+jackson = "2.21.0"
 jpa = "2.2"
-kotlin = "2.1.20"
-logback = "1.5.18"
-mariadb = "3.5.6"
-mockito = "6.1.0"
-postgresql = "42.7.8"
+kotlin = "2.3.0"
+logback = "1.5.27"
+mariadb = "3.5.7"
+mockito = "6.2.3"
+postgresql = "42.7.9"
 slf4j = "2.0.17"
 
 [libraries]

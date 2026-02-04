@@ -13,6 +13,8 @@ repositories {
   mavenCentral()
 }
 
+private val mockitoAgent = configurations.create("mockitoAgent")
+
 dependencies {
   api(libs.jpa)
   api(libs.slf4j)
@@ -24,20 +26,28 @@ dependencies {
 
   testImplementation(kotlin("test"))
   testImplementation(libs.jackson.kotlin)
-  testImplementation(libs.mockito)
+  testImplementation(libs.mockito.kotlin)
   testRuntimeOnly(libs.logback)
   testRuntimeOnly(libs.h2)
   testRuntimeOnly(libs.mariadb)
   testRuntimeOnly(libs.postgresql)
   testApi(libs.assertj)
+
+  mockitoAgent(libs.mockito.core) {
+    isTransitive = false
+  }
 }
 
 tasks.test {
   useJUnitPlatform()
+  jvmArgs(
+    "-Xshare:off",
+    "-javaagent:${mockitoAgent.asPath}"
+  )
 }
 
 kotlin {
-  jvmToolchain(21)
+  jvmToolchain(jdkVersion = 25)
 }
 
 java {

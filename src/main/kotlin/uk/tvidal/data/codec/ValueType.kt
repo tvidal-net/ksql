@@ -285,10 +285,12 @@ open class ValueType<J, T : Any>(
     const val DEFAULT_SCALE = 13
     const val DEFAULT_PRECISION = 2
 
-    val All = ValueType::class.nestedClasses
-      .mapNotNull { it.objectInstance }
-      .filterIsInstance<ValueType<Any, Any>>()
-      .map { valueType(it::class) to it }
+    val All by lazy(mode = LazyThreadSafetyMode.SYNCHRONIZED) {
+      ValueType::class.nestedClasses
+        .mapNotNull { it.objectInstance }
+        .filterIsInstance<ValueType<Any, Any>>()
+        .map { valueType(it::class) to it }
+    }
 
     @Suppress("UNCHECKED_CAST")
     private fun valueType(type: KClass<out ValueType<Any, Any>>): KClass<out Any> = type

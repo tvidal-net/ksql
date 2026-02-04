@@ -11,12 +11,12 @@ import java.sql.Date
 import java.sql.ResultSet
 import java.sql.Time
 import java.sql.Timestamp
-import java.time.Duration
 import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
 import java.util.UUID
+import kotlin.time.Duration.Companion.minutes
 
 class ValueTypeGetResultSetValueTest {
 
@@ -219,7 +219,7 @@ class ValueTypeGetResultSetValueTest {
 
   @Test
   fun durationValue() {
-    val expected = Duration.ofMinutes(13)
+    val expected = 13.minutes
     whenever(rs.getString(eq("duration")))
       .thenReturn(expected.toString())
 

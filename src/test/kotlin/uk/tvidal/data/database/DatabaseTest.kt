@@ -2,46 +2,99 @@ package uk.tvidal.data.database
 
 import org.assertj.core.api.Assertions.assertThat
 import uk.tvidal.data.Database
+import uk.tvidal.data.EntityRepository
 
 abstract class DatabaseTest(val db: Database) {
+
+  private object ValueTypesFactory : Factory<ValueTypes> {
+    override fun create() = ValueTypes()
+    override fun duplicate(value: ValueTypes) = ValueTypes(id = value.id)
+    override fun identify(value: ValueTypes) = value.id
+  }
 
   fun createDatabase() = db.create(
     ValueTypes::class,
   )
 
   fun testValueTypes() {
-    val inserted = ValueTypes()
-    val updated = ValueTypes(id = inserted.id)
-
-    saveTest(inserted.id, inserted, updated)
-    crudTest(inserted.id, inserted, updated)
+    with(db.repository<ValueTypes>()) {
+      testCrudSingle(ValueTypesFactory)
+      testCrudBatch(ValueTypesFactory)
+      testSaveSingle(ValueTypesFactory)
+      testSaveBatch(ValueTypesFactory)
+    }
   }
 
-  inline fun <reified T : Any> saveTest(id: Any, inserted: T, updated: T) {
-    val repo = db.repository<T>()
-    assertThat(repo.save(inserted)).isEqualTo(1)
-    assertThat(repo[id]).isEqualTo(inserted)
+  private fun <T : Any> EntityRepository<T>.testCrudSingle(factory: Factory<T>) {
+    val inserted = factory.create()
+    assertThat(insert(inserted)).isEqualTo(ONE)
 
-    assertThat(repo.save(updated)).isEqualTo(1)
-    assertThat(repo[id]).isEqualTo(updated)
+    val id = factory.identify(inserted)
+    assertThat(one(id)).isEqualTo(inserted)
 
-    assertThat(repo.delete(updated)).isEqualTo(1)
-    assertThat(repo[id]).isNull()
+    val updated = factory.duplicate(inserted)
+    assertThat(update(updated)).isEqualTo(ONE)
+    assertThat(one(id)).isEqualTo(updated)
+
+    assertThat(delete(updated)).isEqualTo(ONE)
+    assertThat(one(id)).isNull()
   }
 
-  inline fun <reified T : Any> crudTest(id: Any, inserted: T, updated: T) {
-    val repo = db.repository<T>()
-    assertThat(repo.insert(inserted)).isEqualTo(1)
-    assertThat(repo[id]).isEqualTo(inserted)
+  private fun <T : Any> EntityRepository<T>.testCrudBatch(factory: Factory<T>) {
+    val inserted = List(EXPECTED.size) { factory.create() }
+    assertThat(insert(inserted)).isEqualTo(EXPECTED)
 
-    assertThat(repo.update(updated)).isEqualTo(1)
-    assertThat(repo[id]).isEqualTo(updated)
+    assertThat(toList()).containsExactlyInAnyOrderElementsOf(inserted)
 
-    assertThat(repo.delete(updated)).isEqualTo(1)
-    assertThat(repo[id]).isNull()
+    val updated = inserted.map(factory::duplicate)
+    assertThat(update(updated)).isEqualTo(EXPECTED)
+    assertThat(toList()).containsExactlyInAnyOrderElementsOf(updated)
+
+    assertThat(delete(updated)).isEqualTo(EXPECTED)
+    assertThat(toList()).isEmpty()
+  }
+
+  private fun <T : Any> EntityRepository<T>.testSaveBatch(factory: Factory<T>) {
+    val inserted = List(EXPECTED.size) { factory.create() }
+    assertThat(save(inserted)).isEqualTo(EXPECTED)
+
+    assertThat(toList()).containsExactlyInAnyOrderElementsOf(inserted)
+
+    val updated = inserted.map(factory::duplicate)
+    assertThat(save(updated)).isEqualTo(EXPECTED)
+    assertThat(toList()).containsExactlyInAnyOrderElementsOf(updated)
+
+    assertThat(delete(updated)).isEqualTo(EXPECTED)
+    assertThat(toList()).isEmpty()
+  }
+
+  private fun <T : Any> EntityRepository<T>.testSaveSingle(factory: Factory<T>) {
+    val inserted = factory.create()
+    assertThat(save(inserted)).isEqualTo(ONE)
+
+    val id = factory.identify(inserted)
+    assertThat(one(id)).isEqualTo(inserted)
+
+    val updated = factory.duplicate(inserted)
+    assertThat(save(updated)).isEqualTo(ONE)
+    assertThat(one(id)).isEqualTo(updated)
+
+    assertThat(delete(updated)).isEqualTo(ONE)
+    assertThat(one(id)).isNull()
   }
 
   fun dropDatabase() = db.drop(
     ValueTypes::class,
   )
+
+  interface Factory<T : Any> {
+    fun create(): T
+    fun duplicate(value: T): T
+    fun identify(value: T): Any
+  }
+
+  companion object {
+    private const val ONE = 1
+    private val EXPECTED = IntArray(10) { ONE }
+  }
 }

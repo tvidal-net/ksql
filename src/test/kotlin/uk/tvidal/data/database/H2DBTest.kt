@@ -7,7 +7,7 @@ import org.junit.jupiter.api.Test
 class H2DBTest {
 
   @Test
-  fun valueTypesCrud() {
+  fun valueTypes() {
     testValueTypes()
   }
 

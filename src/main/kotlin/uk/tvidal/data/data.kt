@@ -39,10 +39,10 @@ val Now: LocalDateTime
 internal val <T : Any> KCallable<T?>.returnValueType: KClass<T>
   get() = returnType.classifier as KClass<T>
 
-private inline fun <reified T : Annotation> Field?.findAnnotation(): T? =
+internal inline fun <reified T : Annotation> Field?.findAnnotation(): T? =
   this?.getAnnotation<T>(T::class.java)
 
-private inline fun <reified T : Annotation> Field?.hasAnnotation(): Boolean =
+internal inline fun <reified T : Annotation> Field?.hasAnnotation(): Boolean =
   this?.findAnnotation<T>() != null
 
 internal fun Column?.fieldName(fallback: String) =
@@ -53,16 +53,19 @@ internal val <E : Any> KProperty1<in E, *>.receiverType: KClass<E>
   get() = instanceParameter!!.type.classifier as KClass<E>
 
 internal val KProperty<*>.column: Column?
-  get() = findAnnotation() ?: javaField.findAnnotation()
+  get() = findAnnotation() ?: javaField?.findAnnotation()
 
 internal val KProperty<*>.isNullable: Boolean
   get() = returnType.isMarkedNullable || column?.nullable ?: false
 
 internal val KProperty<*>.isKeyField: Boolean
-  get() = hasAnnotation<Id>() || javaField.hasAnnotation<Id>()
+  get() = hasAnnotation<Id>() || javaField?.hasAnnotation<Id>() ?: false
 
 internal val KProperty<*>.isTransient: Boolean
-  get() = hasAnnotation<Transient>() || javaField.hasAnnotation<Transient>()
+  get() = hasAnnotation<Transient>() || javaField?.hasAnnotation<Transient>() ?: false
+
+internal fun KProperty<*>.hasAnyAnnotation(predicate: (Annotation) -> Boolean) =
+  annotations.any(predicate) || javaField?.annotations?.any(predicate) ?: false
 
 internal val KProperty<*>.fieldName: String
   get() = column.fieldName(name)

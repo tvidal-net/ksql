@@ -13,6 +13,7 @@ sealed interface SelectFrom {
   val fields: Collection<KProperty<*>>
   val alias: String?
   val name: String
+  val groupBy: Collection<KProperty<*>>
 
   class Table<T : Any>(
     val type: KClass<T>,
@@ -23,6 +24,9 @@ sealed interface SelectFrom {
 
     override val fields: Collection<KProperty<*>>
       get() = type.fields
+
+    override val groupBy: Collection<KProperty<*>>
+      get() = type.groupBy
 
     override fun toString() = "$simpleName($name${asAlias(alias)})"
   }
@@ -47,6 +51,9 @@ sealed interface SelectFrom {
 
     override val fields: Collection<KProperty<*>>
       get() = from.fields
+
+    override val groupBy: Collection<KProperty<*>>
+      get() = from.groupBy
 
     override fun toString() = "$type$simpleName($name${asAlias(alias)} ON $on)"
 

@@ -13,10 +13,12 @@ import uk.tvidal.data.filter.SqlPropertyJoinFilter
 import uk.tvidal.data.filter.SqlPropertyMultiValueFilter
 import uk.tvidal.data.filter.SqlPropertyParamFilter
 import uk.tvidal.data.filter.SqlPropertyValueFilter
+import uk.tvidal.data.query.AggregateType
 import uk.tvidal.data.query.EntityQuery
 import uk.tvidal.data.query.QueryParam
 import uk.tvidal.data.query.QueryParam.Constants.FIRST_PARAM
 import uk.tvidal.data.query.SelectFrom
+import uk.tvidal.data.query.aggregateType
 import kotlin.reflect.KProperty
 import kotlin.reflect.KProperty1
 
@@ -38,6 +40,20 @@ abstract class SqlQueryBuilder(val codecs: CodecFactory) {
       indent()
       append("WHERE ")
       filter(params, whereClause)
+    }
+  }
+
+  protected fun Appendable.groupBy(from: Collection<SelectFrom>) {
+    appendLine()
+    append("GROUP BY ")
+    from.forEachIndexed { j, it ->
+      it.groupBy.forEachIndexed { i, field ->
+        if (i > 0 || j > 0) {
+          listSeparator()
+        }
+        aliasPrefix(it.alias)
+        quotedName(field.name)
+      }
     }
   }
 
@@ -215,7 +231,7 @@ abstract class SqlQueryBuilder(val codecs: CodecFactory) {
       val alias = alias(from, selectFrom.size)
       for ((j, field) in from.fields.withIndex()) {
         if (j > 0) listSeparator()
-        selectField(field.fieldName, alias)
+        selectField(field, alias)
       }
     }
   }
@@ -234,15 +250,27 @@ abstract class SqlQueryBuilder(val codecs: CodecFactory) {
     append(joinType.sql)
   }
 
-  protected open fun Appendable.selectField(name: CharSequence, alias: CharSequence?) {
+  protected open fun Appendable.selectField(field: KProperty<*>, alias: CharSequence?) {
     appendLine()
     indent()
-    aliasPrefix(alias)
-    quotedName(name)
-    alias?.let {
+    val aggregateType = field.aggregateType?.also {
+      append(it.name)
+      openBlock()
+    }
+    if (aggregateType == AggregateType.COUNT) {
+      append("*")
+      closeBlock()
+    } else {
+      aliasPrefix(alias)
+      quotedName(field.fieldName)
+      aggregateType?.run {
+        closeBlock()
+      }
+    }
+    if (alias != null || aggregateType == AggregateType.COUNT) {
       append(" AS ")
       openQuote()
-      namingStrategy.appendName(this, name, it)
+      namingStrategy.appendName(this, field.fieldName, alias)
       closeQuote()
     }
   }

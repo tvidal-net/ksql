@@ -67,6 +67,9 @@ internal val KProperty<*>.isTransient: Boolean
 internal fun KProperty<*>.hasAnyAnnotation(predicate: (Annotation) -> Boolean) =
   annotations.any(predicate) || javaField?.annotations?.any(predicate) ?: false
 
+internal fun <T> KProperty<*>.findAnyAnnotation(transform: (Annotation) -> T?): T? =
+  annotations.firstNotNullOfOrNull(transform) ?: javaField?.annotations?.firstNotNullOfOrNull(transform)
+
 internal val KProperty<*>.fieldName: String
   get() = column.fieldName(name)
 

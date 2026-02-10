@@ -17,7 +17,6 @@ import uk.tvidal.data.schema.Index
 import uk.tvidal.data.schema.SchemaField
 import uk.tvidal.data.schema.SchemaTable
 import uk.tvidal.data.table
-import javax.persistence.criteria.From
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty1
 
@@ -94,6 +93,9 @@ open class SqlDialect(
       join(params, join)
     }
     where(params, whereClause)
+    if (from.any { it.isAggregate }) {
+      groupBy(from)
+    }
   }
 
   protected fun Appendable.from(from: Collection<SelectFrom>) {

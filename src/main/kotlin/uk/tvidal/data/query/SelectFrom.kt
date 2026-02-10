@@ -15,6 +15,9 @@ sealed interface SelectFrom {
   val name: String
   val groupBy: Collection<KProperty<*>>
 
+  val isAggregate: Boolean
+    get() = fields.any { it.isAggregate }
+
   class Table<T : Any>(
     val type: KClass<T>,
     override val alias: String? = null,

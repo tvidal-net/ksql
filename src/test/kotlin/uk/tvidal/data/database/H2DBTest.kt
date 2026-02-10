@@ -1,5 +1,3 @@
 package uk.tvidal.data.database
 
-class H2DBTest {
-
-}
+class H2DBTest

@@ -24,7 +24,7 @@ import kotlin.math.absoluteValue
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 
-private val random = ThreadLocalRandom.current();
+private val random = ThreadLocalRandom.current()
 
 enum class Currency {
   GBP, EUR, USD;

@@ -26,6 +26,11 @@ interface JdbcValueCodec<J, T> {
     override fun equals(other: Any?) = this::class == other?.let { it::class }
   }
 
+  object JavaDateCodec : JdbcValueCodec<Timestamp, java.util.Date> {
+    override fun decode(value: Timestamp) = java.util.Date(value.time)
+    override fun encode(value: java.util.Date) = Timestamp(value.time)
+  }
+
   object InstantCodec : JdbcValueCodec<Timestamp, Instant> {
     override fun decode(value: Timestamp): Instant = value.toInstant()
     override fun encode(value: Instant): Timestamp = Timestamp.from(value)

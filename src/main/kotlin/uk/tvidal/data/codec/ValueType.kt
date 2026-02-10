@@ -3,10 +3,8 @@ package uk.tvidal.data.codec
 import uk.tvidal.data.logging.KLogging
 import uk.tvidal.data.simpleName
 import uk.tvidal.data.str
-import java.sql.Date
 import java.sql.PreparedStatement
 import java.sql.ResultSet
-import java.sql.Time
 import java.sql.Timestamp
 import java.sql.Types
 import java.util.Objects.hash
@@ -64,7 +62,7 @@ open class ValueType<J, T : Any>(
     jdbcCodec = JdbcValueCodec.Primitive(),
   )
 
-  object Boolean : Primitive<kotlin.Boolean>(
+  object Bit : Primitive<Boolean>(
     setParam = PreparedStatement::setBoolean,
     getValue = ResultSet::getBoolean,
   ) {
@@ -135,7 +133,11 @@ open class ValueType<J, T : Any>(
     codec = JdbcValueCodec.Primitive()
   )
 
-  object LocalDateTime : SqlTimestampType<java.time.LocalDateTime>(
+  object JavaDate : SqlTimestampType<java.util.Date>(
+    codec = JdbcValueCodec.JavaDateCodec
+  )
+
+  object DateTime : SqlTimestampType<java.time.LocalDateTime>(
     codec = JdbcValueCodec.LocalDateTimeCodec
   )
 
@@ -144,8 +146,8 @@ open class ValueType<J, T : Any>(
   )
 
   open class SqlDateType<T : Any>(
-    codec: JdbcValueCodec<Date, T>,
-  ) : ValueType<Date, T>(
+    codec: JdbcValueCodec<java.sql.Date, T>,
+  ) : ValueType<java.sql.Date, T>(
     jdbcCodec = codec,
     setParam = PreparedStatement::setDate,
     getValue = ResultSet::getDate,
@@ -154,17 +156,17 @@ open class ValueType<J, T : Any>(
       get() = "DATE"
   }
 
-  object SqlDate : SqlDateType<Date>(
+  object SqlDate : SqlDateType<java.sql.Date>(
     codec = JdbcValueCodec.Primitive()
   )
 
-  object LocalDate : SqlDateType<java.time.LocalDate>(
+  object Date : SqlDateType<java.time.LocalDate>(
     codec = JdbcValueCodec.LocalDateCodec
   )
 
   open class SqlTimeType<T : Any>(
-    codec: JdbcValueCodec<Time, T>,
-  ) : ValueType<Time, T>(
+    codec: JdbcValueCodec<java.sql.Time, T>,
+  ) : ValueType<java.sql.Time, T>(
     jdbcCodec = codec,
     setParam = PreparedStatement::setTime,
     getValue = ResultSet::getTime,
@@ -173,11 +175,11 @@ open class ValueType<J, T : Any>(
       get() = "TIME"
   }
 
-  object SqlTime : SqlTimeType<Time>(
+  object SqlTime : SqlTimeType<java.sql.Time>(
     codec = JdbcValueCodec.Primitive()
   )
 
-  object LocalTime : SqlTimeType<java.time.LocalTime>(
+  object Time : SqlTimeType<java.time.LocalTime>(
     codec = JdbcValueCodec.LocalTimeCodec
   )
 
@@ -196,7 +198,7 @@ open class ValueType<J, T : Any>(
   class EnumType<E : Enum<E>>(
     val enum: KClass<E>,
     length: Int? = null,
-    ignoreCase: kotlin.Boolean = true
+    ignoreCase: Boolean = true
   ) : ShortString<E>(
     decoder = enumValuesMap(enum, ignoreCase)::getValue
   ) {
@@ -289,7 +291,7 @@ open class ValueType<J, T : Any>(
       ValueType::class.nestedClasses
         .mapNotNull { it.objectInstance }
         .filterIsInstance<ValueType<Any, Any>>()
-        .map { valueType(it::class) to it }
+        .associateBy { valueType(it::class) }
     }
 
     @Suppress("UNCHECKED_CAST")
@@ -300,9 +302,13 @@ open class ValueType<J, T : Any>(
       .classifier!! as KClass<out Any>
 
     @Suppress("UNCHECKED_CAST")
-    fun <T : Any> of(type: KClass<T>): ValueType<*, T>? = All.firstNotNullOfOrNull { (value, valueType) ->
-      if (value.isSubclassOf(type)) valueType else null
-    } as? ValueType<*, T>
+    fun <T : Any> of(type: KClass<T>): ValueType<*, T>? {
+      val codec = All[type] ?: All.firstNotNullOfOrNull { (value, valueType) ->
+        if (value.isSubclassOf(type)) valueType else null
+      }
+      trace { "ValueType.of($type) = $codec" }
+      return codec as? ValueType<*, T>
+    }
 
     fun <E : Enum<E>> enumMaxNameLength(enum: KClass<E>) = enum.java
       .enumConstants
@@ -310,14 +316,14 @@ open class ValueType<J, T : Any>(
 
     fun <E : Enum<E>> enumValuesMap(
       enum: KClass<E>,
-      ignoreCase: kotlin.Boolean,
+      ignoreCase: Boolean,
     ): SortedMap<String, E> = enum.java.enumConstants.associateByTo(
       TreeMap(stringComparator(ignoreCase))
     ) {
       it.name
     }
 
-    fun stringComparator(ignoreCase: kotlin.Boolean): Comparator<String> = if (ignoreCase) {
+    fun stringComparator(ignoreCase: Boolean): Comparator<String> = if (ignoreCase) {
       String.CASE_INSENSITIVE_ORDER
     } else {
       Comparator.naturalOrder()

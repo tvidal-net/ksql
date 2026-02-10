@@ -56,7 +56,7 @@ class ValueTypeTest {
 
   @Test
   fun fromBoolean() {
-    assertThat(config.fieldType(T::boolean)).isEqualTo(ValueType.Boolean)
+    assertThat(config.fieldType(T::boolean)).isEqualTo(ValueType.Bit)
   }
 
   @Test
@@ -75,12 +75,12 @@ class ValueTypeTest {
 
   @Test
   fun fromDateType() {
-    assertThat(config.fieldType(T::localDateTime)).isEqualTo(ValueType.LocalDateTime)
-    assertThat(config.fieldType(T::date)).isEqualTo(ValueType.SqlTimestamp)
+    assertThat(config.fieldType(T::localDateTime)).isEqualTo(ValueType.DateTime)
+    assertThat(config.fieldType(T::date)).isEqualTo(ValueType.JavaDate)
     assertThat(config.fieldType(T::timestamp)).isEqualTo(ValueType.SqlTimestamp)
-    assertThat(config.fieldType(T::localDate)).isEqualTo(ValueType.LocalDate)
+    assertThat(config.fieldType(T::localDate)).isEqualTo(ValueType.Date)
     assertThat(config.fieldType(T::sqlDate)).isEqualTo(ValueType.SqlDate)
-    assertThat(config.fieldType(T::localTime)).isEqualTo(ValueType.LocalTime)
+    assertThat(config.fieldType(T::localTime)).isEqualTo(ValueType.Time)
     assertThat(config.fieldType(T::sqlTime)).isEqualTo(ValueType.SqlTime)
   }
 

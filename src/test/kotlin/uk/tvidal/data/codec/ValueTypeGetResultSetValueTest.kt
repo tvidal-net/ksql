@@ -27,7 +27,7 @@ class ValueTypeGetResultSetValueTest {
     whenever(rs.getBoolean(eq("boolean")))
       .thenReturn(true)
 
-    assertThat(ValueType.Boolean.getResultSetValue(rs, "boolean"))
+    assertThat(ValueType.Bit.getResultSetValue(rs, "boolean"))
       .isTrue
 
     verify(rs).getBoolean(eq("boolean"))
@@ -117,7 +117,7 @@ class ValueTypeGetResultSetValueTest {
     whenever(rs.getTimestamp(eq("localDateTime")))
       .thenReturn(Timestamp.valueOf(expected))
 
-    assertThat(ValueType.LocalDateTime.getResultSetValue(rs, "localDateTime"))
+    assertThat(ValueType.DateTime.getResultSetValue(rs, "localDateTime"))
       .isEqualTo(expected)
 
     verify(rs).getTimestamp(eq("localDateTime"))
@@ -153,7 +153,7 @@ class ValueTypeGetResultSetValueTest {
     whenever(rs.getDate(eq("localDate")))
       .thenReturn(Date.valueOf(expected))
 
-    assertThat(ValueType.LocalDate.getResultSetValue(rs, "localDate"))
+    assertThat(ValueType.Date.getResultSetValue(rs, "localDate"))
       .isEqualTo(expected)
 
     verify(rs).getDate(eq("localDate"))
@@ -177,7 +177,7 @@ class ValueTypeGetResultSetValueTest {
     whenever(rs.getTime(eq("localTime")))
       .thenReturn(Time.valueOf(expected))
 
-    assertThat(ValueType.LocalTime.getResultSetValue(rs, "localTime"))
+    assertThat(ValueType.Time.getResultSetValue(rs, "localTime"))
       .isEqualTo(expected)
 
     verify(rs).getTime(eq("localTime"))

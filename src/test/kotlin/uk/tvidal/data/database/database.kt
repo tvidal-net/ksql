@@ -3,6 +3,7 @@ package uk.tvidal.data.database
 import uk.tvidal.data.RandomUUID
 import uk.tvidal.data.Today
 import uk.tvidal.data.schema.Decimal
+import uk.tvidal.data.schema.References
 import java.math.BigDecimal
 import java.sql.Time
 import java.sql.Timestamp
@@ -31,6 +32,22 @@ enum class Currency {
       get() = entries[random.nextInt().absoluteValue % entries.size]
   }
 }
+
+data class Parent(
+  val name: String,
+  @Id val id: UUID = RandomUUID
+)
+
+data class Child(
+  val parent: Parent? = null,
+  @Id val id: UUID = RandomUUID
+)
+
+data class Account(
+  val name: String,
+  @References(Account::class) val parent: UUID? = null,
+  @Id val id: UUID = RandomUUID
+)
 
 data class ValueTypes(
   val boolean: Boolean = random.nextBoolean(),

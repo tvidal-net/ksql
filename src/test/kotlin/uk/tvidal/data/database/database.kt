@@ -33,6 +33,12 @@ enum class Currency {
   }
 }
 
+data class Person(
+  val name: String,
+  val age: Int,
+  @Id val id: UUID = RandomUUID
+)
+
 data class Parent(
   val name: String,
   @Id val id: UUID = RandomUUID

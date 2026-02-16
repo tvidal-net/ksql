@@ -13,8 +13,10 @@ import uk.tvidal.data.schema.Constraint.PrimaryKey
 import uk.tvidal.data.schema.Constraint.UniqueKey
 import uk.tvidal.data.table
 import javax.persistence.Column
+import kotlin.reflect.KAnnotatedElement
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty
+import kotlin.reflect.full.findAnnotation
 
 @Target(AnnotationTarget.PROPERTY)
 annotation class Decimal(
@@ -24,6 +26,11 @@ annotation class Decimal(
 
 internal val Decimal.column: Column
   get() = Column(scale = scale, precision = precision)
+
+@Target(AnnotationTarget.PROPERTY)
+annotation class References(
+  val entity: KClass<*>,
+)
 
 val KProperty<*>.asc: FieldReference
   get() = FieldReference.Ascending(fieldName)
@@ -49,14 +56,30 @@ fun unique(uniqueName: String? = null, vararg fields: FieldReference) =
 fun on(fieldName: String, referenceField: String = fieldName) =
   ForeignKeyReference(fieldName, referenceField)
 
-fun <E : Any> foreignKeys(table: KClass<E>) = table.fields.mapNotNull { field ->
-  val type = field.returnValueType
-  type.keyField?.let { idField ->
-    ForeignKey(
-      table = type.table,
-      references = listOf(
-        on(field.fieldName, idField.fieldName)
+internal val KAnnotatedElement.references: References?
+  get() = findAnnotation()
+
+internal val KProperty<*>.foreignKey: ForeignKey?
+  get() = references?.let {
+    it.entity.keyField?.let { idField ->
+      ForeignKey(
+        table = it.entity.table,
+        references = listOf(
+          on(name, idField.name)
+        )
       )
-    )
+    }
+  }
+
+fun <E : Any> foreignKeys(table: KClass<E>) = table.fields.mapNotNull { field ->
+  field.returnValueType.let { type ->
+    field.foreignKey ?: type.keyField?.let { idField ->
+      ForeignKey(
+        table = type.table,
+        references = listOf(
+          on(field.fieldName, idField.fieldName)
+        )
+      )
+    }
   }
 }

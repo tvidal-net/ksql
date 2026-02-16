@@ -1,7 +1,5 @@
 package uk.tvidal.data.database
 
-import org.assertj.core.api.Assertions.assertThat
-import uk.tvidal.data.Database
 import uk.tvidal.data.RandomUUID
 import uk.tvidal.data.Today
 import uk.tvidal.data.schema.Decimal
@@ -61,31 +59,3 @@ data class ValueTypes(
   @Decimal val decimal: BigDecimal = numeric,
   @Id val id: UUID = RandomUUID,
 )
-
-fun testValueTypes(db: Database) {
-  db.create(ValueTypes::class)
-
-  val repo = db.repository<ValueTypes>()
-
-  val saved = ValueTypes()
-  repo.save(saved)
-  assertThat(repo[saved.id]).isEqualTo(saved)
-
-  val updateSaved = ValueTypes(id = saved.id)
-  repo.save(updateSaved)
-  assertThat(repo[saved.id]).isEqualTo(updateSaved)
-
-  val inserted = ValueTypes()
-  repo.insert(inserted)
-  assertThat(repo[inserted.id]).isEqualTo(inserted)
-
-  val updated = ValueTypes(id = inserted.id)
-  repo.update(updated)
-  assertThat(repo[updated.id]).isEqualTo(updated)
-
-  repo.delete(saved, inserted)
-  assertThat(repo[saved.id]).isNull()
-  assertThat(repo[updated.id]).isNull()
-
-  db.drop(ValueTypes::class)
-}

@@ -55,5 +55,5 @@ class EntityQuery<in E>(
     override fun toString() = "$index:$name"
   }
 
-  companion object : KLogging()
+  private companion object : KLogging()
 }

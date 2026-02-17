@@ -97,10 +97,5 @@ class CodecFactory(
   private fun <T : Any> fieldDecoder(decoder: ResultSetDecoder<T>, fieldName: String, alias: String?): EntityDecoder<T> =
     EntityDecoder.FieldDecoder(decoder, databaseName[fieldName, alias])
 
-  private data class CacheKey(
-    val table: KClass<*>,
-    val alias: String? = null
-  )
-
-  companion object : KLogging()
+  private companion object : KLogging()
 }

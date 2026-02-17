@@ -67,5 +67,5 @@ fun interface EntityDecoder<E> {
     override fun toString() = "$simpleName($fieldName=$decoder)"
   }
 
-  companion object : KLogging()
+  private companion object : KLogging()
 }

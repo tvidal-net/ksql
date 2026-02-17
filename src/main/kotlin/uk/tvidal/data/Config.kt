@@ -3,23 +3,14 @@ package uk.tvidal.data
 import uk.tvidal.data.codec.ValueType
 import uk.tvidal.data.codec.returnValueType
 import uk.tvidal.data.logging.KLogging
-import uk.tvidal.data.schema.Decimal
-import uk.tvidal.data.schema.SchemaField
-import uk.tvidal.data.schema.SchemaTable
-import uk.tvidal.data.schema.column
-import uk.tvidal.data.schema.foreignKeys
-import uk.tvidal.data.schema.primaryKey
 import java.math.BigDecimal
 import javax.persistence.Column
 import kotlin.reflect.KClass
 import kotlin.reflect.KParameter
 import kotlin.reflect.KProperty
-import kotlin.reflect.KProperty1
 import kotlin.reflect.full.findAnnotation
 import kotlin.reflect.full.isSubclassOf
-import kotlin.reflect.full.primaryConstructor
 
-@Suppress("UNCHECKED_CAST")
 class Config(
   val namingStrategy: NamingStrategy = NamingStrategy.SnakeCase,
   val createIfNotExists: Boolean = true,
@@ -46,14 +37,11 @@ class Config(
     valueType(returnValueType, findAnnotation())
   }
 
-  internal fun <T : Any> keyType(table: KClass<*>): ValueType<*, T>? = table.keyField?.let {
-    fieldType(it as KProperty<T>)
-  }
-
   internal fun <T> fieldType(field: KProperty<T>) = field.run {
     valueType(returnValueType, column)
   }
 
+  @Suppress("UNCHECKED_CAST")
   internal fun <T : Any> valueType(type: KClass<T>, column: Column? = null): ValueType<*, T>? = when {
     type.java.isEnum -> enumType(type as KClass<out Enum<*>>, column)
     type.isSubclassOf(CharSequence::class) -> string(column)
@@ -62,49 +50,6 @@ class Config(
       else -> null
     }
   } as? ValueType<*, T>
-
-  internal fun <T : Any> fields(type: KClass<T>): Collection<SchemaField<*>> {
-    val fields = type.fields
-      .associateBy { it.name }
-
-    val parameters = type.primaryConstructor?.parameters ?: emptyList()
-    val parameterNames = parameters
-      .map { it.name }
-      .toSet()
-
-    val allFields = parameters.mapNotNull {
-      fields[it.name]
-    } + fields.values.filterNot {
-      it.name in parameterNames
-    }
-    return allFields.map {
-      schema(it)
-    }
-  }
-
-  internal fun <E : Any> schema(type: KClass<E>) = SchemaTable(
-    table = type.table,
-    fields = fields(type),
-    constraints = listOfNotNull(
-      type.primaryKey
-    ) + foreignKeys(
-      type
-    ),
-  )
-
-  internal fun <E : Any, T> schema(field: KProperty1<E, T>) = SchemaField(
-    name = field.fieldName,
-    type = requireNotNull(schemaFieldType(field)) {
-      "Unable to find a suitable ValueType for $field"
-    },
-    nullable = field.isNullable
-  )
-
-  private fun <V : Any> schemaFieldType(field: KProperty<V?>) = field.run {
-    findAnnotation<Decimal>()?.let { valueType(BigDecimal::class, it.column) }
-      ?: fieldType(field)
-      ?: keyType(returnValueType)
-  }
 
   companion object Constants : KLogging() {
 

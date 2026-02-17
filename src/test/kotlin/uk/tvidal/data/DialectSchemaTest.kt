@@ -17,12 +17,10 @@ import javax.persistence.Id
 
 class DialectSchemaTest {
 
-  val config = Config.Default
-
   @Test
   fun createTableIfNotExists() {
     data class Person(val name: String, @Id val id: Int)
-    assertSql { create(config.schema(Person::class)) }
+    assertSql { create(SchemaTable.from(Person::class)) }
       .isEqualTo("CREATE TABLE IF NOT EXISTS [Person] ( [name] NVARCHAR(1024) NOT NULL, [id] INTEGER NOT NULL, PRIMARY KEY ([id]) );")
   }
 

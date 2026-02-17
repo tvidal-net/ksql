@@ -44,5 +44,5 @@ class SelectQuery<E>(
 
   override fun toString() = "$simpleName[params=$params, sql=$sql]"
 
-  companion object : KLogging()
+  private companion object : KLogging()
 }

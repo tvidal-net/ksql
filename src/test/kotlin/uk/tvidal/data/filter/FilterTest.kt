@@ -61,5 +61,5 @@ class FilterTest {
     assertEquals(expected, actual)
   }
 
-  companion object : KLogging()
+  private companion object : KLogging()
 }

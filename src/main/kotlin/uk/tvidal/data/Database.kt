@@ -3,6 +3,7 @@ package uk.tvidal.data
 import uk.tvidal.data.codec.CodecFactory
 import uk.tvidal.data.query.EntityQuery
 import uk.tvidal.data.query.SimpleQuery
+import uk.tvidal.data.schema.SchemaTable
 import uk.tvidal.data.sql.SqlDialect
 import java.sql.Connection
 import kotlin.reflect.KClass
@@ -46,7 +47,7 @@ class Database(
 
   fun create(vararg tables: KClass<*>) = invoke { cnn ->
     tables.forEach { table ->
-      dialect.create(config.schema(table), config.createIfNotExists)
+      dialect.create(SchemaTable.from(table), config.createIfNotExists)
         .execute(cnn)
     }
   }

@@ -9,14 +9,26 @@ abstract class KLogging {
   fun error(e: Throwable) =
     log.error(TEMPLATE_EXCEPTION, e::class.simpleName, e.message, e)
 
-  inline fun error(message: () -> Any?) =
-    log.error { message() }
+  inline fun error(vararg args: Any?, message: () -> Any?) =
+    log.error(message().toString(), *args)
 
   fun warn(e: Throwable) =
     log.warn(TEMPLATE_EXCEPTION, e::class.simpleName, e.message, e)
 
-  inline fun warn(message: () -> Any?) =
-    log.warn { message() }
+  inline fun warn(vararg args: Any?, message: () -> Any?) =
+    log.warn(message().toString(), *args)
+
+  inline fun info(vararg args: Any?, message: () -> Any?) {
+    if (log.isInfoEnabled) log.info(message().toString(), *args)
+  }
+
+  inline fun debug(vararg args: Any?, message: () -> Any?) {
+    if (log.isDebugEnabled) log.debug(message().toString(), *args)
+  }
+
+  inline fun trace(vararg args: Any?, message: () -> Any?) {
+    if (log.isTraceEnabled) log.trace(message().toString(), *args)
+  }
 
   inline fun <T> T.alsoInfo(message: (T) -> Any?) = also {
     log.info { message(it) }

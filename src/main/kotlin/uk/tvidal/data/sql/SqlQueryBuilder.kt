@@ -37,7 +37,6 @@ abstract class SqlQueryBuilder(val codecs: CodecFactory) {
   ) {
     if (whereClause != null) {
       appendLine()
-      indent()
       append("WHERE ")
       filter(params, whereClause)
     }
@@ -226,8 +225,6 @@ abstract class SqlQueryBuilder(val codecs: CodecFactory) {
 
   protected fun Appendable.select(selectFrom: Collection<SelectFrom>) {
     append("SELECT ")
-    appendLine()
-    indent()
     for ((i, from) in selectFrom.withIndex()) {
       if (i > 0) listSeparator()
       val alias = alias(from, selectFrom.size)

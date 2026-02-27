@@ -17,7 +17,7 @@ class EntityQuery<in E>(
     value: E
   ): Int = cnn.prepareStatement(sql).use { st ->
     setParamValues(st, value)
-    st.executeUpdate().debug {
+    st.executeUpdate().alsoDebug {
       "affected: $it, $description"
     }
   }
@@ -28,10 +28,10 @@ class EntityQuery<in E>(
   ): IntArray = cnn.prepareStatement(sql).use { st ->
     for (value in values) {
       setParamValues(st, value)
-      trace { "addBatch: $value" }
+      alsoTrace { "addBatch: $value" }
       st.addBatch()
     }
-    st.executeBatch().debug {
+    st.executeBatch().alsoDebug {
       "affected: ${it.sum()}, $description"
     }
   }

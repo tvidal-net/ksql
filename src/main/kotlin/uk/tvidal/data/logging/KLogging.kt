@@ -18,15 +18,15 @@ abstract class KLogging {
   inline fun warn(message: () -> Any?) =
     log.warn { message() }
 
-  inline fun <T> T.info(message: (T) -> Any?) = also {
+  inline fun <T> T.alsoInfo(message: (T) -> Any?) = also {
     log.info { message(it) }
   }
 
-  inline fun <T> T.debug(message: (T) -> Any?) = also {
+  inline fun <T> T.alsoDebug(message: (T) -> Any?) = also {
     log.debug { message(it) }
   }
 
-  inline fun <T> T.trace(message: (T) -> Any?) = also {
+  inline fun <T> T.alsoTrace(message: (T) -> Any?) = also {
     log.trace { message(it) }
   }
 }

@@ -52,7 +52,7 @@ class CodecFactory(
 
     val upstreamDecoder: EntityDecoder<E> = if (parameters.isNotEmpty()) {
       EntityDecoder.ByConstructor(
-        constructor = constructor.debug {
+        constructor = constructor.alsoDebug {
           "byConstructor ${constructor.description}${asAlias(alias)}"
         },
         parameterDecoders = parameters.map {
@@ -68,7 +68,7 @@ class CodecFactory(
 
     return if (properties.isNotEmpty()) {
       EntityDecoder.ByProperties(
-        upstreamDecoder = upstreamDecoder.debug {
+        upstreamDecoder = upstreamDecoder.alsoDebug {
           val propertiesDescription = properties.joinToString { it.description }
           "byProperties ($propertiesDescription)${asAlias(alias)}"
         },

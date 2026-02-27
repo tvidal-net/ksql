@@ -28,13 +28,13 @@ open class ValueType<J, T : Any>(
 
   override fun setParamValue(statement: PreparedStatement, index: Int, value: T?) {
     if (value != null) {
-      val encodedValue = jdbcCodec.encode(value).trace {
+      val encodedValue = jdbcCodec.encode(value).alsoTrace {
         val logMessage = if ("$it" == "$value") "" else " value=${str(it)}"
         "$simpleName::setParamValue($index=${str(value)})$logMessage"
       }
       setParam(statement, index, encodedValue)
     } else {
-      trace { "$simpleName::setParamValue($index=NULL)" }
+      alsoTrace { "$simpleName::setParamValue($index=NULL)" }
       statement.setNull(index, Types.NULL)
     }
   }
@@ -47,7 +47,7 @@ open class ValueType<J, T : Any>(
       null
     } else {
       jdbcCodec.decode(it)
-    }.trace { value ->
+    }.alsoTrace { value ->
       val logMessage = if ("$it" == "$value") "" else " value=${str(value)}"
       "$simpleName::getResultSetValue($fieldName=${str(it)})$logMessage"
     }
@@ -306,7 +306,7 @@ open class ValueType<J, T : Any>(
       val codec = All[type] ?: All.firstNotNullOfOrNull { (value, valueType) ->
         if (value.isSubclassOf(type)) valueType else null
       }
-      trace { "ValueType.of($type) = $codec" }
+      alsoTrace { "ValueType.of($type) = $codec" }
       return codec as? ValueType<*, T>
     }
 

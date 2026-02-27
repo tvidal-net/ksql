@@ -17,10 +17,10 @@ class SelectQuery<E>(
   ) = cnn.prepareStatement(sql).use { st ->
     setParamValues(st, params, paramValues)
     st.executeQuery().use { rs ->
-      debug { "Select ALL params=$params\n$sql" }
+      alsoDebug { "Select ALL params=$params\n$sql" }
       buildList {
         while (rs.next()) add(
-          decode(rs)!!.trace {
+          decode(rs)!!.alsoTrace {
             "decode: $it"
           }
         )
@@ -34,10 +34,10 @@ class SelectQuery<E>(
   ): E? = cnn.prepareStatement(sql).use { st ->
     setParamValues(st, params, paramValues)
     st.executeQuery().use { rs ->
-      debug { "Select ONE params=$params\n$sql" }
+      alsoDebug { "Select ONE params=$params\n$sql" }
       if (!rs.next()) null
       else decode(rs)
-    }.trace {
+    }.alsoTrace {
       "decode: $it"
     }
   }

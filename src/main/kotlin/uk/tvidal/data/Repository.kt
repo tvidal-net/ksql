@@ -3,7 +3,7 @@ package uk.tvidal.data
 import uk.tvidal.data.filter.SqlFilter
 import kotlin.reflect.KClass
 
-interface Repository<E : Any> : Iterable<E> {
+interface Repository<E : Any> : Sequence<E> {
 
   val db: Database
   val entity: KClass<E>

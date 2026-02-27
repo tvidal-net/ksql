@@ -3,6 +3,7 @@ package uk.tvidal.data.schema
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import uk.tvidal.data.TableName
+import uk.tvidal.data.codec.ValueType
 import uk.tvidal.data.database.Account
 import uk.tvidal.data.database.Child
 import uk.tvidal.data.database.Person
@@ -29,6 +30,50 @@ class SchemaTest {
       Constraint.ForeignKey(
         table = TableName("Account"),
         references = listOf(on("parent", "id"))
+      )
+    )
+  }
+
+  @Test
+  fun simpleSchemaField() {
+    assertThat(
+      SchemaField.from(Account::name)
+    ).containsExactly(
+      SchemaField(
+        name = "name",
+        type = ValueType.NVarChar(ValueType.LENGTH),
+        nullable = false,
+      )
+    )
+  }
+
+  @Test
+  fun referenceSchemaField() {
+    assertThat(
+      SchemaField.from(Child::parent)
+    ).containsExactly(
+      SchemaField(
+        name = "parent",
+        type = ValueType.UUID,
+        nullable = true,
+      )
+    )
+  }
+
+  @Test
+  fun nestedSchemaFields() {
+    assertThat(
+      SchemaField.from(Person::details)
+    ).containsExactlyInAnyOrder(
+      SchemaField(
+        name = "detailsName",
+        type = ValueType.NVarChar(ValueType.LENGTH),
+        nullable = true,
+      ),
+      SchemaField(
+        name = "detailsAge",
+        type = ValueType.Integer,
+        nullable = true,
       )
     )
   }

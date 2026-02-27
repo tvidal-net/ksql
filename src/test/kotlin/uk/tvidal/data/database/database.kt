@@ -33,9 +33,13 @@ enum class Currency {
   }
 }
 
-data class Person(
+data class PersonDetails(
   val name: String,
   val age: Int,
+)
+
+data class Person(
+  val details: PersonDetails?,
   @Id val id: UUID = RandomUUID
 )
 
@@ -51,7 +55,8 @@ data class Child(
 
 data class Account(
   val name: String,
-  @References(Account::class) val parent: UUID? = null,
+  @References(Account::class)
+  val parent: UUID? = null,
   @Id val id: UUID = RandomUUID
 )
 

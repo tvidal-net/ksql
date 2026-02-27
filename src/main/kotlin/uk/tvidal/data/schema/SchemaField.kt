@@ -1,8 +1,10 @@
 package uk.tvidal.data.schema
 
 import uk.tvidal.data.Config
+import uk.tvidal.data.NamingStrategy.PascalCase
 import uk.tvidal.data.codec.ValueType
 import uk.tvidal.data.fieldName
+import uk.tvidal.data.fields
 import uk.tvidal.data.isNullable
 import uk.tvidal.data.keyField
 import uk.tvidal.data.returnValueType
@@ -38,14 +40,23 @@ data class SchemaField<T : Any>(
     fun <E : Any, T> from(
       field: KProperty1<E, T>,
       config: Config = Config.Default,
-    ): Collection<SchemaField<*>> = listOf(
-      SchemaField(
-        name = field.fieldName,
-        type = requireNotNull(config.schemaFieldType(field)) {
-          "Unable to find a suitable ValueType for $field"
-        },
-        nullable = field.isNullable
+      namePrefix: String? = null,
+      parentNullable: Boolean = false
+    ): Collection<SchemaField<*>> = when (val fieldType = config.schemaFieldType(field)) {
+      null -> field.returnValueType.fields.flatMap {
+        from(it, config, field.fieldName, field.isNullable)
+      }
+
+      else -> listOf(
+        field.run {
+          val prefixedName = if (namePrefix?.isNotBlank() == true) {
+            "$namePrefix${PascalCase[fieldName]}"
+          } else {
+            fieldName
+          }
+          SchemaField(prefixedName, fieldType, isNullable || parentNullable)
+        }
       )
-    )
+    }
   }
 }

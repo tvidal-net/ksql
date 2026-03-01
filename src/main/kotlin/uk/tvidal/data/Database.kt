@@ -45,16 +45,22 @@ class Database(
     dialect.delete(E::class, where<E>(builder))
   )
 
-  fun create(vararg tables: KClass<*>) = invoke { cnn ->
+  fun create(vararg tables: KClass<*>) =
+    create(tables.toList())
+
+  fun create(tables: Iterable<KClass<*>>) = invoke { cnn ->
     tables.forEach { table ->
-      dialect.create(SchemaTable.from(table), config.createIfNotExists)
+      dialect.createTable(SchemaTable.from(table), config.createIfNotExists)
         .execute(cnn)
     }
   }
 
-  fun drop(vararg entities: KClass<*>) = invoke { cnn ->
-    entities.forEach { table ->
-      dialect.drop(table, config.createIfNotExists)
+  fun drop(vararg tables: KClass<*>) =
+    drop(tables.toList())
+
+  fun drop(tables: Iterable<KClass<*>>) = invoke { cnn ->
+    tables.forEach { table ->
+      dialect.dropTable(table, config.createIfNotExists)
         .execute(cnn)
     }
   }

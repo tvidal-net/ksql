@@ -26,7 +26,7 @@ open class SqlDialect(
   codecs = CodecFactory(config)
 ), QueryDialect, SchemaDialect {
 
-  override fun create(schemaTable: SchemaTable, ifNotExists: Boolean) = sqlQuery {
+  override fun createTable(schemaTable: SchemaTable, ifNotExists: Boolean) = sqlQuery {
     append("CREATE TABLE ")
     ifNotExists(ifNotExists)
     tableName(schemaTable.table)
@@ -49,18 +49,18 @@ open class SqlDialect(
     terminate()
     schemaTable.indices.forEach { index ->
       appendLine()
-      create(index, schemaTable.table)
+      createIndex(index, schemaTable.table)
       terminate()
     }
   }
 
-  override fun drop(table: TableName, ifExists: Boolean) = sqlQuery {
+  override fun dropTable(tableName: TableName, ifExists: Boolean) = sqlQuery {
     append("DROP TABLE ")
     ifExists(ifExists)
-    tableName(table)
+    tableName(tableName)
   }
 
-  override fun create(index: Index, table: TableName, ifNotExists: Boolean) = sqlQuery {
+  override fun createIndex(index: Index, tableName: TableName, ifNotExists: Boolean) = sqlQuery {
     append("CREATE INDEX ")
     ifNotExists(ifNotExists)
     if (index.name != null) {
@@ -68,12 +68,12 @@ open class SqlDialect(
       space()
     }
     append("ON ")
-    tableName(table)
+    tableName(tableName)
     space()
     fields(index.fields)
   }
 
-  override fun drop(index: Index, table: TableName, ifExists: Boolean) = sqlQuery {
+  override fun dropIndex(index: Index, tableName: TableName, ifExists: Boolean) = sqlQuery {
     requireNotNull(index.name) {
       "Cannot drop index without a name"
     }

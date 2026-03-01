@@ -6,6 +6,7 @@ import uk.tvidal.data.fieldName
 import uk.tvidal.data.fields
 import uk.tvidal.data.keyField
 import uk.tvidal.data.keyFields
+import uk.tvidal.data.prefixedBy
 import uk.tvidal.data.returnValueType
 import uk.tvidal.data.schema.Constraint.ForeignKey
 import uk.tvidal.data.schema.Constraint.ForeignKeyReference
@@ -16,7 +17,6 @@ import javax.persistence.Column
 import kotlin.reflect.KAnnotatedElement
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty
-import kotlin.reflect.full.findAnnotation
 
 @Target(AnnotationTarget.PROPERTY)
 annotation class Decimal(
@@ -56,30 +56,41 @@ fun unique(uniqueName: String? = null, vararg fields: FieldReference) =
 fun on(fieldName: String, referenceField: String = fieldName) =
   ForeignKeyReference(fieldName, referenceField)
 
-internal val KAnnotatedElement.references: References?
-  get() = findAnnotation()
+internal val KAnnotatedElement.references: List<References>
+  get() = annotations.filterIsInstance<References>()
 
-internal val KProperty<*>.foreignKey: ForeignKey?
-  get() = references?.let {
-    it.entity.keyField?.let { idField ->
-      ForeignKey(
-        table = it.entity.table,
-        references = listOf(
-          on(name, idField.name)
+fun <E : Any> foreignKeys(
+  entity: KClass<E>,
+  referenceName: String? = null,
+): List<ForeignKey> = entity.fields.flatMap { field ->
+  field.returnValueType.let { returnType ->
+    listOfNotNull(
+      returnType.keyField?.let { idField ->
+        ForeignKey(
+          table = returnType.table,
+          references = listOf(
+            on(
+              fieldName = field.fieldName prefixedBy referenceName,
+              referenceField = idField.fieldName
+            )
+          )
         )
-      )
-    }
-  }
-
-fun <E : Any> foreignKeys(table: KClass<E>) = table.fields.mapNotNull { field ->
-  field.returnValueType.let { type ->
-    field.foreignKey ?: type.keyField?.let { idField ->
-      ForeignKey(
-        table = type.table,
-        references = listOf(
-          on(field.fieldName, idField.fieldName)
+      }
+    ) + field.references.mapNotNull { reference ->
+      reference.entity.keyField?.let { idField ->
+        ForeignKey(
+          table = reference.entity.table,
+          references = listOf(
+            on(
+              fieldName = field.fieldName prefixedBy referenceName,
+              referenceField = idField.name
+            )
+          )
         )
-      )
-    }
+      }
+    } + if (entity == returnType) emptyList() else foreignKeys(
+      entity = returnType,
+      referenceName = field.fieldName,
+    )
   }
 }

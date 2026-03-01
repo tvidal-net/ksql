@@ -8,46 +8,55 @@ import uk.tvidal.data.table
 import kotlin.reflect.KClass
 
 interface SchemaDialect {
-
   /**
    *
    */
-  fun create(
+  fun createTable(
     schemaTable: SchemaTable,
     ifNotExists: Boolean = true,
   ): SimpleQuery
 
-  /**
-   *
-   */
-  fun create(
+  fun createTable(
+    entity: KClass<*>,
+    ifNotExists: Boolean = true
+  ) = createTable(
+    SchemaTable.from(entity),
+    ifNotExists
+  )
+
+  fun createIndex(
     index: Index,
-    table: TableName,
+    tableName: TableName,
     ifNotExists: Boolean = true,
   ): SimpleQuery
 
   /**
    *
    */
-  fun drop(
-    table: TableName,
+  fun dropTable(
+    tableName: TableName,
     ifExists: Boolean = true
   ): SimpleQuery
 
-  /**
-   *
-   */
-  fun <E : Any> drop(
+  fun dropTable(
+    schemaTable: SchemaTable,
+    ifExists: Boolean = true,
+  ) = dropTable(
+    schemaTable.table,
+    ifExists
+  )
+
+  fun <E : Any> dropTable(
     entity: KClass<E>,
     ifExists: Boolean = true
-  ) = drop(
+  ) = dropTable(
     entity.table,
     ifExists
   )
 
-  fun drop(
+  fun dropIndex(
     index: Index,
-    table: TableName,
+    tableName: TableName,
     ifExists: Boolean = true,
   ): SimpleQuery
 }

@@ -1,12 +1,12 @@
 package uk.tvidal.data.schema
 
 import uk.tvidal.data.Config
-import uk.tvidal.data.NamingStrategy.PascalCase
 import uk.tvidal.data.codec.ValueType
 import uk.tvidal.data.fieldName
 import uk.tvidal.data.fields
 import uk.tvidal.data.isNullable
 import uk.tvidal.data.keyField
+import uk.tvidal.data.prefixedBy
 import uk.tvidal.data.returnValueType
 import java.math.BigDecimal
 import kotlin.reflect.KClass
@@ -49,12 +49,11 @@ data class SchemaField<T : Any>(
 
       else -> listOf(
         field.run {
-          val prefixedName = if (namePrefix?.isNotBlank() == true) {
-            "$namePrefix${PascalCase[fieldName]}"
-          } else {
-            fieldName
-          }
-          SchemaField(prefixedName, fieldType, isNullable || parentNullable)
+          SchemaField(
+            name = fieldName prefixedBy namePrefix,
+            type = fieldType,
+            nullable = isNullable || parentNullable
+          )
         }
       )
     }

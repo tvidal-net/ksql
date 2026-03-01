@@ -1,5 +1,6 @@
 package uk.tvidal.data
 
+import uk.tvidal.data.NamingStrategy.PascalCase
 import uk.tvidal.data.filter.SqlFilter
 import uk.tvidal.data.filter.SqlFilterBuilder
 import uk.tvidal.data.filter.SqlMultiFilter
@@ -117,6 +118,10 @@ internal fun equalsFilter(properties: Collection<KProperty1<*, *>>): SqlFilter {
 
 internal val Any.simpleName: String?
   get() = this::class.simpleName
+
+internal infix fun String.prefixedBy(prefix: String?): String =
+  if (prefix?.isNotBlank() != true) this
+  else "$prefix${PascalCase[this]}"
 
 internal fun str(value: Any?): String = when (value) {
   null -> "NULL"

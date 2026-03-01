@@ -29,11 +29,11 @@ data class SchemaTable(
 
   companion object Factory {
 
-    internal fun <T : Any> fields(type: KClass<T>, config: Config): Collection<SchemaField<*>> {
-      val fields = type.fields
+    internal fun <T : Any> fields(entity: KClass<T>, config: Config): Collection<SchemaField<*>> {
+      val fields = entity.fields
         .associateBy { it.name }
 
-      val parameters = type.primaryConstructor?.parameters ?: emptyList()
+      val parameters = entity.primaryConstructor?.parameters ?: emptyList()
       val parameterNames = parameters
         .map { it.name }
         .toSet()
@@ -49,15 +49,15 @@ data class SchemaTable(
     }
 
     fun <E : Any> from(
-      type: KClass<E>,
+      entity: KClass<E>,
       config: Config = Config.Default,
     ) = SchemaTable(
-      table = type.table,
-      fields = fields(type, config),
+      table = entity.table,
+      fields = fields(entity, config),
       constraints = listOfNotNull(
-        type.primaryKey
+        entity.primaryKey
       ) + foreignKeys(
-        type
+        entity
       ),
     )
   }

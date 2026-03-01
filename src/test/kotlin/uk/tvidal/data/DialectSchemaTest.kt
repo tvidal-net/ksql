@@ -20,25 +20,25 @@ class DialectSchemaTest {
   @Test
   fun createTableIfNotExists() {
     data class Person(val name: String, @Id val id: Int)
-    assertSql { create(SchemaTable.from(Person::class)) }
+    assertSql { createTable(SchemaTable.from(Person::class)) }
       .isEqualTo("CREATE TABLE IF NOT EXISTS [Person] ( [name] NVARCHAR(1024) NOT NULL, [id] INTEGER NOT NULL, PRIMARY KEY ([id]) );")
   }
 
   @Test
   fun createTable() {
-    assertSql { create(TestTable, false) }
+    assertSql { createTable(TestTable, false) }
       .isEqualTo("CREATE TABLE $TABLE ( $NAME, $ID, $PK, $UQ );")
   }
 
   @Test
   fun dropTableIfExists() {
-    assertSql { drop(tableName) }
+    assertSql { dropTable(tableName) }
       .isEqualTo("DROP TABLE IF EXISTS $TABLE")
   }
 
   @Test
   fun dropTable() {
-    assertSql { drop(tableName, false) }
+    assertSql { dropTable(tableName, false) }
       .isEqualTo("DROP TABLE $TABLE")
   }
 
@@ -105,14 +105,14 @@ class DialectSchemaTest {
   @Test
   fun anonymousIndex() {
     val index = Index(listOf(asc("id"), desc("name")))
-    assertSql { create(index, tableName) }
+    assertSql { createIndex(index, tableName) }
       .isEqualTo("CREATE INDEX IF NOT EXISTS ON $TABLE ([id], [name] DESC)")
   }
 
   @Test
   fun namedIndex() {
     val index = Index(listOf(asc("id"), asc("name")), "test_idx")
-    assertSql { create(index, tableName) }
+    assertSql { createIndex(index, tableName) }
       .isEqualTo("CREATE INDEX IF NOT EXISTS [test_idx] ON $TABLE ([id], [name])")
   }
 

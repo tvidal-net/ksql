@@ -4,6 +4,7 @@ import uk.tvidal.data.codec.ValueType
 import uk.tvidal.data.codec.returnValueType
 import uk.tvidal.data.logging.KLogging
 import java.math.BigDecimal
+import java.util.concurrent.ConcurrentHashMap
 import javax.persistence.Column
 import kotlin.reflect.KClass
 import kotlin.reflect.KParameter
@@ -18,6 +19,17 @@ class Config(
   val string: ValueType<String, String> = ValueType.NVarChar(ValueType.LENGTH),
   val decimal: ValueType<BigDecimal, BigDecimal> = ValueType.Decimal(ValueType.DEFAULT_SCALE, ValueType.DEFAULT_PRECISION),
 ) {
+
+  private val valueTypeOverrides = ConcurrentHashMap<KClass<*>, ValueType<*, *>>()
+
+  fun <T : Any> register(type: KClass<T>, valueType: ValueType<*, T>) {
+    debug { "register $type overridden by $valueType" }
+    valueTypeOverrides[type] = valueType
+  }
+
+  inline fun <reified T : Any> register(provider: () -> ValueType<*, T>) {
+    register(T::class, provider())
+  }
 
   internal fun <E : Enum<E>> enumType(type: KClass<E>, column: Column? = null) = ValueType.EnumType(
     enum = type,
@@ -42,7 +54,11 @@ class Config(
   }
 
   @Suppress("UNCHECKED_CAST")
-  internal fun <T : Any> valueType(type: KClass<T>, column: Column? = null): ValueType<*, T>? = when {
+  internal fun <T : Any> valueType(
+    type: KClass<T>,
+    column: Column? = null
+  ): ValueType<*, T>? = when {
+    valueTypeOverrides.containsKey(type) -> valueTypeOverrides.getValue(type)
     type.java.isEnum -> enumType(type as KClass<out Enum<*>>, column)
     type.isSubclassOf(CharSequence::class) -> string(column)
     else -> ValueType.of(type) ?: when {

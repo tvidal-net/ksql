@@ -3,6 +3,7 @@ package uk.tvidal.data.codec
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.ObjectReader
 import com.fasterxml.jackson.databind.ObjectWriter
+import java.math.BigDecimal
 import java.sql.Date
 import java.sql.Time
 import java.sql.Timestamp
@@ -58,6 +59,16 @@ interface JdbcValueCodec<J, T> {
     override fun hashCode() = hash(decoder)
 
     override fun equals(other: Any?) = other is StringCodec<*>
+      && decoder == other.decoder
+  }
+
+  class DecimalCodec<T>(val decoder: (BigDecimal) -> T) : JdbcValueCodec<BigDecimal, T> {
+    override fun encode(value: T) = BigDecimal("$value")
+    override fun decode(value: BigDecimal): T = decoder(value)
+
+    override fun hashCode() = hash(decoder)
+
+    override fun equals(other: Any?) = other is DecimalCodec<*>
       && decoder == other.decoder
   }
 

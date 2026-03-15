@@ -1,8 +1,10 @@
 package uk.tvidal.data.database
 
 import org.assertj.core.api.Assertions.assertThat
+import uk.tvidal.data.Config
 import uk.tvidal.data.Database
 import uk.tvidal.data.EntityRepository
+import uk.tvidal.data.database.ValueTypes.Companion.amountValueType
 
 abstract class DatabaseTest(val db: Database) {
 
@@ -96,5 +98,9 @@ abstract class DatabaseTest(val db: Database) {
   companion object {
     private const val ONE = 1
     private val EXPECTED = IntArray(10) { ONE }
+
+    init {
+      Config.Default.register { amountValueType }
+    }
   }
 }

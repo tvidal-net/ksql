@@ -1,7 +1,10 @@
 package uk.tvidal.data.schema
 
+import com.fasterxml.jackson.databind.JsonNode
+import com.fasterxml.jackson.databind.ObjectMapper
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
+import uk.tvidal.data.Config
 import uk.tvidal.data.TableName
 import uk.tvidal.data.codec.ValueType
 import uk.tvidal.data.database.Account
@@ -45,6 +48,27 @@ class SchemaTest {
         nullable = false,
       )
     )
+  }
+
+  @Test
+  fun overriddenSchemaField() {
+    class JsonContainer(val json: JsonNode)
+
+    val mapper = ObjectMapper()
+    val jsonValueType = ValueType.ShortString(
+      decoder = { mapper.readTree(it) },
+      sqlDataType = "CLOB",
+      length = 0,
+    )
+    val config = Config()
+    config.register { jsonValueType }
+
+    val actual = SchemaField
+      .from(JsonContainer::json, config)
+      .single()
+
+    assertThat(actual.type).isSameAs(jsonValueType)
+    assertThat("${actual.type.sqlDataType}").isEqualTo("CLOB")
   }
 
   @Test

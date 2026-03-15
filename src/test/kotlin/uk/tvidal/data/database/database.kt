@@ -2,6 +2,8 @@ package uk.tvidal.data.database
 
 import uk.tvidal.data.RandomUUID
 import uk.tvidal.data.Today
+import uk.tvidal.data.codec.JdbcValueCodec
+import uk.tvidal.data.codec.ValueType
 import uk.tvidal.data.schema.Decimal
 import uk.tvidal.data.schema.References
 import java.math.BigDecimal
@@ -60,6 +62,11 @@ data class Account(
   @Id val id: UUID = RandomUUID
 )
 
+@JvmInline
+value class Amount(val value: Long) {
+  override fun toString() = "$value"
+}
+
 data class ValueTypes(
   val boolean: Boolean = random.nextBoolean(),
   val int: Int = random.nextInt(),
@@ -84,6 +91,15 @@ data class ValueTypes(
   val nChar: String = "nChar $long",
   val nVarChar: String = "nVarChar $long",
   val numeric: BigDecimal = BigDecimal("$short.00"),
+  val amount: Amount = Amount(long),
   @Decimal val decimal: BigDecimal = numeric,
   @Id val id: UUID = RandomUUID,
-)
+) {
+  companion object {
+    val amountValueType = ValueType.BigDecimal(
+      JdbcValueCodec.DecimalCodec {
+        Amount(it.toLong())
+      }
+    )
+  }
+}

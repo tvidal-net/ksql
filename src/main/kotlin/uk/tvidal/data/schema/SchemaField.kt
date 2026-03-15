@@ -14,7 +14,6 @@ import kotlin.reflect.KProperty
 import kotlin.reflect.KProperty1
 import kotlin.reflect.full.findAnnotation
 
-@Suppress("UNCHECKED_CAST")
 data class SchemaField<T : Any>(
   val name: String,
   val type: ValueType<*, T>,
@@ -27,6 +26,7 @@ data class SchemaField<T : Any>(
     private fun nullDef(nullable: Boolean) =
       (if (!nullable) "NOT " else "") + "NULL"
 
+    @Suppress("UNCHECKED_CAST")
     private fun <T : Any> Config.keyType(table: KClass<*>): ValueType<*, T>? = table.keyField?.let {
       fieldType(it as KProperty<T>)
     }

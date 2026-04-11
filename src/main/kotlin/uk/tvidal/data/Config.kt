@@ -22,14 +22,13 @@ class Config(
 
   private val valueTypeOverrides = ConcurrentHashMap<KClass<*>, ValueType<*, *>>()
 
-  fun <T : Any> register(type: KClass<T>, valueType: ValueType<*, T>) {
+  fun <T : Any> register(type: KClass<T>, valueType: ValueType<*, T>) = apply {
     debug { "register $type overridden by $valueType" }
     valueTypeOverrides[type] = valueType
   }
 
-  inline fun <reified T : Any> register(provider: () -> ValueType<*, T>) {
+  inline fun <reified T : Any> register(provider: () -> ValueType<*, T>) =
     register(T::class, provider())
-  }
 
   internal fun <E : Enum<E>> enumType(type: KClass<E>, column: Column? = null) = ValueType.EnumType(
     enum = type,

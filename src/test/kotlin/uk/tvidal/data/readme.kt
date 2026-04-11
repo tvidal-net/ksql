@@ -53,7 +53,7 @@ data class Transaction(
   )
 }
 
-private var db = H2DB.createDatabase(
+private var db = H2DB().createDatabase(
   url = "jdbc:h2:mem:account;DB_CLOSE_DELAY=-1"
 )
 

@@ -50,7 +50,7 @@ class Database(
 
   fun create(tables: Iterable<KClass<*>>) = invoke { cnn ->
     tables.forEach { table ->
-      dialect.createTable(SchemaTable.from(table), config.createIfNotExists)
+      dialect.createTable(SchemaTable.from(table, config), config.createIfNotExists)
         .execute(cnn)
     }
   }

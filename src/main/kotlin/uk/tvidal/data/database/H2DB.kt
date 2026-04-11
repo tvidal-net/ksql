@@ -3,6 +3,7 @@ package uk.tvidal.data.database
 import org.h2.jdbcx.JdbcDataSource
 import uk.tvidal.data.Config
 import uk.tvidal.data.Database
+import uk.tvidal.data.logging.KLogging
 import uk.tvidal.data.sql.SqlDialect
 import uk.tvidal.data.table
 import kotlin.reflect.KClass
@@ -28,21 +29,18 @@ class H2DB(config: Config = Config.Default) : SqlDialect(config) {
     insertValues(params, updateFields + keyFields)
   }
 
-  companion object {
-
-    val Default = H2DB()
-
-    fun createDatabase(
-      url: String,
-      username: String? = null,
-      password: String? = null,
-      dialect: SqlDialect = Default
-    ): Database = JdbcDataSource().apply {
-      setUrl(url)
-      setUser(username)
-      setPassword(password)
-    }.let { ds ->
-      Database(dialect, createConnection = ds::getConnection)
-    }
+  fun createDatabase(
+    url: String,
+    username: String? = null,
+    password: String? = null,
+  ): Database = JdbcDataSource().apply {
+    info { "createDatabase(url=$url, user=$username)" }
+    setUrl(url)
+    setUser(username)
+    setPassword(password)
+  }.let { ds ->
+    Database(this, createConnection = ds::getConnection)
   }
+
+  private companion object : KLogging()
 }

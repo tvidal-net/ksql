@@ -12,7 +12,7 @@ class H2DBTest {
   }
 
   companion object : DatabaseTest(
-    db = H2DB.createDatabase("jdbc:h2:mem:temp;DB_CLOSE_DELAY=-1")
+    db = H2DB().createDatabase("jdbc:h2:mem:temp;DB_CLOSE_DELAY=-1")
   ) {
 
     @BeforeAll

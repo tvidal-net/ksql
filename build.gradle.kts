@@ -47,7 +47,7 @@ tasks.test {
 }
 
 kotlin {
-  jvmToolchain(jdkVersion = 25)
+  jvmToolchain(jdkVersion = 21)
 }
 
 java {

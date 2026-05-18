@@ -3,6 +3,7 @@
     <option name="myName" value="Project Default" />
     <inspection_tool class="AssertEqualsCalledOnArray" enabled="true" level="WARNING" enabled_by_default="true" />
     <inspection_tool class="AssertEqualsMayBeAssertSame" enabled="true" level="WARNING" enabled_by_default="true" />
+    <inspection_tool class="AvoidDuplicateDependencies" enabled="false" level="WEAK WARNING" enabled_by_default="false" />
     <inspection_tool class="BashAddShebang" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="BashSimpleVarUsage" enabled="true" level="INFORMATION" enabled_by_default="true" />
     <inspection_tool class="BusyWait" enabled="false" level="WARNING" enabled_by_default="false" />
@@ -44,6 +45,7 @@
     <inspection_tool class="SamePackageImport" enabled="true" level="WARNING" enabled_by_default="true" />
     <inspection_tool class="StaticCallOnSubclass" enabled="true" level="WARNING" enabled_by_default="true" />
     <inspection_tool class="StaticFieldReferenceOnSubclass" enabled="true" level="WARNING" enabled_by_default="true" />
+    <inspection_tool class="TomlUnresolvedReference" enabled="true" level="INFORMATION" enabled_by_default="true" editorAttributes="INFORMATION_ATTRIBUTES" />
     <inspection_tool class="UnnecessaryQualifiedReference" enabled="true" level="INFORMATION" enabled_by_default="true" />
     <inspection_tool class="UnusedSymbol" enabled="true" level="WEAK WARNING" enabled_by_default="true" />
     <inspection_tool class="UseOfObsoleteAssert" enabled="true" level="WARNING" enabled_by_default="true" />
@@ -57,7 +59,7 @@
       <option name="ignoreClassesWithOnlyMain" value="false" />
     </inspection_tool>
     <inspection_tool class="unused" enabled="true" level="INFORMATION" enabled_by_default="true" editorAttributes="INFORMATION_ATTRIBUTES" checkParameterExcludingHierarchy="false">
-      <scope name="Production" level="WARNING" enabled="true" checkParameterExcludingHierarchy="false">
+      <scope name="Production" level="WARNING" enabled="true" editorAttributes="NOT_USED_ELEMENT_ATTRIBUTES" checkParameterExcludingHierarchy="false">
         <option name="LOCAL_VARIABLE" value="true" />
         <option name="FIELD" value="true" />
         <option name="METHOD" value="true" />

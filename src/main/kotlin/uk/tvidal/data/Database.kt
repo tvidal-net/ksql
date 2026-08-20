@@ -65,7 +65,8 @@ class Database(
     }
   }
 
-  fun begin() = currentTransaction ?: createConnection()
+  fun begin(): Connection = currentTransaction ?: createConnection()
+    .apply { autoCommit = false }
     .also(connection::set)
 
   fun close() {

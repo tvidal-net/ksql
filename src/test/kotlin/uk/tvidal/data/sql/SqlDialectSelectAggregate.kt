@@ -4,9 +4,12 @@ import jakarta.persistence.Id
 import jakarta.persistence.Transient
 import org.junit.jupiter.api.Test
 import uk.tvidal.data.TestDialect.assertSelect
+import uk.tvidal.data.query.Average
 import uk.tvidal.data.query.Count
 import uk.tvidal.data.query.Max
+import uk.tvidal.data.query.Min
 import uk.tvidal.data.query.SelectFrom
+import uk.tvidal.data.query.Sum
 import uk.tvidal.data.query.eq
 import java.util.UUID
 
@@ -54,9 +57,26 @@ class SqlDialectSelectAggregate {
     )
   }
 
+  @Test
+  fun sumMinAverage() {
+    val from = listOf(
+      SelectFrom.Table(Stats::class),
+    )
+    assertSelect { select(Stats::class, null, from) }.isEqualTo(
+      "SELECT AVG([avgValue]), MIN([minValue]), [name], SUM([total]) FROM [Stats] GROUP BY [name]"
+    )
+  }
+
   private class Table(
     val name: String,
     @Count val count: Int,
+  )
+
+  private class Stats(
+    val name: String,
+    @Sum val total: Double,
+    @Min val minValue: Int,
+    @Average val avgValue: Int,
   )
 
   private class Parent(

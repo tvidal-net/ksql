@@ -39,7 +39,7 @@ interface BaseDialect : QueryBuilder {
   fun Appendable.newLine(level: Int = 0) {
     if (config.pretty) {
       appendLine()
-      indent(level)
+      repeat(level * config.indentSize) { append(' ') }
     } else {
       space()
     }

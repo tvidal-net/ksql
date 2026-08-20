@@ -38,6 +38,88 @@ class DialectQueryTest {
   }
 
   @Test
+  fun deleteWithIsNullFilter() {
+    val filter = where {
+      Person::name.isNull
+    }
+    assertSql { delete(person, filter) }
+      .isEqualTo("DELETE FROM [Person] WHERE [name] IS NULL")
+  }
+
+  @Test
+  fun deleteWithIsNotNullFilter() {
+    val filter = where {
+      Person::name.isNotNull
+    }
+    assertSql { delete(person, filter) }
+      .isEqualTo("DELETE FROM [Person] WHERE [name] IS NOT NULL")
+  }
+
+  @Test
+  fun deleteWithBetweenFilter() {
+    val filter = where {
+      Person::age.between(10, 20)
+    }
+    assertSql { delete(person, filter) }
+      .isEqualTo("DELETE FROM [Person] WHERE [age] BETWEEN ? AND ?")
+  }
+
+  @Test
+  fun deleteWithInFilter() {
+    val filter = where {
+      Person::age.inValues(1, 2, 3)
+    }
+    assertSql { delete(person, filter) }
+      .isEqualTo("DELETE FROM [Person] WHERE [age] IN (?, ?, ?)")
+  }
+
+  @Test
+  fun deleteWithLikeFilter() {
+    val filter = where {
+      Person::name.like("A%")
+    }
+    assertSql { delete(person, filter) }
+      .isEqualTo("DELETE FROM [Person] WHERE [name] LIKE ?")
+  }
+
+  @Test
+  fun deleteWithNotEqualsFilter() {
+    val filter = where {
+      Person::age.ne(10)
+    }
+    assertSql { delete(person, filter) }
+      .isEqualTo("DELETE FROM [Person] WHERE [age] != ?")
+  }
+
+  @Test
+  fun deleteWithGreaterEqualsFilter() {
+    val filter = where {
+      Person::age.ge(10)
+    }
+    assertSql { delete(person, filter) }
+      .isEqualTo("DELETE FROM [Person] WHERE [age] >= ?")
+  }
+
+  @Test
+  fun deleteWithLessEqualsFilter() {
+    val filter = where {
+      Person::age.le(10)
+    }
+    assertSql { delete(person, filter) }
+      .isEqualTo("DELETE FROM [Person] WHERE [age] <= ?")
+  }
+
+  @Test
+  fun deleteWithMultiFilterAnd() {
+    val filter = where {
+      Person::age.gt(10)
+      Person::name.like("A%")
+    }
+    assertSql { delete(person, filter) }
+      .isEqualTo("DELETE FROM [Person] WHERE ([age] > ? AND [name] LIKE ?)")
+  }
+
+  @Test
   fun deleteQuery() {
     assertQuery { delete(person) }
       .isEqualTo("DELETE FROM [Person] WHERE [id] = ?")

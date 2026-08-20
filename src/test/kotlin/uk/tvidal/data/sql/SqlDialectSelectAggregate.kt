@@ -33,8 +33,8 @@ class SqlDialectSelectAggregate {
       ),
     )
     assertSelect { select(Table::class, null, from) }.isEqualTo(
-      "SELECT COUNT(*) AS [a_count], [a].[name] AS [a_name], [b].[id] AS [b_id], [b].[name] AS [b_name], MAX([b].[size]) AS [b_size] " +
-        "FROM [Table] AS [a] CROSS JOIN [Parent] AS [b] GROUP BY [a].[name], [b].[id], [b].[name]"
+      "SELECT COUNT(*) AS [a_count], [a].[name] AS [a_name], [b].[name] AS [b_name], MAX([b].[size]) AS [b_size] " +
+        "FROM [Table] AS [a] CROSS JOIN [Parent] AS [b] GROUP BY [a].[name], [b].[name]"
     )
   }
 
@@ -49,8 +49,8 @@ class SqlDialectSelectAggregate {
       ),
     )
     assertSelect { select(Table::class, null, from) }.isEqualTo(
-      "SELECT COUNT(*) AS [a_count], [a].[name] AS [a_name], [b].[id] AS [b_id], [b].[name] AS [b_name], MAX([b].[size]) AS [b_size] " +
-        "FROM [Table] AS [a] LEFT OUTER JOIN [Parent] AS [b] ON [b].[id] = [a].[id] GROUP BY [a].[name], [b].[id], [b].[name]"
+      "SELECT COUNT(*) AS [a_count], [a].[name] AS [a_name], [b].[name] AS [b_name], MAX([b].[size]) AS [b_size] " +
+        "FROM [Table] AS [a] LEFT OUTER JOIN [Parent] AS [b] ON [b].[id] = [a].[id] GROUP BY [a].[name], [b].[name]"
     )
   }
 

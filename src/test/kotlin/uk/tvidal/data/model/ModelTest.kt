@@ -4,12 +4,14 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import uk.tvidal.data.TableName
 import uk.tvidal.data.fieldName
+import uk.tvidal.data.fields
 import uk.tvidal.data.keyFields
 import uk.tvidal.data.sql.insertFields
 import uk.tvidal.data.sql.updateFields
 import uk.tvidal.data.table
 import jakarta.persistence.Column
 import jakarta.persistence.Id
+import jakarta.persistence.Transient
 import jakarta.persistence.Table
 
 class ModelTest {
@@ -138,5 +140,24 @@ class ModelTest {
   fun nonInsertableFields() {
     assertThat(NonUpdatableFields::class.insertFields)
       .contains(NonUpdatableFields::id, NonUpdatableFields::nonUpdatable)
+  }
+
+  private class TransientFields(
+    val persisted: String,
+    @Transient val ignored: String,
+    @Id val id: Long
+  )
+
+  @Test
+  fun transientFieldsAreExcluded() {
+    assertThat(TransientFields::class.fields)
+      .contains(TransientFields::persisted, TransientFields::id)
+      .doesNotContain(TransientFields::ignored)
+
+    assertThat(TransientFields::class.insertFields)
+      .doesNotContain(TransientFields::ignored)
+
+    assertThat(TransientFields::class.updateFields)
+      .containsExactly(TransientFields::persisted)
   }
 }

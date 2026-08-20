@@ -34,7 +34,7 @@ internal class RepositoryImpl<E : Any>(
     db.dialect.insert(entity)
   }
 
-  fun selectQuery(where: SqlFilter?): SelectQuery<E> =
+  private fun selectQuery(where: SqlFilter?): SelectQuery<E> =
     db.dialect.select(entity, where)
 
   override fun one(vararg keyValues: Any) = db { cnn ->
@@ -42,8 +42,8 @@ internal class RepositoryImpl<E : Any>(
   }
 
   override fun select(where: SqlFilter?) = db { cnn ->
-    db.dialect.select(entity, where)
-      .all(cnn, where?.values ?: emptyList())
+    val query = if (where == null) selectAll else selectQuery(where)
+    query.all(cnn, where?.values ?: emptyList())
   }
 
   override fun save(value: E) =

@@ -60,7 +60,7 @@ class Database(
 
   fun drop(tables: Iterable<KClass<*>>) = invoke { cnn ->
     tables.forEach { table ->
-      dialect.dropTable(table, config.createIfNotExists)
+      dialect.dropTable(table, config.dropIfExists)
         .execute(cnn)
     }
   }

@@ -15,6 +15,7 @@ import kotlin.reflect.full.isSubclassOf
 class Config(
   val namingStrategy: NamingStrategy = NamingStrategy.SnakeCase,
   val createIfNotExists: Boolean = true,
+  val dropIfExists: Boolean = true,
   val enumIgnoreCase: Boolean = true,
   val string: ValueType<String, String> = ValueType.NVarChar(ValueType.LENGTH),
   val decimal: ValueType<BigDecimal, BigDecimal> = ValueType.Decimal(ValueType.DEFAULT_SCALE, ValueType.DEFAULT_PRECISION),

@@ -17,7 +17,7 @@ import kotlin.reflect.KProperty1
 
 infix fun <V> KProperty1<*, V>.eq(target: KProperty1<out Any, V>) = eq(target, null)
 
-fun <V> KProperty1<*, V>.eq(target: KProperty1<out Any, V>, alias: String?) = SqlPropertyJoinFilter.Equals(
+fun <V> KProperty1<*, V>.eq(target: KProperty1<out Any, V>, alias: String?) = SqlPropertyJoinFilter(
   property = this,
   target = target,
   alias = alias ?: target.receiverType.table.name

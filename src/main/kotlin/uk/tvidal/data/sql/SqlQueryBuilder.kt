@@ -8,6 +8,7 @@ import uk.tvidal.data.codec.ParamValueEncoder
 import uk.tvidal.data.fieldName
 import uk.tvidal.data.filter.SqlFilter
 import uk.tvidal.data.filter.SqlMultiFilter
+import uk.tvidal.data.filter.SqlOperator
 import uk.tvidal.data.filter.SqlPropertyFilter
 import uk.tvidal.data.filter.SqlPropertyJoinFilter
 import uk.tvidal.data.filter.SqlPropertyMultiValueFilter
@@ -67,7 +68,7 @@ abstract class SqlQueryBuilder(val codecs: CodecFactory) {
       }
       fieldFilter(
         params = params as MutableCollection<QueryParam>,
-        filter = SqlPropertyParamFilter.Equals(field),
+        filter = SqlPropertyParamFilter(field, SqlOperator.Equals),
       )
     }
   }
@@ -247,6 +248,10 @@ abstract class SqlQueryBuilder(val codecs: CodecFactory) {
 
   protected open fun Appendable.append(joinType: SelectFrom.Join.Type) {
     append(joinType.sql)
+  }
+
+  protected open fun Appendable.append(operator: SqlOperator) {
+    append(operator.sql)
   }
 
   protected open fun Appendable.selectField(field: KProperty<*>, alias: CharSequence?) {

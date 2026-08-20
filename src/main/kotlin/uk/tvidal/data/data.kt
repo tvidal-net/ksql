@@ -9,6 +9,7 @@ import uk.tvidal.data.NamingStrategy.PascalCase
 import uk.tvidal.data.filter.SqlFilter
 import uk.tvidal.data.filter.SqlFilterBuilder
 import uk.tvidal.data.filter.SqlMultiFilter
+import uk.tvidal.data.filter.SqlOperator
 import uk.tvidal.data.filter.SqlPropertyParamFilter
 import java.lang.reflect.Field
 import java.time.LocalDate
@@ -108,7 +109,7 @@ internal fun equalsFilter(properties: Collection<KProperty1<*, *>>): SqlFilter {
     "Unable to create an equalsFilter for empty properties!"
   }
   val keyFilters = properties.map { property ->
-    SqlPropertyParamFilter.Equals(property)
+    SqlPropertyParamFilter(property, SqlOperator.Equals)
   }
   return if (keyFilters.size > 1) {
     SqlMultiFilter.And(keyFilters)

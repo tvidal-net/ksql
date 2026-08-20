@@ -19,7 +19,7 @@ class FilterTest {
   @Test
   fun testSingleKeyFilter() {
     assertEquals(
-      SqlPropertyParamFilter.Equals(TestClass::key),
+      SqlPropertyParamFilter(TestClass::key, SqlOperator.Equals),
       TestClass::class.keyFilter
     )
   }
@@ -51,8 +51,8 @@ class FilterTest {
   fun testOrFilter() {
     val expected = SqlMultiFilter.Or(
       setOf(
-        SqlPropertyParamFilter.GreaterThan(TestClass::key),
-        SqlPropertyParamFilter.LessThan(TestClass::key)
+        SqlPropertyParamFilter(TestClass::key, SqlOperator.GreaterThan),
+        SqlPropertyParamFilter(TestClass::key, SqlOperator.LessThan)
       )
     )
     val actual = where {

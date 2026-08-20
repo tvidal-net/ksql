@@ -4,7 +4,7 @@ import kotlin.reflect.KProperty1
 
 sealed class SqlPropertyMultiValueFilter<out V> : SqlPropertyFilter<V>() {
 
-  abstract val operator: String
+  abstract val operator: SqlOperator
 
   data class Between<T>(
     override val property: KProperty1<*, T>,
@@ -12,8 +12,8 @@ sealed class SqlPropertyMultiValueFilter<out V> : SqlPropertyFilter<V>() {
     val toValue: T,
     override val alias: String? = null,
   ) : SqlPropertyMultiValueFilter<T>() {
-    override val operator: String
-      get() = SqlFilter.BETWEEN
+    override val operator: SqlOperator
+      get() = SqlOperator.Between
     override val values: Collection<T>
       get() = listOf(fromValue, toValue)
   }
@@ -23,8 +23,8 @@ sealed class SqlPropertyMultiValueFilter<out V> : SqlPropertyFilter<V>() {
     override val values: Collection<T>,
     override val alias: String? = null,
   ) : SqlPropertyMultiValueFilter<T>() {
-    override val operator: String
-      get() = SqlFilter.IN
+    override val operator: SqlOperator
+      get() = SqlOperator.In
   }
 
   override fun toString() = "${alias.dot}${property.name}$operator$values"

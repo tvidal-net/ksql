@@ -4,14 +4,14 @@
 
 assertj = "3.27.7"
 h2 = "2.4.240"
-jackson = "2.21.3"
+jackson = "2.22.2"
 jpa = "2.2"
 kotlin = "2.4.10"
 logback = "1.5.32"
-mariadb = "3.5.8"
+mariadb = "3.5.10"
 mockito-core = "5.23.0"
 mockito-kotlin = "6.3.0"
-postgresql = "42.7.11"
+postgresql = "42.7.13"
 slf4j = "2.0.18"
 
 [libraries]

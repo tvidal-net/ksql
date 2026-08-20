@@ -1,5 +1,6 @@
 package uk.tvidal.data.schema
 
+import jakarta.persistence.Column
 import uk.tvidal.data.codec.ValueType.Companion.DEFAULT_PRECISION
 import uk.tvidal.data.codec.ValueType.Companion.DEFAULT_SCALE
 import uk.tvidal.data.fieldName
@@ -13,7 +14,6 @@ import uk.tvidal.data.schema.Constraint.ForeignKeyReference
 import uk.tvidal.data.schema.Constraint.PrimaryKey
 import uk.tvidal.data.schema.Constraint.UniqueKey
 import uk.tvidal.data.table
-import jakarta.persistence.Column
 import kotlin.reflect.KAnnotatedElement
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty

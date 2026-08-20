@@ -1,5 +1,7 @@
 package uk.tvidal.data.sql
 
+import jakarta.persistence.Id
+import jakarta.persistence.Transient
 import org.junit.jupiter.api.Test
 import uk.tvidal.data.TestDialect.assertSelect
 import uk.tvidal.data.query.Count
@@ -7,8 +9,6 @@ import uk.tvidal.data.query.Max
 import uk.tvidal.data.query.SelectFrom
 import uk.tvidal.data.query.eq
 import java.util.UUID
-import jakarta.persistence.Id
-import jakarta.persistence.Transient
 
 class SqlDialectSelectAggregate {
 

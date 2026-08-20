@@ -1,5 +1,7 @@
 package uk.tvidal.data.codec
 
+import jakarta.persistence.Column
+import jakarta.persistence.Id
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import uk.tvidal.data.Config
@@ -11,8 +13,6 @@ import java.time.LocalTime
 import java.util.Date
 import java.util.UUID
 import java.util.regex.Pattern
-import jakarta.persistence.Column
-import jakarta.persistence.Id
 
 class ValueTypeTest {
 

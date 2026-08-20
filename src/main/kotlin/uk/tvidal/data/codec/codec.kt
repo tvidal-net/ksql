@@ -1,10 +1,10 @@
 package uk.tvidal.data.codec
 
+import jakarta.persistence.Column
 import uk.tvidal.data.isNullable
 import uk.tvidal.data.returnValueType
 import java.sql.PreparedStatement
 import java.sql.ResultSet
-import jakarta.persistence.Column
 import kotlin.reflect.KCallable
 import kotlin.reflect.KClass
 import kotlin.reflect.KFunction

@@ -1,12 +1,12 @@
 package uk.tvidal.data.filter
 
+import jakarta.persistence.Id
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import uk.tvidal.data.equalsFilter
 import uk.tvidal.data.keyFilter
 import uk.tvidal.data.logging.KLogging
 import uk.tvidal.data.where
-import jakarta.persistence.Id
 import kotlin.test.assertEquals
 
 class FilterTest {

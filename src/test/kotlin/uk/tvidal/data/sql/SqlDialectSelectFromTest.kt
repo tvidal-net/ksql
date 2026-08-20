@@ -1,12 +1,12 @@
 package uk.tvidal.data.sql
 
+import jakarta.persistence.Id
 import org.junit.jupiter.api.Test
 import uk.tvidal.data.TestDialect.assertSelect
 import uk.tvidal.data.query.SelectFrom
 import uk.tvidal.data.query.eq
 import uk.tvidal.data.query.from
 import java.util.UUID
-import jakarta.persistence.Id
 
 class SqlDialectSelectFromTest {
 

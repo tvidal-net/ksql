@@ -1,5 +1,6 @@
 package uk.tvidal.data
 
+import jakarta.persistence.Column
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
@@ -10,7 +11,6 @@ import uk.tvidal.data.database.Amount
 import uk.tvidal.data.database.Currency
 import uk.tvidal.data.database.ValueTypes.Companion.amountValueType
 import java.math.BigDecimal
-import jakarta.persistence.Column
 
 class ConfigTest {
 

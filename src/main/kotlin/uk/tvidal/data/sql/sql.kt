@@ -1,8 +1,8 @@
 package uk.tvidal.data.sql
 
+import uk.tvidal.data.column
 import uk.tvidal.data.fields
 import uk.tvidal.data.isKeyField
-import uk.tvidal.data.column
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty1
 

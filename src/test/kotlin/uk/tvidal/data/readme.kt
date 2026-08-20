@@ -1,13 +1,13 @@
 package uk.tvidal.data
 
+import jakarta.persistence.Column
+import jakarta.persistence.Id
 import uk.tvidal.data.database.H2DB
 import uk.tvidal.data.schema.Decimal
 import uk.tvidal.data.schema.References
 import uk.tvidal.data.schema.SchemaTable
 import java.time.LocalDate
 import java.util.UUID
-import jakarta.persistence.Column
-import jakarta.persistence.Id
 
 enum class Currency {
   GBP, EUR, USD

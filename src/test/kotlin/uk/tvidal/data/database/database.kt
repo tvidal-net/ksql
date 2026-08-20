@@ -1,5 +1,6 @@
 package uk.tvidal.data.database
 
+import jakarta.persistence.Id
 import uk.tvidal.data.RandomUUID
 import uk.tvidal.data.Today
 import uk.tvidal.data.codec.JdbcValueCodec
@@ -18,7 +19,6 @@ import java.time.temporal.ChronoUnit
 import java.util.Date
 import java.util.UUID
 import java.util.concurrent.ThreadLocalRandom
-import jakarta.persistence.Id
 import kotlin.math.absoluteValue
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds

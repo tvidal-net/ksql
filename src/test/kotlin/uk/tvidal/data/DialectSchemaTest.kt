@@ -1,5 +1,6 @@
 package uk.tvidal.data
 
+import jakarta.persistence.Id
 import org.junit.jupiter.api.Test
 import uk.tvidal.data.TestDialect.assertSql
 import uk.tvidal.data.TestDialect.assertThat
@@ -13,7 +14,6 @@ import uk.tvidal.data.schema.SchemaTable
 import uk.tvidal.data.schema.on
 import uk.tvidal.data.schema.primaryKey
 import uk.tvidal.data.schema.unique
-import jakarta.persistence.Id
 
 class DialectSchemaTest {
 

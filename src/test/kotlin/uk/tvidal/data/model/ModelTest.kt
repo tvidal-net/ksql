@@ -1,5 +1,9 @@
 package uk.tvidal.data.model
 
+import jakarta.persistence.Column
+import jakarta.persistence.Id
+import jakarta.persistence.Table
+import jakarta.persistence.Transient
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import uk.tvidal.data.TableName
@@ -9,10 +13,6 @@ import uk.tvidal.data.keyFields
 import uk.tvidal.data.sql.insertFields
 import uk.tvidal.data.sql.updateFields
 import uk.tvidal.data.table
-import jakarta.persistence.Column
-import jakarta.persistence.Id
-import jakarta.persistence.Transient
-import jakarta.persistence.Table
 
 class ModelTest {
 

@@ -1,11 +1,11 @@
 package uk.tvidal.data.query
 
+import jakarta.persistence.Id
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import uk.tvidal.data.query.SelectFrom.Join
 import uk.tvidal.data.query.SelectFrom.Table
 import java.util.UUID
-import jakarta.persistence.Id
 
 @Suppress("UNCHECKED_CAST")
 class QueryTest {

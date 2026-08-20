@@ -8,8 +8,8 @@ import uk.tvidal.data.query.EntityQuery
 import uk.tvidal.data.query.QueryParam
 import uk.tvidal.data.query.SelectQuery
 import uk.tvidal.data.query.SimpleQuery
-import uk.tvidal.data.schema.FieldReference
 import uk.tvidal.data.schema.Constraint
+import uk.tvidal.data.schema.FieldReference
 import uk.tvidal.data.schema.SchemaField
 import uk.tvidal.data.sql.SqlDialect
 import kotlin.reflect.KClass

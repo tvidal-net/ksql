@@ -6,7 +6,7 @@ import uk.tvidal.data.equalsFilter
 import uk.tvidal.data.keyFilter
 import uk.tvidal.data.logging.KLogging
 import uk.tvidal.data.where
-import javax.persistence.Id
+import jakarta.persistence.Id
 import kotlin.test.assertEquals
 
 class FilterTest {

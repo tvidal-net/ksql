@@ -7,8 +7,8 @@ import uk.tvidal.data.query.Max
 import uk.tvidal.data.query.SelectFrom
 import uk.tvidal.data.query.eq
 import java.util.UUID
-import javax.persistence.Id
-import javax.persistence.Transient
+import jakarta.persistence.Id
+import jakarta.persistence.Transient
 
 class SqlDialectSelectAggregate {
 

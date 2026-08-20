@@ -6,7 +6,7 @@ import uk.tvidal.data.query.SelectFrom
 import uk.tvidal.data.query.eq
 import uk.tvidal.data.query.from
 import java.util.UUID
-import javax.persistence.Id
+import jakarta.persistence.Id
 
 class SqlDialectSelectFromTest {
 

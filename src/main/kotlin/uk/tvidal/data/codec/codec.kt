@@ -4,7 +4,7 @@ import uk.tvidal.data.isNullable
 import uk.tvidal.data.returnValueType
 import java.sql.PreparedStatement
 import java.sql.ResultSet
-import javax.persistence.Column
+import jakarta.persistence.Column
 import kotlin.reflect.KCallable
 import kotlin.reflect.KClass
 import kotlin.reflect.KFunction

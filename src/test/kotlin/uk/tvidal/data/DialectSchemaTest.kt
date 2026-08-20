@@ -13,7 +13,7 @@ import uk.tvidal.data.schema.SchemaTable
 import uk.tvidal.data.schema.on
 import uk.tvidal.data.schema.primaryKey
 import uk.tvidal.data.schema.unique
-import javax.persistence.Id
+import jakarta.persistence.Id
 
 class DialectSchemaTest {
 

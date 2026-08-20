@@ -5,7 +5,7 @@ import org.junit.jupiter.api.Test
 import uk.tvidal.data.query.SelectFrom.Join
 import uk.tvidal.data.query.SelectFrom.Table
 import java.util.UUID
-import javax.persistence.Id
+import jakarta.persistence.Id
 
 @Suppress("UNCHECKED_CAST")
 class QueryTest {

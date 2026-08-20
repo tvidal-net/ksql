@@ -5,7 +5,7 @@ import uk.tvidal.data.codec.returnValueType
 import uk.tvidal.data.logging.KLogging
 import java.math.BigDecimal
 import java.util.concurrent.ConcurrentHashMap
-import javax.persistence.Column
+import jakarta.persistence.Column
 import kotlin.reflect.KClass
 import kotlin.reflect.KParameter
 import kotlin.reflect.KProperty

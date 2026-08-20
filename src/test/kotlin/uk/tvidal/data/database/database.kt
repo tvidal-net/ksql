@@ -18,7 +18,7 @@ import java.time.temporal.ChronoUnit
 import java.util.Date
 import java.util.UUID
 import java.util.concurrent.ThreadLocalRandom
-import javax.persistence.Id
+import jakarta.persistence.Id
 import kotlin.math.absoluteValue
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds

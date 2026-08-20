@@ -6,8 +6,8 @@ import uk.tvidal.data.schema.References
 import uk.tvidal.data.schema.SchemaTable
 import java.time.LocalDate
 import java.util.UUID
-import javax.persistence.Column
-import javax.persistence.Id
+import jakarta.persistence.Column
+import jakarta.persistence.Id
 
 enum class Currency {
   GBP, EUR, USD

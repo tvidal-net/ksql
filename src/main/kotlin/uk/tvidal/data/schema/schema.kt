@@ -13,7 +13,7 @@ import uk.tvidal.data.schema.Constraint.ForeignKeyReference
 import uk.tvidal.data.schema.Constraint.PrimaryKey
 import uk.tvidal.data.schema.Constraint.UniqueKey
 import uk.tvidal.data.table
-import javax.persistence.Column
+import jakarta.persistence.Column
 import kotlin.reflect.KAnnotatedElement
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty

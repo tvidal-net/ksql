@@ -6,7 +6,7 @@ import uk.tvidal.data.TestDialect.assertSelect
 import uk.tvidal.data.TestDialect.assertSql
 import uk.tvidal.data.TestDialect.assertThrows
 import java.util.UUID
-import javax.persistence.Id
+import jakarta.persistence.Id
 
 class DialectQueryTest {
 

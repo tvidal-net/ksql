@@ -8,9 +8,9 @@ import uk.tvidal.data.keyFields
 import uk.tvidal.data.sql.insertFields
 import uk.tvidal.data.sql.updateFields
 import uk.tvidal.data.table
-import javax.persistence.Column
-import javax.persistence.Id
-import javax.persistence.Table
+import jakarta.persistence.Column
+import jakarta.persistence.Id
+import jakarta.persistence.Table
 
 class ModelTest {
 

@@ -10,7 +10,7 @@ import uk.tvidal.data.database.Amount
 import uk.tvidal.data.database.Currency
 import uk.tvidal.data.database.ValueTypes.Companion.amountValueType
 import java.math.BigDecimal
-import javax.persistence.Column
+import jakarta.persistence.Column
 
 class ConfigTest {
 

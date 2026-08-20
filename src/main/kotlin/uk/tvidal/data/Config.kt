@@ -19,6 +19,8 @@ class Config(
   val enumIgnoreCase: Boolean = true,
   val string: ValueType<String, String> = ValueType.NVarChar(ValueType.LENGTH),
   val decimal: ValueType<BigDecimal, BigDecimal> = ValueType.Decimal(ValueType.DEFAULT_SCALE, ValueType.DEFAULT_PRECISION),
+  val pretty: Boolean = true,
+  val indentSize: Int = 2,
 ) {
 
   private val valueTypeOverrides = ConcurrentHashMap<KClass<*>, ValueType<*, *>>()

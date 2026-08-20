@@ -1,6 +1,6 @@
 package uk.tvidal.data.filter
 
-import uk.tvidal.data.sql.SqlQueryBuilder.Constants.PARAM_CHAR
+import uk.tvidal.data.sql.QueryBuilder.Constants.PARAM_CHAR
 import kotlin.reflect.KProperty1
 
 data class SqlPropertyParamFilter<out V>(

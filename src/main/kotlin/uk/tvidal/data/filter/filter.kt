@@ -1,6 +1,6 @@
 package uk.tvidal.data.filter
 
-import uk.tvidal.data.sql.SqlQueryBuilder.Constants.SCHEMA_SEP
+import uk.tvidal.data.sql.QueryBuilder.Constants.SCHEMA_SEP
 
 internal fun String?.whenNotNull(suffix: Any): String =
   this?.let { "$it$suffix" } ?: ""

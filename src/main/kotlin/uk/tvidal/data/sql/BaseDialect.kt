@@ -8,7 +8,6 @@ import uk.tvidal.data.codec.ParamValueEncoder
 import uk.tvidal.data.fieldName
 import uk.tvidal.data.filter.SqlFilter
 import uk.tvidal.data.filter.SqlMultiFilter
-import uk.tvidal.data.filter.SqlOperator
 import uk.tvidal.data.filter.SqlPropertyFilter
 import uk.tvidal.data.filter.SqlPropertyJoinFilter
 import uk.tvidal.data.filter.SqlPropertyMultiValueFilter
@@ -19,32 +18,47 @@ import uk.tvidal.data.query.EntityQuery
 import uk.tvidal.data.query.QueryParam
 import uk.tvidal.data.query.QueryParam.Constants.FIRST_PARAM
 import uk.tvidal.data.query.SelectFrom
+import uk.tvidal.data.query.SelectQuery
+import uk.tvidal.data.query.SimpleQuery
 import uk.tvidal.data.query.aggregateType
+import kotlin.reflect.KClass
 import kotlin.reflect.KProperty
 import kotlin.reflect.KProperty1
 
 @Suppress("UNCHECKED_CAST")
-abstract class SqlQueryBuilder(val codecs: CodecFactory) {
+interface BaseDialect : QueryBuilder {
 
-  protected val config: Config
-    get() = codecs.config
+  val config: Config
 
-  protected val namingStrategy: NamingStrategy
-    get() = codecs.databaseName
+  val codecs: CodecFactory
+    get() = CodecFactory(config)
 
-  protected fun <P : QueryParam> Appendable.where(
+  val namingStrategy: NamingStrategy
+    get() = config.namingStrategy
+
+  fun Appendable.newLine(level: Int = 0) {
+    if (config.pretty) {
+      appendLine()
+      indent(level)
+    } else {
+      space()
+    }
+  }
+
+  fun <P : QueryParam> Appendable.where(
     params: MutableCollection<in P>,
-    whereClause: SqlFilter?
+    whereClause: SqlFilter?,
+    indentLevel: Int = 0,
   ) {
     if (whereClause != null) {
-      appendLine()
+      newLine(indentLevel)
       append("WHERE ")
       filter(params, whereClause)
     }
   }
 
-  protected fun Appendable.groupBy(from: Collection<SelectFrom>) {
-    appendLine()
+  fun Appendable.groupBy(from: Collection<SelectFrom>, indentLevel: Int = 0) {
+    newLine(indentLevel)
     append("GROUP BY ")
     from.forEachIndexed { j, it ->
       it.groupBy.forEachIndexed { i, field ->
@@ -57,40 +71,7 @@ abstract class SqlQueryBuilder(val codecs: CodecFactory) {
     }
   }
 
-  protected fun <E, P : QueryParam> Appendable.setFields(
-    params: MutableCollection<in P>,
-    fields: Collection<KProperty1<E, *>>
-  ) {
-    append("SET ")
-    for ((i, field) in fields.withIndex()) {
-      if (i > 0) {
-        listSeparator()
-      }
-      fieldFilter(
-        params = params as MutableCollection<QueryParam>,
-        filter = SqlPropertyParamFilter(field, SqlOperator.Equals),
-      )
-    }
-  }
-
-  protected fun <E, P : QueryParam> Appendable.fieldParams(
-    params: MutableCollection<in P>,
-    fields: Collection<KProperty1<in E, *>>
-  ) {
-    openBlock()
-    for ((i, field) in fields.withIndex()) {
-      if (i > 0) {
-        listSeparator()
-      }
-      fieldParam(
-        params = params as MutableCollection<QueryParam>,
-        property = field
-      )
-    }
-    closeBlock()
-  }
-
-  protected fun <P : QueryParam> Appendable.filter(
+  fun <P : QueryParam> Appendable.filter(
     params: MutableCollection<in P>,
     filter: SqlFilter,
     alias: String? = null,
@@ -117,7 +98,7 @@ abstract class SqlQueryBuilder(val codecs: CodecFactory) {
     }
   }
 
-  private fun Appendable.fieldFilter(
+  fun Appendable.fieldFilter(
     params: MutableCollection<in QueryParam>,
     filter: SqlPropertyFilter<*>,
     alias: String? = null,
@@ -135,13 +116,13 @@ abstract class SqlQueryBuilder(val codecs: CodecFactory) {
     }
   }
 
-  private fun Appendable.joinFilter(joinFilter: SqlPropertyJoinFilter<*>) {
+  fun Appendable.joinFilter(joinFilter: SqlPropertyJoinFilter<*>) {
     append(joinFilter.operator)
     aliasPrefix(joinFilter.alias)
     quotedName(joinFilter.target.fieldName)
   }
 
-  private fun Appendable.paramFilter(
+  fun Appendable.paramFilter(
     params: MutableCollection<in QueryParam>,
     paramFilter: SqlPropertyParamFilter<*>,
   ) {
@@ -149,7 +130,7 @@ abstract class SqlQueryBuilder(val codecs: CodecFactory) {
     fieldParam(params, paramFilter.property)
   }
 
-  private fun Appendable.valueFilter(
+  fun Appendable.valueFilter(
     params: MutableCollection<in QueryParam>,
     valueFilter: SqlPropertyValueFilter<*>
   ) {
@@ -161,7 +142,7 @@ abstract class SqlQueryBuilder(val codecs: CodecFactory) {
     )
   }
 
-  private fun Appendable.betweenFilter(
+  fun Appendable.betweenFilter(
     params: MutableCollection<in QueryParam>,
     betweenFilter: SqlPropertyMultiValueFilter.Between<*>
   ) {
@@ -173,7 +154,7 @@ abstract class SqlQueryBuilder(val codecs: CodecFactory) {
     }
   }
 
-  private fun Appendable.inFilter(
+  fun Appendable.inFilter(
     params: MutableCollection<in QueryParam>,
     inFilter: SqlPropertyMultiValueFilter.In<*>
   ) {
@@ -187,7 +168,7 @@ abstract class SqlQueryBuilder(val codecs: CodecFactory) {
     closeBlock()
   }
 
-  protected fun <E> Appendable.fieldParam(
+  fun <E> Appendable.fieldParam(
     params: MutableCollection<in QueryParam>,
     property: KProperty1<E, *>
   ) {
@@ -201,7 +182,7 @@ abstract class SqlQueryBuilder(val codecs: CodecFactory) {
     }
   }
 
-  protected fun Appendable.valueParam(
+  fun Appendable.valueParam(
     params: MutableCollection<in QueryParam>,
     name: String,
     encoder: ParamValueEncoder<Any>,
@@ -212,7 +193,7 @@ abstract class SqlQueryBuilder(val codecs: CodecFactory) {
     }
   }
 
-  protected fun Appendable.tableName(table: TableName, alias: String? = null) {
+  fun Appendable.tableName(table: TableName, alias: String? = null) {
     table.schema?.let {
       quotedName(it)
       schemaSeparator()
@@ -224,7 +205,7 @@ abstract class SqlQueryBuilder(val codecs: CodecFactory) {
     }
   }
 
-  protected fun Appendable.select(selectFrom: Collection<SelectFrom>) {
+  fun Appendable.select(selectFrom: Collection<SelectFrom>) {
     append("SELECT ")
     for ((i, from) in selectFrom.withIndex()) {
       if (i > 0) listSeparator()
@@ -236,7 +217,7 @@ abstract class SqlQueryBuilder(val codecs: CodecFactory) {
     }
   }
 
-  protected fun Appendable.fieldNames(
+  fun Appendable.fieldNames(
     fields: Collection<KProperty1<*, *>>,
     block: Boolean = true
   ) {
@@ -246,15 +227,7 @@ abstract class SqlQueryBuilder(val codecs: CodecFactory) {
     )
   }
 
-  protected open fun Appendable.append(joinType: SelectFrom.Join.Type) {
-    append(joinType.sql)
-  }
-
-  protected open fun Appendable.append(operator: SqlOperator) {
-    append(operator.sql)
-  }
-
-  protected open fun Appendable.selectField(field: KProperty<*>, alias: CharSequence?) {
+  fun Appendable.selectField(field: KProperty<*>, alias: CharSequence?) {
     val aggregateType = field.aggregateType?.also {
       append(it.name)
       openBlock()
@@ -277,20 +250,20 @@ abstract class SqlQueryBuilder(val codecs: CodecFactory) {
     }
   }
 
-  protected fun Appendable.aliasPrefix(alias: CharSequence?, separator: Char = SCHEMA_SEP) {
+  fun Appendable.aliasPrefix(alias: CharSequence?, separator: Char = QueryBuilder.SCHEMA_SEP) {
     alias?.let {
       quotedName(it)
       append(separator)
     }
   }
 
-  protected open fun Appendable.quotedName(name: CharSequence, alias: CharSequence? = null) {
+  fun Appendable.quotedName(name: CharSequence, alias: CharSequence? = null) {
     openQuote()
     databaseName(name, alias)
     closeQuote()
   }
 
-  protected fun Appendable.quotedNames(names: Collection<String>, block: Boolean = true) {
+  fun Appendable.quotedNames(names: Collection<String>, block: Boolean = true) {
     if (block) openBlock()
     for ((i, name) in names.withIndex()) {
       if (i > 0) listSeparator()
@@ -299,86 +272,57 @@ abstract class SqlQueryBuilder(val codecs: CodecFactory) {
     if (block) closeBlock()
   }
 
-  protected fun Appendable.databaseName(name: CharSequence, alias: CharSequence? = null) {
+  fun Appendable.databaseName(name: CharSequence, alias: CharSequence? = null) {
     namingStrategy.appendName(this, name, alias)
   }
 
-  protected fun Appendable.ifExists(value: Boolean) {
-    if (value) append("IF EXISTS ")
+  fun sqlQuery(
+    builder: Appendable.() -> Unit
+  ) = buildString {
+    builder()
+  }.let {
+    SimpleQuery(it)
   }
 
-  protected fun Appendable.ifNotExists(value: Boolean) {
-    if (value) append("IF NOT EXISTS ")
+  fun paramQuery(
+    builder: Appendable.(MutableCollection<QueryParam>) -> Unit
+  ) = arrayListOf<QueryParam>().let { params ->
+    SimpleQuery(
+      sql = buildString {
+        builder(params)
+      },
+      params = params,
+    )
   }
 
-  protected fun Appendable.notNull(notNull: Boolean) {
-    if (notNull) append(" NOT NULL")
+  fun <E : Any> selectQuery(
+    projection: KClass<E>,
+    alias: String?,
+    builder: Appendable.(MutableCollection<QueryParam>) -> Unit
+  ) = arrayListOf<QueryParam>().let { params ->
+    SelectQuery(
+      decode = codecs.decoder(projection, alias),
+      sql = buildString {
+        builder(params)
+      },
+      params = params,
+    )
   }
 
-  protected fun Appendable.isNotNull() {
-    append(" IS NOT NULL")
+  fun <E> entityQuery(
+    builder: Appendable.(MutableCollection<EntityQuery.Param<E>>) -> Unit
+  ) = arrayListOf<EntityQuery.Param<E>>().let { params ->
+    EntityQuery(
+      sql = buildString {
+        builder(params)
+      },
+      params = params
+    )
   }
 
-  protected fun Appendable.isNull() {
-    append(" IS NULL")
-  }
-
-  protected fun Appendable.param(param: QueryParam) {
-    param(param.index, param.name)
-  }
-
-  protected open fun Appendable.param(index: Int, paramName: CharSequence) {
-    append(PARAM_CHAR)
-  }
-
-  protected fun Appendable.indent(size: Int = 1) {
-    repeat(size) {
-      append("  ")
-    }
-  }
-
-  protected fun Appendable.space() {
-    append(' ')
-  }
-
-  protected fun Appendable.listSeparator() {
-    append(',')
-    space()
-  }
-
-  protected fun Appendable.schemaSeparator() {
-    append(SCHEMA_SEP)
-  }
-
-  protected fun Appendable.terminate() {
-    append(';')
-  }
-
-  protected fun Appendable.openBlock() {
-    append('(')
-  }
-
-  protected fun Appendable.closeBlock() {
-    append(')')
-  }
-
-  protected open fun Appendable.openQuote() {}
-
-  protected open fun Appendable.closeQuote() {}
-
-  companion object Constants {
-
-    const val PARAM_CHAR = '?'
-    const val SCHEMA_SEP = '.'
+  private companion object {
 
     private val Collection<*>.nextIndex: Int
       get() = size + FIRST_PARAM
-
-    internal fun alias(from: Collection<SelectFrom>) = from
-      .first { it is SelectFrom.Table<*> }
-      .let { alias(it, from.size) }
-
-    internal fun alias(from: SelectFrom, count: Int = Int.MAX_VALUE): String? =
-      from.alias ?: if (count == 1) null else from.name
   }
 }
